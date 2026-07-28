@@ -1642,7 +1642,7 @@ async function updateOfflineStatus(){
     if(reg.waiting && !reg.active){ el.textContent='待機中…（一度タブを閉じて開き直してください）'; return; }
     if(!reg.active){ el.textContent='登録はされたが起動していません'; return; }
 
-    const c=await caches.open('meditation-app-v5');
+    const c=await caches.open('meditation-app-v6');
     const hasHtml = !!(await c.match('./index.html'));
     const hasIcon = !!(await c.match('./icon.png'));
     if(hasHtml && hasIcon){
