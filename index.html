@@ -1201,7 +1201,7 @@ function renderBreath(){
   $('#breathList').innerHTML=BREATHING.map(b=>`
     <button class="card" data-b="${b.id}" aria-selected="${S.breath===b.id}">
       <div class="t">${b.name}</div><div class="d">${b.desc}</div>
-      <div class="n">${b.custom?'':b.phases.map(p=>p.sec).join(' - ')+' 秒'}</div></button>`).join('');
+      <div class="n">${b.custom?'':b.blocks?'選んだ時間に合わせて自動配分':b.phases.map(p=>p.sec).join(' - ')+' 秒'}</div></button>`).join('');
   $$('#breathList .card').forEach(el=>el.onclick=()=>{S.breath=el.dataset.b;save();renderBreath()});
   $('#customBox').classList.toggle('hidden',S.breath!=='custom');
   $('#breathMin').innerHTML=MINS.map(m=>`<button class="chip" data-m="${m}" aria-selected="${S.breathMin===m}">${m}分</button>`).join('');
