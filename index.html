@@ -1454,7 +1454,10 @@ function nextStage(){
     }
   }
 
-  if(st.type==='chant'){ chantStart(.7); }
+  if(st.type==='chant'){
+    // 鐘が鳴り終わってから曲を始める（鐘と同時に鳴り出すと鐘の音がかき消されるため）
+    setTimeout(()=>{ if(sess && sess.st===st) chantStart(.7); }, 2600);
+  }
   else if(prevSt && prevSt.type==='chant'){ chantFade(S.drone?.05:0); }
 
   if(st.dedTrack) dedicationStart();
