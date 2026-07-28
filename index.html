@@ -628,7 +628,7 @@ const JOY_PILLARS = [
 const DEDICATION = {
   open:[
     {at:0,  text:'最後に、今日の実りを、みんなに手渡しシェアします。'},
-    {at:13, text:'この瞑想で生まれたわずかな善いものを、自分だけのものにしません。'},
+    {at:13, text:'この瞑想で生まれた善いものを、自分だけのものにしません。'},
     {at:30, text:'すべての生きているものの役に立ちますように。'},
     {at:44, text:'今日一日、この心のまま過ごせますように。'},
   ],
@@ -817,17 +817,19 @@ const COURSE = [
     desc:'考えたことを、他者へひらく。四無量心の慈と悲。' },
   { id:'mudita', name:'喜びの瞑想', opts:[0,3,5,7,10,12,15,20], def:5,
     desc:'『よろこびの書』の八本柱を1本ずつ育てる。「今日の柱」にすると毎回自動で次へ進みます。' },
+  { id:'morningword', name:'朝のひとこと', opts:[0,1,2,3,5], def:1,
+    desc:'今日という日を、自分で定義する短い言葉。回向の前に置きます。' },
   { id:'dedication', name:'回向', opts:[0,1,2,3], def:1,
     desc:'生まれた善いものを、自分のものにしないで終える。' },
 ];
 
 /* ---- 合計時間のプリセット（数字はぴったり合計になるようにしてあります）---- */
 const COURSE_PRESETS = {
-  20:{chant:1,breath:3,analytical:8, metta:3, mudita:3, dedication:2},
-  30:{chant:2,breath:5,analytical:12,metta:5, mudita:5, dedication:1},
-  45:{chant:3,breath:7,analytical:20,metta:7, mudita:7, dedication:1},
-  60:{chant:3,breath:10,analytical:25,metta:10,mudita:10,dedication:2},
-  90:{chant:5,breath:15,analytical:40,metta:15,mudita:12,dedication:3},
+  20:{chant:1,breath:3,analytical:7, metta:3, mudita:3, morningword:1,dedication:2},
+  30:{chant:2,breath:5,analytical:11,metta:5, mudita:5, morningword:1,dedication:1},
+  45:{chant:3,breath:7,analytical:19,metta:7, mudita:7, morningword:1,dedication:1},
+  60:{chant:3,breath:10,analytical:24,metta:10,mudita:10,morningword:1,dedication:2},
+  90:{chant:5,breath:15,analytical:39,metta:15,mudita:12,morningword:1,dedication:3},
 };
 
 /* ---- 最後に流す曲。YouTubeの動画IDを差し替えれば変わります ---- */
@@ -1004,27 +1006,34 @@ function droneOff(){
 /* チャンティング中に流す曲（YouTube）。ネット接続が必要。
    使えない時（オフライン等）は、これまで通り chant.mp3 → 合成ドローンの順にフォールバックする */
 const CHANT_MUSIC = { id:'IZkjX_c4hm4', volume:65 };
-let chantYtPlayer=null, chantYtReady=false;
+let chantYtPlayer=null, chantYtReady=false, chantWantVol=null;
 
+/* セッション開始と同時に、ミュート状態でチャンティング動画の読み込み・再生だけ先に始めておく。
+   （チャンティングは大抵コースの最初のステージなので、ここでYouTube側のバッファリングを
+   先に済ませておかないと、実際にそのステージが来た時に間に合わず無音になりがち） */
+function chantPrewarm(){
+  if(!CHANT_MUSIC.id || chantYtPlayer) return;
+  loadYT().then(()=>{
+    if(!(window.YT&&window.YT.Player) || chantYtPlayer) return;
+    chantYtPlayer=new YT.Player('chantYt',{
+      height:'2',width:'2',videoId:CHANT_MUSIC.id,
+      playerVars:{autoplay:1,controls:0,disablekb:1,fs:0,modestbranding:1,rel:0,
+                  loop:1,playlist:CHANT_MUSIC.id,playsinline:1,mute:1},
+      events:{
+        onReady:e=>{ chantYtReady=true; e.target.mute(); e.target.playVideo();
+          if(chantWantVol!=null){ e.target.unMute(); e.target.setVolume(chantWantVol); chantWantVol=null; } },
+        onStateChange:e=>{ if(e.data===YT.PlayerState.ENDED) e.target.playVideo(); }
+      }
+    });
+  });
+}
 async function chantStart(vol){
   if(CHANT_MUSIC.id){
-    await loadYT();
-    if(window.YT&&window.YT.Player){
-      if(chantYtPlayer){
-        if(chantYtReady){ chantYtPlayer.setVolume(CHANT_MUSIC.volume); chantYtPlayer.playVideo(); }
-      } else {
-        chantYtPlayer=new YT.Player('chantYt',{
-          height:'2',width:'2',videoId:CHANT_MUSIC.id,
-          playerVars:{autoplay:1,controls:0,disablekb:1,fs:0,modestbranding:1,rel:0,
-                      loop:1,playlist:CHANT_MUSIC.id,playsinline:1},
-          events:{
-            onReady:e=>{ chantYtReady=true; e.target.setVolume(CHANT_MUSIC.volume); e.target.playVideo(); },
-            onStateChange:e=>{ if(e.data===YT.PlayerState.ENDED) e.target.playVideo(); }
-          }
-        });
-      }
-      return;
-    }
+    const v=Math.round((vol||.7)*100);
+    if(chantYtPlayer && chantYtReady){ chantYtPlayer.unMute(); chantYtPlayer.setVolume(v); chantYtPlayer.playVideo(); return; }
+    if(chantYtPlayer){ chantWantVol=v; return; } // 準備中：onReadyが来たら自動で音量を上げる
+    chantWantVol=v; chantPrewarm();
+    return;
   }
   if(await probeChant()){ chantEl.volume=vol||.7; try{ await chantEl.play(); }catch(e){ droneOn(vol); } }
   else droneOn(vol);
@@ -1384,6 +1393,7 @@ function buildCourse(){
     }
     if(s.id==='metta') st.push({type:'script',name:'慈悲の瞑想',sec,tl:tlFromScript(METTA,sec,'metta'),bgSound:'gayatri'});
     if(s.id==='mudita'){ const p=resolvePillar(); st.push({type:'script',name:p.name,sec,tl:tlFromScript(p.script,sec,p.id),pillar:p.id,bgSound:'gayatri'}); }
+    if(s.id==='morningword') st.push({type:'script',name:'朝のひとこと',sec,tl:tlFromScript(MORNING,sec,'morningword'),bgSound:'gayatri'});
     if(s.id==='dedication') st.push({type:'script',name:'回向',sec,tl:tlFromScript(DEDICATION,sec),dedTrack:true});
   });
   return {name:'コース',stages:st};
@@ -1395,6 +1405,7 @@ let sess=null,timer=null,raf=null,paused=false;
 function startSession(plan){
   unlockSpeech(); unlockAudioEl(); audio(); startKeepAlive(); keepAwake();
   loadYT(); // チャンティング等が最初のYouTube利用で足止めされないよう、先に読み込みだけ始めておく
+  if(plan.stages && plan.stages.some(s=>s.type==='chant')) chantPrewarm();
   sess={name:plan.name,stages:plan.stages,i:-1,pillarsDone:new Set(),
         noClosing:!!plan.noClosing, softBell:!!plan.softBell, freq720:!!plan.freq720, relaxBg:!!plan.relaxBg,
         total:plan.stages.reduce((a,s)=>a+s.sec,0),startedAt:performance.now()};
@@ -1565,8 +1576,10 @@ function finish(complete){
   if(complete) setTimeout(()=>bell(soft?.35:.6, f720?720:undefined),400);
   const withMusic = complete && S.music && CLOSING_MUSIC.id && !noClose;
   setTimeout(()=>{
-    stopKeepAlive(); releaseAwake(); sess=null; renderLog(); renderCourse();
-    if(withMusic) openMusic(); else closeRun();
+    sess=null; renderLog(); renderCourse();
+    // 曲を流す間は画面ロックさせない（ロックされるとiframeの再生が途中で止まるため）。
+    // 曲を流さないときだけ、ここで解放する。曲を流す場合はcloseRun()で解放する。
+    if(withMusic) openMusic(); else { stopKeepAlive(); releaseAwake(); closeRun(); }
   }, complete?(noClose?1800:3800):250);
 }
 
@@ -1582,6 +1595,7 @@ function openMusic(){
     +'?autoplay=1&playsinline=1&rel=0&start='+(CLOSING_MUSIC.start||0)+'"></iframe>';
 }
 function closeRun(){
+  stopKeepAlive(); releaseAwake();
   $('#ytBox').innerHTML='';            // 再生を止めるためiframeごと捨てる
   $('#endMusic').classList.add('hidden');
   $('#runMain').classList.remove('hidden');
