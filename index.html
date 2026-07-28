@@ -1081,17 +1081,28 @@ function bgMusicStart(){
 function bgMusicStop(){ try{ if(bgPlayer&&bgReady) bgPlayer.pauseVideo(); }catch(e){} }
 function bgMusicResume(){ try{ if(bgPlayer&&bgReady&&S.bgMusic) bgPlayer.playVideo(); }catch(e){} }
 
-/* ---------- 声 ---------- */
+/* ---------- 声 ----------
+   音声合成APIが無い環境（アプリ内ブラウザ等）でも、ここで例外が起きて
+   アプリ全体が止まってしまわないよう、必ず try/catch と存在チェックを通す。 */
 let voices=[];
+const hasSpeech = ('speechSynthesis' in window);
 function loadVoices(){
-  const all=speechSynthesis.getVoices();
-  voices=all.filter(v=>/^ja/i.test(v.lang)); if(!voices.length) voices=all;
-  const sel=$('#voiceSel');
-  sel.innerHTML=voices.map(v=>`<option value="${v.voiceURI}">${v.name}</option>`).join('')||'<option>（声が見つかりません）</option>';
-  if(S.voiceURI&&voices.some(v=>v.voiceURI===S.voiceURI)) sel.value=S.voiceURI;
-  else if(voices[0]){ S.voiceURI=voices[0].voiceURI; sel.value=S.voiceURI; }
+  if(!hasSpeech) return;
+  try{
+    const all=speechSynthesis.getVoices();
+    voices=all.filter(v=>/^ja/i.test(v.lang)); if(!voices.length) voices=all;
+    const sel=$('#voiceSel'); if(!sel) return;
+    sel.innerHTML=voices.map(v=>`<option value="${v.voiceURI}">${v.name}</option>`).join('')||'<option>（声が見つかりません）</option>';
+    if(S.voiceURI&&voices.some(v=>v.voiceURI===S.voiceURI)) sel.value=S.voiceURI;
+    else if(voices[0]){ S.voiceURI=voices[0].voiceURI; sel.value=S.voiceURI; }
+  }catch(e){}
 }
-speechSynthesis.onvoiceschanged=loadVoices; loadVoices(); setTimeout(loadVoices,400);
+if(hasSpeech){
+  try{ speechSynthesis.onvoiceschanged=loadVoices; }catch(e){}
+  loadVoices(); setTimeout(loadVoices,400);
+} else if($('#voiceSel')){
+  $('#voiceSel').innerHTML='<option>（この環境では音声合成が使えません）</option>';
+}
 
 function speakSynth(text,force){
   if(!text||(!S.voice&&!force))return;
@@ -1624,7 +1635,7 @@ async function updateOfflineStatus(){
     if(reg.waiting && !reg.active){ el.textContent='待機中…（一度タブを閉じて開き直してください）'; return; }
     if(!reg.active){ el.textContent='登録はされたが起動していません'; return; }
 
-    const c=await caches.open('meditation-app-v4');
+    const c=await caches.open('meditation-app-v5');
     const hasHtml = !!(await c.match('./index.html'));
     const hasIcon = !!(await c.match('./icon.png'));
     if(hasHtml && hasIcon){
