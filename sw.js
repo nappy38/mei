@@ -1,6 +1,6 @@
 // オフライン対応：一度開ければ、次からは電波が無くても開ける。
 // 同じ場所（オリジン）のファイルだけキャッシュし、YouTube等は素通しする（オフラインでは単に鳴らないだけ）。
-const CACHE = 'meditation-app-v5';
+const CACHE = 'meditation-app-v6';
 const CORE = ['./', './index.html', './icon.png', './manifest.json', './decor_leaves.png'];
 
 self.addEventListener('install', e => {

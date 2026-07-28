@@ -136,14 +136,24 @@ input[type=range]{width:150px;accent-color:var(--gold)}
 .endmusic #btnClose{margin-top:24px;border:1px solid var(--line);border-radius:99px;padding:12px 32px;font-size:13px;color:var(--dim);letter-spacing:.24em}
 .hidden{display:none}
 
-/* オープニング：アイコンがぼわっと浮かび上がってから、本体が現れる */
+/* オープニング：アイコンがぼわっと浮かび上がってから、本体が現れる。
+   JSのタイマーに頼らず、CSSアニメーションだけで自動的に終わるようにしてある
+   （何らかの理由でJSが動かなくても、画面がふさがれたままにはならない）。 */
+@keyframes splashImgBloom{
+  0%{opacity:0;transform:scale(.82);filter:blur(6px)}
+  35%{opacity:1;transform:scale(1);filter:blur(0)}
+  75%{opacity:1;transform:scale(1);filter:blur(0)}
+  100%{opacity:0;transform:scale(1);filter:blur(0)}
+}
+@keyframes splashBgFade{
+  0%{opacity:1;pointer-events:auto}
+  75%{opacity:1;pointer-events:auto}
+  100%{opacity:0;pointer-events:none}
+}
 #splash{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;
-  background:var(--bg);transition:opacity .55s ease}
+  background:var(--bg);animation:splashBgFade 2.6s ease forwards}
 #splash img{width:38vw;max-width:190px;border-radius:24px;
-  opacity:0;transform:scale(.82);filter:blur(6px);
-  transition:opacity 1s cubic-bezier(.2,.7,.3,1), transform 1s cubic-bezier(.2,.7,.3,1), filter 1s cubic-bezier(.2,.7,.3,1)}
-#splash.bloom img{opacity:1;transform:scale(1);filter:blur(0)}
-#splash.fade{opacity:0;pointer-events:none}
+  animation:splashImgBloom 2.6s cubic-bezier(.2,.7,.3,1) forwards}
 </style>
 </head>
 <body>
@@ -1610,15 +1620,12 @@ $('#startMed').onclick=()=>{
 
 renderCourse(); renderBreath(); renderMed(); renderLog();
 
-// オープニング：アイコンがぼわっと浮かび上がってから、少し間を置いて消える
-(function(){
-  const sp=$('#splash'); if(!sp) return;
-  requestAnimationFrame(()=>{ setTimeout(()=>sp.classList.add('bloom'),60); });
-  setTimeout(()=>{
-    sp.classList.add('fade');
-    setTimeout(()=>sp.remove(),600);
-  },1500);
-})();
+// オープニング：見た目はCSSアニメーションだけで完結している（JSが動かなくても画面はふさがれない）。
+// ここではDOMの掃除だけを、可能なら行う（うまくいかなくてもアプリの動作には影響しない）。
+try{
+  const sp=document.getElementById('splash');
+  if(sp) sp.addEventListener('animationend',()=>{ try{ sp.remove(); }catch(e){} });
+}catch(e){}
 
 // オフライン対応：https で開いたときだけ効く（file:// や http では登録されない/意味がない）
 let offlinePoll=null;
