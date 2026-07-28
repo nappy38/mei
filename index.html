@@ -680,9 +680,20 @@ const MORNING = {
     'その人たちに、今日は良い顔で会いたい、と思います。',
   ]},
   close:[
-    {at:-20,text:'今日という日を、自分で定義します。'},
-    {at:-12,text:'心の中で、はっきりと言います。'},
-    {at:-6, text:'「今日は、幸福な一日である」'},
+    {at:-108,text:'今日という日を、自分で定義します。'},
+    {at:-100,text:'心の中で、はっきりと言います。'},
+    {at:-94, text:'「今日は、幸福な一日である」'},
+    {at:-84, text:'心を、明るく保ちます。今日一日の、健康の土台です。'},
+    {at:-76, text:'心配も、急ぐ気持ちも、今は手放します。'},
+    {at:-68, text:'恐れも、余計な考えも、不安も、今日は連れていきません。'},
+    {at:-60, text:'今日という一日は、一つのゲームだと思って、楽しんでいきます。'},
+    {at:-52, text:'難しいことに出会ったら、それを挑戦として受け止めます。'},
+    {at:-42, text:'本気で取り組んだことの結果は、いつも同じ頃に現れます。だいたい、70日を過ぎたあたりです。'},
+    {at:-30, text:'そこまでは、まだ何も変わっていないように見えるかもしれません。それでも、続けます。'},
+    {at:-20, text:'耐えた分だけ、その先で、一気に飛躍が起こります。'},
+    {at:-12, text:'今日も、その大切な一日です。'},
+    {at:-9,  text:'今日出会う人には、やさしい気持ちで接します。'},
+    {at:-4,  text:'それが、今日を生きる、私の姿勢です。'},
   ]
 };
 
@@ -742,8 +753,8 @@ function tlInnerGuide(total){
 
 /* ---- 単発の瞑想 ---- */
 const MEDITATIONS = [
-  { id:'night', name:'夜の瞑想', mins:[10,15,20], script:NIGHT, softBell:true, freq720:true, relaxBg:true,
-    desc:'今日への感謝と、自分をほめる時間（THE MAGIC式の感謝＋ほめ日記）。目を開けずに、最後はアラティを聴きながら眠りへ。鐘は720Hz基音。背景に雨音・波・ノイズを選べます。' },
+  { id:'night', name:'夜の瞑想', mins:[10,15,20], script:NIGHT, softBell:true, relaxBg:true,
+    desc:'今日への感謝と、自分をほめる時間（THE MAGIC式の感謝＋ほめ日記）。目を開けずに、最後はアラティを聴きながら眠りへ。背景に雨音・波・ノイズを選べます。' },
   { id:'morning', name:'朝のひとこと', mins:[3,5,7,10],
     desc:'今日は幸福な一日だと、自分で決めて一日を始める。短い朝の儀式。', script:MORNING },
   { id:'innerguide', name:'インナーガイド瞑想', mins:[15,30,45], innerguide:true,
@@ -1035,7 +1046,7 @@ function chantStop(){
 }
 
 /* 回向で流す曲（YouTube）。ネット接続が必要。オフラインの時は静かに諦める（回向は短いので無音でも成立する） */
-const DEDICATION_MUSIC = { id:'8DWqCvFYpUo', volume:55 };
+const DEDICATION_MUSIC = { id:'f2cIRYXgJbY', volume:55 };
 let dedYtPlayer=null, dedYtReady=false;
 async function dedicationStart(){
   if(!DEDICATION_MUSIC.id) return;
@@ -1213,7 +1224,14 @@ function renderMed(){
       <div class="t">${m.name}</div><div class="d">${m.desc}</div></button>`).join('')
     + (S.med==='analytical'?`<select id="soloTopic" style="max-width:none;width:100%;margin-top:4px">${
         ANALYTICAL.map(a=>`<option value="${a.id}" ${S.topic===a.id?'selected':''}>${a.name} — ${a.short}</option>`).join('')}</select>`:'')
-    + (S.med==='mudita'?`<select id="soloPillar" style="max-width:none;width:100%;margin-top:4px">${pillarOptions()}</select>`:'');
+    + (S.med==='mudita'?`<select id="soloPillar" style="max-width:none;width:100%;margin-top:4px">${pillarOptions()}</select>`:'')
+    + (S.med==='night'?`<select id="soloNightBg" style="max-width:none;width:100%;margin-top:4px">
+        <option value="rain" ${S.nightBg==='rain'?'selected':''}>雨音</option>
+        <option value="wave" ${S.nightBg==='wave'?'selected':''}>波の音</option>
+        <option value="pink" ${S.nightBg==='pink'?'selected':''}>ピンクノイズ</option>
+        <option value="brown" ${S.nightBg==='brown'?'selected':''}>ブラウンノイズ</option>
+        <option value="" ${!S.nightBg?'selected':''}>なし</option>
+      </select>`:'');
   $$('#medList .card').forEach(el=>el.onclick=()=>{
     S.med=el.dataset.m;
     const mm=MEDITATIONS.find(x=>x.id===S.med);
@@ -1222,6 +1240,7 @@ function renderMed(){
   });
   const st=$('#soloTopic'); if(st) st.onchange=()=>{S.topic=st.value;save()};
   const sp=$('#soloPillar'); if(sp) sp.onchange=()=>{S.pillar=sp.value;save();renderMed()};
+  const nb=$('#soloNightBg'); if(nb) nb.onchange=()=>{S.nightBg=nb.value;save();const sel=$('#nightBgSel');if(sel)sel.value=S.nightBg;};
   const mm=MEDITATIONS.find(x=>x.id===S.med)||MEDITATIONS[0];
   $('#medMin').innerHTML=mm.mins.map(m=>`<button class="chip" data-m="${m}" aria-selected="${S.medMin===m}">${m}分</button>`).join('');
   $$('#medMin .chip').forEach(el=>el.onclick=()=>{S.medMin=+el.dataset.m;save();renderMed()});
@@ -1356,8 +1375,8 @@ function buildCourse(){
     if(s.id==='chant') st.push({type:'chant',name:'チャンティング',sec});
     if(s.id==='breath'){
       const b=BREATHING.find(x=>x.id===S.courseBreath)||BREATHING[0];
-      if(b.blocks) st.push({type:'breath',name:b.name,sec,blocks:resolveBreathBlocks(b.blocks,sec),bgSound:'gayatri'});
-      else st.push({type:'breath',name:b.name,sec,phases:b.phases,bgSound:'gayatri'});
+      if(b.blocks) st.push({type:'breath',name:b.name,sec,blocks:resolveBreathBlocks(b.blocks,sec),bgSound:'wave'});
+      else st.push({type:'breath',name:b.name,sec,phases:b.phases,bgSound:'wave'});
     }
     if(s.id==='analytical'){
       const a=ANALYTICAL.find(x=>x.id===S.topic)||ANALYTICAL[0];
@@ -1375,6 +1394,7 @@ let sess=null,timer=null,raf=null,paused=false;
 
 function startSession(plan){
   unlockSpeech(); unlockAudioEl(); audio(); startKeepAlive(); keepAwake();
+  loadYT(); // チャンティング等が最初のYouTube利用で足止めされないよう、先に読み込みだけ始めておく
   sess={name:plan.name,stages:plan.stages,i:-1,pillarsDone:new Set(),
         noClosing:!!plan.noClosing, softBell:!!plan.softBell, freq720:!!plan.freq720, relaxBg:!!plan.relaxBg,
         total:plan.stages.reduce((a,s)=>a+s.sec,0),startedAt:performance.now()};
@@ -1642,7 +1662,7 @@ async function updateOfflineStatus(){
     if(reg.waiting && !reg.active){ el.textContent='待機中…（一度タブを閉じて開き直してください）'; return; }
     if(!reg.active){ el.textContent='登録はされたが起動していません'; return; }
 
-    const c=await caches.open('meditation-app-v6');
+    const c=await caches.open('meditation-app-v7');
     const hasHtml = !!(await c.match('./index.html'));
     const hasIcon = !!(await c.match('./icon.png'));
     if(hasHtml && hasIcon){
