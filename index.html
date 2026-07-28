@@ -228,6 +228,15 @@ input[type=range]{width:150px;accent-color:var(--gold)}
     <div class="row"><span>呼吸の合図音</span><button class="sw" id="swCue" role="switch" aria-checked="true"></button></div>
     <div class="row"><span>秒数を数える</span><button class="sw" id="swCount" role="switch" aria-checked="false"></button></div>
     <div class="row"><span>画面を暗くする</span><button class="sw" id="swDim" role="switch" aria-checked="false"></button></div>
+    <div class="row"><span>夜の瞑想の背景音</span>
+      <select id="nightBgSel">
+        <option value="rain">雨音</option>
+        <option value="wave">波の音</option>
+        <option value="pink">ピンクノイズ</option>
+        <option value="brown">ブラウンノイズ</option>
+        <option value="">なし</option>
+      </select>
+    </div>
     <div class="row"><span>オフライン保存</span><span id="offlineStatus" style="font-size:12px;color:var(--dim)">確認中…</span></div>
     <div class="row"><span>最後に曲を流す</span><button class="sw" id="swMusic" role="switch" aria-checked="true"></button></div>
     <div class="row"><span>セッション中ガヤトリーを小さく流す</span><button class="sw" id="swBgMusic" role="switch" aria-checked="true"></button></div>
@@ -275,6 +284,8 @@ input[type=range]{width:150px;accent-color:var(--gold)}
   </div>
 
   <div id="bgYt" style="position:fixed;width:2px;height:2px;overflow:hidden;opacity:0;pointer-events:none"></div>
+  <div id="chantYt" style="position:fixed;width:2px;height:2px;overflow:hidden;opacity:0;pointer-events:none"></div>
+  <div id="dedYt" style="position:fixed;width:2px;height:2px;overflow:hidden;opacity:0;pointer-events:none"></div>
 
   <div class="endmusic hidden" id="endMusic">
     <div class="emT">おわりました</div>
@@ -295,6 +306,23 @@ input[type=range]{width:150px;accent-color:var(--gold)}
 
 /* ---- 呼吸法 ---- */
 const BREATHING = [
+  { id:'reset46', name:'リセット呼吸（既定）',
+    desc:'生理的ため息を5回 → 腹式呼吸4-6 → そのまま自然な呼吸を観察。選んだ時間に合わせて配分が自動で変わります。',
+    blocks:[
+      { kind:'cycle', reps:5, label:'生理的ため息',
+        phases:[
+          {k:'in', say:'吸って',        vid:'sigh_in1', label:'吸う',   sec:1.3},
+          {k:'in', say:'もう一度、少し吸って', vid:'sigh_in2', label:'もう一度', sec:0.7},
+          {k:'out',say:'長く、口から吐いて',   vid:'sigh_out', label:'長く吐く', sec:6},
+        ]},
+      { kind:'cycle', frac:0.4, label:'腹式呼吸 4-6',
+        phases:[
+          {k:'in', say:'お腹に吸って',   vid:'hara_in',  label:'吸う', sec:4},
+          {k:'out',say:'ゆっくり吐いて', vid:'out_slow', label:'吐く', sec:6},
+        ]},
+      { kind:'free', frac:0.6, label:'自然な呼吸',
+        sayStart:'呼吸をコントロールするのをやめます。自然に、まかせます。', vid:'natural_start' },
+    ]},
   { id:'46', name:'腹式呼吸 4-6', desc:'吐く息を長く。お腹を膨らませて吸い、しぼませて吐く。瞑想の前に心を静めるならこれ。',
     phases:[{k:'in',say:'お腹に吸って',vid:'hara_in',label:'吸う',sec:4},{k:'out',say:'ゆっくり吐いて',vid:'out_slow',label:'吐く',sec:6}] },
   { id:'55', name:'コヒーレント呼吸 5-5', desc:'1分間に6回。心拍のゆらぎが整いやすい。長く続けるのに向く。',
@@ -589,7 +617,7 @@ const JOY_PILLARS = [
 
 const DEDICATION = {
   open:[
-    {at:0,  text:'最後に、回向します。'},
+    {at:0,  text:'最後に、今日の実りを、みんなに手渡しシェアします。'},
     {at:13, text:'この瞑想で生まれたわずかな善いものを、自分だけのものにしません。'},
     {at:30, text:'すべての生きているものの役に立ちますように。'},
     {at:44, text:'今日一日、この心のまま過ごせますように。'},
@@ -648,12 +676,68 @@ const MORNING = {
   ]
 };
 
+/* インナーガイド瞑想：本人が書いた設計（呼吸→森→洞窟→光→動物→ガイド→対話→感謝→帰還）を、
+   そのまま台本にしたもの。エドウィン・スタインブレッシャーの原著にある占星術12ハウス・タロット22アーキタイプ・
+   カバラ生命の樹・易経といった独自の体系までは再現していない（著作物の複製になるため、また実装上も過大なため）。
+   「ガイドが本物かは瞑想の中でなく、瞑想後の現実の変化で判断する」という本人の設計方針を核に据えている。
+   質問は「お手本をいくつか読み上げる→あとは沈黙の中で自分の問いを選ぶ」という形にしてある。
+   セリフの前半（洞窟の物語部分）は時間を選んでも長さを変えない。長くなった分は、後半の沈黙に使われる。 */
+function tlInnerGuide(total){
+  const fixed=[
+    {at:0,  text:'楽な姿勢で、座るか横になります。'},
+    {at:14, text:'呼吸を、吸うより吐く方を長くしていきます。'},
+    {at:34, text:'体の力を、少しずつ抜いていきます。'},
+    {at:60, text:'深い森を、歩いています。'},
+    {at:78, text:'静かな森。鳥の声が聞こえます。'},
+    {at:96, text:'木漏れ日が、揺れています。'},
+    {at:118,text:'歩いていると、洞窟を見つけます。'},
+    {at:140,text:'洞窟は、安全な場所です。ゆっくり、奥へ歩いていきます。'},
+    {at:165,text:'途中、暗く感じても、怖がらなくて大丈夫です。安心して、進みます。'},
+    {at:195,text:'出口が近づき、光が見えてきます。'},
+    {at:215,text:'その光の方へ、進みます。'},
+    {at:235,text:'洞窟を、抜けます。'},
+    {at:255,text:'外に出ると、一匹の動物が現れます。'},
+    {at:275,text:'どんな動物でもかまいません。最初に現れた存在を、信頼します。'},
+    {at:295,text:'その動物は、あなたを歓迎しています。'},
+    {at:320,text:'動物が、振り返りながら、歩き始めます。'},
+    {at:340,text:'あなたは、その後ろを歩いていきます。'},
+    {at:365,text:'森でも、草原でも、湖のほとりでも、かまいません。どこへ向かうかは、任せます。'},
+    {at:395,text:'動物が、ある場所へ、あなたを案内します。'},
+    {at:415,text:'そこに、ガイドがいます。姿が見えなくても、存在だけ感じられれば、それで十分です。'},
+    {at:440,text:'今日は、いつも同じ問いから始めます。'},
+    {at:460,text:'心の中で、ガイドに尋ねます。「今日、一番大切な行動はなんですか？」'},
+    {at:485,text:'急がず、浮かんでくるものを、待ちます。'},
+    {at:525,text:'ほかにも、聞きたいことがあれば、続けて尋ねます。'},
+    {at:545,text:'手放すべきもの、恐れていること、まだ気付いていない才能——なんでもかまいません。'},
+    {at:568,text:'これらは、ただの例です。自分が本当に聞きたいことを、心の中で選びます。'},
+    {at:588,text:'声には出さず、その問いを、ガイドに向けます。'},
+    {at:608,text:'急がず、答えを待ちます。答えは、言葉とは限りません。映像、感覚、色、感情、静けさそのものかもしれません。全部、メッセージです。'},
+  ];
+  const closeLines=[
+    {off:-70,text:'その存在に、ありがとう、と伝えます。'},
+    {off:-58,text:'動物も、微笑んで見送ってくれます。'},
+    {off:-46,text:'来た道を、戻っていきます。'},
+    {off:-34,text:'洞窟を通り、森を歩いていきます。'},
+    {off:-20,text:'呼吸を感じます。体を感じます。'},
+    {off:-8, text:'ゆっくり、目を開けます。'},
+  ];
+  const tl=fixed.filter(l=>l.at<total).map((l,i)=>({at:l.at,text:l.text,vid:'innerguide_'+i}));
+  const lastFixed=fixed[fixed.length-1].at;
+  closeLines.forEach((l,i)=>{
+    const at=total+l.off;
+    if(at>lastFixed) tl.push({at,text:l.text,vid:'innerguide_c'+i});
+  });
+  return tl.sort((a,b)=>a.at-b.at);
+}
+
 /* ---- 単発の瞑想 ---- */
 const MEDITATIONS = [
-  { id:'night', name:'夜の瞑想', mins:[10,15,20], script:NIGHT, softBell:true, freq720:true,
-    desc:'今日への感謝と、自分をほめる時間（THE MAGIC式の感謝＋ほめ日記）。目を開けずに、最後はアラティを聴きながら眠りへ。鐘は720Hz基音。' },
+  { id:'night', name:'夜の瞑想', mins:[10,15,20], script:NIGHT, softBell:true, freq720:true, relaxBg:true,
+    desc:'今日への感謝と、自分をほめる時間（THE MAGIC式の感謝＋ほめ日記）。目を開けずに、最後はアラティを聴きながら眠りへ。鐘は720Hz基音。背景に雨音・波・ノイズを選べます。' },
   { id:'morning', name:'朝のひとこと', mins:[3,5,7,10],
     desc:'今日は幸福な一日だと、自分で決めて一日を始める。短い朝の儀式。', script:MORNING },
+  { id:'innerguide', name:'インナーガイド瞑想', mins:[15,30,45], innerguide:true,
+    desc:'呼吸→森→洞窟→光→動物→ガイドとの対話、という本人設計の台本。お手本の質問を聞いたあとは沈黙の中で自分の問いを選ぶ。ガイドが本物かは瞑想後の現実の変化で判断する。' },
   { id:'metta', name:'慈悲の瞑想', mins:[5,7,10,15,20], desc:'自分から、大切な人、無関係な人、苦手な人、すべての生き物へ。心が固くなった日に。', script:METTA },
   { id:'mudita', name:'喜びの瞑想', mins:[3,5,7,10,15], pillar:true,
     desc:'『よろこびの書』の八本柱、または随喜（全般）。うらやましさや嫉妬が出た日に。' },
@@ -742,10 +826,10 @@ const KEY='medapp.v2';
 const S = Object.assign({
   voice:true, bell:true, cue:true, count:false, dim:false, drone:false, music:true, bgMusic:true,
   rate:0.85, pitch:0.95, voiceURI:'',
-  breath:'46', breathMin:5, med:'metta', medMin:10,
+  breath:'reset46', breathMin:5, med:'metta', medMin:10,
   cIn:4, cH1:0, cOut:6, cH2:0,
-  courseBreath:'46', topic:'impermanence',
-  pillar:'auto', pillarIdx:0, pillarCount:{},
+  courseBreath:'reset46', topic:'impermanence',
+  pillar:'auto', pillarIdx:0, pillarCount:{}, nightBg:'rain',
   stage:Object.fromEntries(COURSE.map(s=>[s.id,s.def]))
 }, JSON.parse(localStorage.getItem(KEY)||'{}'));
 S.stage = Object.assign(Object.fromEntries(COURSE.map(s=>[s.id,s.def])), S.stage||{});
@@ -824,24 +908,140 @@ function droneOn(vol){
   lp.connect(out); out.connect(c.destination);
   drone={oscs,out};
 }
+/* ---------- リラックス音源（雨音・波・ピンクノイズ／ブラウンノイズ）----------
+   全部WebAudioでその場で合成する。音源ファイル不要・オフラインで確実に鳴る。 */
+let relaxNode=null;
+function makeNoiseBuffer(c,seconds){
+  const n=Math.floor(c.sampleRate*seconds), buf=c.createBuffer(1,n,c.sampleRate), d=buf.getChannelData(0);
+  for(let i=0;i<n;i++) d[i]=Math.random()*2-1;
+  return buf;
+}
+function relaxStop(){
+  if(!relaxNode) return;
+  const {nodes,gain}=relaxNode; relaxNode=null;
+  const c=audio();
+  try{ gain.gain.exponentialRampToValueAtTime(.0001,c.currentTime+1.2); }catch(e){}
+  setTimeout(()=>nodes.forEach(n=>{ try{n.stop&&n.stop();}catch(e){} try{n.disconnect&&n.disconnect();}catch(e){} }),1500);
+}
+function relaxStart(kind,vol){
+  relaxStop();
+  if(!kind) return;
+  const c=audio(), out=c.createGain();
+  out.gain.setValueAtTime(.0001,c.currentTime);
+  out.gain.exponentialRampToValueAtTime(vol||.22,c.currentTime+3);
+  out.connect(c.destination);
+  const nodes=[out];
+
+  if(kind==='rain'){
+    const src=c.createBufferSource(); src.buffer=makeNoiseBuffer(c,3); src.loop=true;
+    const hp=c.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=900;
+    const bp=c.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=3200; bp.Q.value=.6;
+    src.connect(hp); hp.connect(bp); bp.connect(out); src.start();
+    nodes.push(src,hp,bp);
+  } else if(kind==='wave'){
+    const src=c.createBufferSource(); src.buffer=makeNoiseBuffer(c,4); src.loop=true;
+    const lp=c.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=700; lp.Q.value=.5;
+    const swell=c.createGain(); swell.gain.value=.6;
+    const lfo=c.createOscillator(); lfo.frequency.value=0.11; // 寄せて返す、約9秒周期
+    const lfoGain=c.createGain(); lfoGain.gain.value=.4;
+    lfo.connect(lfoGain); lfoGain.connect(swell.gain);
+    src.connect(lp); lp.connect(swell); swell.connect(out);
+    src.start(); lfo.start();
+    nodes.push(src,lp,swell,lfo,lfoGain);
+  } else if(kind==='pink'||kind==='brown'){
+    const sp=c.createScriptProcessor(4096,1,1);
+    if(kind==='pink'){
+      let b0=0,b1=0,b2=0,b3=0,b4=0,b5=0,b6=0;
+      sp.onaudioprocess=e=>{
+        const o=e.outputBuffer.getChannelData(0);
+        for(let i=0;i<o.length;i++){
+          const w=Math.random()*2-1;
+          b0=.99886*b0+w*.0555179; b1=.99332*b1+w*.0750759; b2=.96900*b2+w*.1538520;
+          b3=.86650*b3+w*.3104856; b4=.55000*b4+w*.5329522; b5=-.7616*b5-w*.0168980;
+          o[i]=(b0+b1+b2+b3+b4+b5+b6+w*.5362)*.11;
+          b6=w*.115926;
+        }
+      };
+    } else {
+      let last=0;
+      sp.onaudioprocess=e=>{
+        const o=e.outputBuffer.getChannelData(0);
+        for(let i=0;i<o.length;i++){ const w=Math.random()*2-1; last=(last+.02*w)/1.02; o[i]=last*3.5; }
+      };
+    }
+    sp.connect(out); nodes.push(sp);
+  }
+  relaxNode={nodes,gain:out};
+}
+
 function droneOff(){
   if(!drone)return;
   const c=audio(), d=drone; drone=null;
   try{ d.out.gain.exponentialRampToValueAtTime(.0001,c.currentTime+3); }catch(e){}
   setTimeout(()=>d.oscs.forEach(o=>{try{o.stop()}catch(e){}}),3400);
 }
+/* チャンティング中に流す曲（YouTube）。ネット接続が必要。
+   使えない時（オフライン等）は、これまで通り chant.mp3 → 合成ドローンの順にフォールバックする */
+const CHANT_MUSIC = { id:'IZkjX_c4hm4', volume:65 };
+let chantYtPlayer=null, chantYtReady=false;
+
 async function chantStart(vol){
+  if(CHANT_MUSIC.id){
+    await loadYT();
+    if(window.YT&&window.YT.Player){
+      if(chantYtPlayer){
+        if(chantYtReady){ chantYtPlayer.setVolume(CHANT_MUSIC.volume); chantYtPlayer.playVideo(); }
+      } else {
+        chantYtPlayer=new YT.Player('chantYt',{
+          height:'2',width:'2',videoId:CHANT_MUSIC.id,
+          playerVars:{autoplay:1,controls:0,disablekb:1,fs:0,modestbranding:1,rel:0,
+                      loop:1,playlist:CHANT_MUSIC.id,playsinline:1},
+          events:{
+            onReady:e=>{ chantYtReady=true; e.target.setVolume(CHANT_MUSIC.volume); e.target.playVideo(); },
+            onStateChange:e=>{ if(e.data===YT.PlayerState.ENDED) e.target.playVideo(); }
+          }
+        });
+      }
+      return;
+    }
+  }
   if(await probeChant()){ chantEl.volume=vol||.7; try{ await chantEl.play(); }catch(e){ droneOn(vol); } }
   else droneOn(vol);
 }
 function chantFade(vol){
+  if(chantYtPlayer && chantYtReady){
+    if(vol<=0) chantYtPlayer.pauseVideo(); else chantYtPlayer.setVolume(Math.round(vol*100));
+    return;
+  }
   if(chantEl && !chantEl.paused){
     const t0=chantEl.volume, steps=30; let i=0;
     const iv=setInterval(()=>{ i++; chantEl.volume=Math.max(0,t0+(vol-t0)*i/steps);
       if(i>=steps){ clearInterval(iv); if(vol<=0) chantEl.pause(); } },100);
   } else if(drone){ if(vol<=0) droneOff(); else { try{ drone.out.gain.exponentialRampToValueAtTime(vol,audio().currentTime+3);}catch(e){} } }
 }
-function chantStop(){ if(chantEl){try{chantEl.pause();chantEl.currentTime=0}catch(e){}} droneOff(); }
+function chantStop(){
+  try{ if(chantYtPlayer&&chantYtReady) chantYtPlayer.pauseVideo(); }catch(e){}
+  if(chantEl){try{chantEl.pause();chantEl.currentTime=0}catch(e){}} droneOff();
+}
+
+/* 回向で流す曲（YouTube）。ネット接続が必要。オフラインの時は静かに諦める（回向は短いので無音でも成立する） */
+const DEDICATION_MUSIC = { id:'8DWqCvFYpUo', volume:55 };
+let dedYtPlayer=null, dedYtReady=false;
+async function dedicationStart(){
+  if(!DEDICATION_MUSIC.id) return;
+  await loadYT();
+  if(!(window.YT&&window.YT.Player)) return;
+  if(dedYtPlayer){ if(dedYtReady){ dedYtPlayer.setVolume(DEDICATION_MUSIC.volume); dedYtPlayer.playVideo(); } return; }
+  dedYtPlayer=new YT.Player('dedYt',{
+    height:'2',width:'2',videoId:DEDICATION_MUSIC.id,
+    playerVars:{autoplay:1,controls:0,disablekb:1,fs:0,modestbranding:1,rel:0,loop:1,playlist:DEDICATION_MUSIC.id,playsinline:1},
+    events:{
+      onReady:e=>{ dedYtReady=true; e.target.setVolume(DEDICATION_MUSIC.volume); e.target.playVideo(); },
+      onStateChange:e=>{ if(e.data===YT.PlayerState.ENDED) e.target.playVideo(); }
+    }
+  });
+}
+function dedicationStop(){ try{ if(dedYtPlayer&&dedYtReady) dedYtPlayer.pauseVideo(); }catch(e){} }
 
 /* ---------- 背景音（ガヤトリー・マントラ／YouTube） ----------
    セッション中ずっと小さな音量で流す。ネット接続が必要。
@@ -1055,6 +1255,8 @@ function bindSwitch(id,key){const el=$(id);el.setAttribute('aria-checked',!!S[ke
 $('#rate').value=S.rate; $('#rate').oninput=e=>{S.rate=+e.target.value;save()};
 $('#pitch').value=S.pitch; $('#pitch').oninput=e=>{S.pitch=+e.target.value;save()};
 $('#voiceSel').onchange=e=>{S.voiceURI=e.target.value;save()};
+$('#nightBgSel').value=S.nightBg;
+$('#nightBgSel').onchange=e=>{S.nightBg=e.target.value;save()};
 $('#testVoice').onclick=()=>{unlockSpeech();unlockAudioEl();audio();setTimeout(()=>say('ゆっくり、息を吐きます。',null,true),120)};
 ['cIn','cH1','cOut','cH2'].forEach(k=>{const el=$('#'+k);el.value=S[k];el.oninput=()=>{S[k]=Math.max(0,+el.value||0);save()}});
 $('#clearLog').onclick=()=>{ if(confirm('履歴と、八本柱の回数をすべて消しますか？')){
@@ -1063,6 +1265,23 @@ $('#clearLog').onclick=()=>{ if(confirm('履歴と、八本柱の回数をすべ
 /* ---------- タイムライン生成 ----------
    各行に vid（声ファイルID）を振る。ファイル名は voice/<vid>.mp3。
    loop部分は「元の台本内での行番号」をvidにするので、同じ文が2回読まれる時は同じ録音を使い回す。 */
+/* 複数段階の呼吸法（例：ため息5回→4-6→自然呼吸）を、選んだ時間に合わせて配分する。
+   reps指定のブロックは固定の長さ、frac指定のブロックは残り時間をfracの比率で分け合う。 */
+function resolveBreathBlocks(blocks,totalSec){
+  const fixed=blocks.filter(b=>b.reps).reduce((a,b)=>{
+    const cyc=b.phases.reduce((s,p)=>s+p.sec,0); return a+cyc*b.reps;
+  },0);
+  const remain=Math.max(0,totalSec-fixed);
+  const fracSum=blocks.filter(b=>b.frac).reduce((a,b)=>a+b.frac,0)||1;
+  let t=0;
+  return blocks.map(b=>{
+    const cycleLen=b.phases?b.phases.reduce((s,p)=>s+p.sec,0):0;
+    const dur=b.reps?cycleLen*b.reps:remain*(b.frac/fracSum);
+    const start=t,end=t+dur; t=end;
+    return Object.assign({},b,{cycleLen,start,end});
+  });
+}
+
 function tlFromScript(sc,total,sid){
   const tl=[];
   (sc.open||[]).forEach((l,i)=>tl.push({at:l.at,text:l.text,vid:sid+'_o'+i}));
@@ -1116,15 +1335,16 @@ function buildCourse(){
     if(s.id==='chant') st.push({type:'chant',name:'チャンティング',sec});
     if(s.id==='breath'){
       const b=BREATHING.find(x=>x.id===S.courseBreath)||BREATHING[0];
-      st.push({type:'breath',name:b.name,sec,phases:b.phases});
+      if(b.blocks) st.push({type:'breath',name:b.name,sec,blocks:resolveBreathBlocks(b.blocks,sec),bgSound:'gayatri'});
+      else st.push({type:'breath',name:b.name,sec,phases:b.phases,bgSound:'gayatri'});
     }
     if(s.id==='analytical'){
       const a=ANALYTICAL.find(x=>x.id===S.topic)||ANALYTICAL[0];
-      st.push({type:'script',name:'分析的瞑想 — '+a.name,sec,tl:tlAnalytical(S.topic,sec),big:true});
+      st.push({type:'script',name:'分析的瞑想 — '+a.name,sec,tl:tlAnalytical(S.topic,sec),big:true,bgSound:'brown'});
     }
-    if(s.id==='metta') st.push({type:'script',name:'慈悲の瞑想',sec,tl:tlFromScript(METTA,sec,'metta')});
-    if(s.id==='mudita'){ const p=resolvePillar(); st.push({type:'script',name:p.name,sec,tl:tlFromScript(p.script,sec,p.id),pillar:p.id}); }
-    if(s.id==='dedication') st.push({type:'script',name:'回向',sec,tl:tlFromScript(DEDICATION,sec)});
+    if(s.id==='metta') st.push({type:'script',name:'慈悲の瞑想',sec,tl:tlFromScript(METTA,sec,'metta'),bgSound:'gayatri'});
+    if(s.id==='mudita'){ const p=resolvePillar(); st.push({type:'script',name:p.name,sec,tl:tlFromScript(p.script,sec,p.id),pillar:p.id,bgSound:'gayatri'}); }
+    if(s.id==='dedication') st.push({type:'script',name:'回向',sec,tl:tlFromScript(DEDICATION,sec),dedTrack:true});
   });
   return {name:'コース',stages:st};
 }
@@ -1133,10 +1353,12 @@ function buildCourse(){
 let sess=null,timer=null,raf=null,paused=false;
 
 function startSession(plan){
-  unlockSpeech(); unlockAudioEl(); audio(); startKeepAlive(); keepAwake(); bgMusicStart();
+  unlockSpeech(); unlockAudioEl(); audio(); startKeepAlive(); keepAwake();
   sess={name:plan.name,stages:plan.stages,i:-1,pillarsDone:new Set(),
-        noClosing:!!plan.noClosing, softBell:!!plan.softBell, freq720:!!plan.freq720,
+        noClosing:!!plan.noClosing, softBell:!!plan.softBell, freq720:!!plan.freq720, relaxBg:!!plan.relaxBg,
         total:plan.stages.reduce((a,s)=>a+s.sec,0),startedAt:performance.now()};
+  if(sess.relaxBg){ if(S.nightBg) relaxStart(S.nightBg); }
+  // それ以外の背景音（ガヤトリー／雨音等）は nextStage() がステージごとに切り替えて鳴らす
   paused=false; $('#btnPause').textContent='一時停止';
   $('#btnSkip').style.display = plan.stages.length>1?'':'none';
   $('#btnBg').setAttribute('aria-pressed', !!S.bgMusic);
@@ -1153,10 +1375,11 @@ function nextStage(){
   if(!sess) return;
   // 最後まで流れきった柱だけを「育った」とみなす（途中でやめた分は数えない）
   if(sess.st && sess.st.pillar) sess.pillarsDone.add(sess.st.pillar);
+  const prevSt=sess.st; // 背景音の切り替え判定に使う、直前のステージ
   sess.i++;
   if(sess.i>=sess.stages.length){ finish(true); return; }
   const st=sess.stages[sess.i];
-  sess.st=st; sess.stStart=performance.now(); sess.fired=new Set(); sess.lastPhase=-1; sess.lastCount=-1;
+  sess.st=st; sess.stStart=performance.now(); sess.fired=new Set(); sess.lastPhase=-1; sess.lastCount=-1; sess.lastBlock=-1;
   if(st.phases) st.cycle=st.phases.reduce((a,p)=>a+p.sec,0);
 
   $('#stageName').textContent=st.name;
@@ -1168,8 +1391,22 @@ function nextStage(){
 
   { const f=sess.freq720?720:undefined; if(sess.i>0) bell(.45,f); else bell(.55,f); }
 
+  // 背景音（ガヤトリー／雨音等）は、ステージが変わるたびに必要なら切り替える。
+  // 夜の瞑想（relaxBg）・チャンティング・回向は、それぞれ専用の仕組みで鳴らすのでここでは扱わない。
+  if(!sess.relaxBg){
+    const prevBg = prevSt ? prevSt.bgSound : undefined;
+    const newBg = st.bgSound;
+    if(newBg!==prevBg){
+      if(prevBg==='gayatri') bgMusicStop(); else if(prevBg) relaxStop();
+      if(newBg==='gayatri'){ if(S.bgMusic) bgMusicStart(); } else if(newBg) relaxStart(newBg,.22);
+    }
+  }
+
   if(st.type==='chant'){ chantStart(.7); }
-  else if(sess.i>0 && sess.stages[sess.i-1].type==='chant'){ chantFade(S.drone?.05:0); }
+  else if(prevSt && prevSt.type==='chant'){ chantFade(S.drone?.05:0); }
+
+  if(st.dedTrack) dedicationStart();
+  else if(prevSt && prevSt.dedTrack) dedicationStop();
 }
 
 function tick(){
@@ -1182,7 +1419,23 @@ function tick(){
   $('#barFill').style.width=(Math.min(1,all/sess.total)*100)+'%';
 
   const st=sess.st;
-  if(st.type==='breath'){
+  if(st.type==='breath' && st.blocks){
+    let bi=st.blocks.length-1;
+    for(let i=0;i<st.blocks.length;i++){ if(el<st.blocks[i].end){bi=i;break;} }
+    const blk=st.blocks[bi];
+    if(bi!==sess.lastBlock){ sess.lastBlock=bi; sess.lastPhase=-1; sess.lastCount=-1;
+      if(blk.kind==='free'){ $('#phaseName').textContent=blk.label||'自然に'; $('#phaseCount').textContent=''; say(blk.sayStart,blk.vid); }
+    }
+    if(blk.kind==='cycle'){
+      const inBlk=el-blk.start, c=inBlk%blk.cycleLen; let acc=0,idx=0;
+      for(let i=0;i<blk.phases.length;i++){ if(c<acc+blk.phases[i].sec){idx=i;break;} acc+=blk.phases[i].sec; }
+      const p=blk.phases[idx],left=Math.ceil(p.sec-(c-acc));
+      if(idx!==sess.lastPhase){ sess.lastPhase=idx; sess.lastCount=-1;
+        $('#phaseName').textContent=p.label; cue(p.k); say(p.say,p.vid); }
+      $('#phaseCount').textContent=left;
+      if(S.count&&left!==sess.lastCount&&left<p.sec){ sess.lastCount=left; say(String(left)); }
+    }
+  } else if(st.type==='breath'){
     const c=el%st.cycle; let acc=0,idx=0;
     for(let i=0;i<st.phases.length;i++){ if(c<acc+st.phases[i].sec){idx=i;break;} acc+=st.phases[i].sec; }
     const p=st.phases[idx],left=Math.ceil(p.sec-(c-acc));
@@ -1210,7 +1463,23 @@ function showLine(t){
 function draw(){
   if(sess&&!paused){
     const el=(performance.now()-sess.stStart)/1000, st=sess.st;
-    if(st&&st.type==='breath'){
+    if(st&&st.type==='breath'&&st.blocks){
+      let bi=st.blocks.length-1;
+      for(let i=0;i<st.blocks.length;i++){ if(el<st.blocks[i].end){bi=i;break;} }
+      const blk=st.blocks[bi];
+      if(blk.kind==='free'){
+        $('#orb').style.transform=`scale(${.72+.08*Math.sin(el*0.45)})`;
+      } else {
+        const inBlk=el-blk.start, c=inBlk%blk.cycleLen; let acc=0,idx=0;
+        for(let i=0;i<blk.phases.length;i++){ if(c<acc+blk.phases[i].sec){idx=i;break;} acc+=blk.phases[i].sec; }
+        const p=blk.phases[idx],r=(c-acc)/p.sec,ease=x=>x<.5?2*x*x:1-Math.pow(-2*x+2,2)/2;
+        let s;
+        if(p.k==='in') s=.55+.45*ease(r);
+        else if(p.k==='out') s=1-.45*ease(r);
+        else s=(blk.phases[(idx-1+blk.phases.length)%blk.phases.length].k==='in')?1:.55;
+        $('#orb').style.transform=`scale(${s})`;
+      }
+    } else if(st&&st.type==='breath'){
       const c=el%st.cycle; let acc=0,idx=0;
       for(let i=0;i<st.phases.length;i++){ if(c<acc+st.phases[i].sec){idx=i;break;} acc+=st.phases[i].sec; }
       const p=st.phases[idx],r=(c-acc)/p.sec,ease=x=>x<.5?2*x*x:1-Math.pow(-2*x+2,2)/2;
@@ -1231,7 +1500,9 @@ function finish(complete){
   try{ speechSynthesis.cancel(); }catch(e){}
   stopVoiceEl();
   chantStop();
+  dedicationStop();
   bgMusicStop();
+  relaxStop();
   if(sess){
     if(sess.pillarsDone && sess.pillarsDone.size){
       sess.pillarsDone.forEach(id=>{
@@ -1281,9 +1552,11 @@ $('#btnSkip').onclick=()=>{ if(sess){ try{speechSynthesis.cancel()}catch(e){} st
 $('#btnPause').onclick=()=>{
   if(!sess)return;
   paused=!paused; $('#btnPause').textContent=paused?'つづける':'一時停止';
-  if(paused){ sess.pAt=performance.now(); try{speechSynthesis.cancel()}catch(e){} stopVoiceEl(); if(chantEl&&!chantEl.paused)chantEl.pause(); bgMusicStop(); }
+  if(paused){ sess.pAt=performance.now(); try{speechSynthesis.cancel()}catch(e){} stopVoiceEl(); if(chantEl&&!chantEl.paused)chantEl.pause();
+    if(sess.relaxBg) relaxStop(); else bgMusicStop(); }
   else{ const d=performance.now()-sess.pAt; sess.stStart+=d; sess.startedAt+=d;
-        if(sess.st.type==='chant'&&chantEl)chantEl.play().catch(()=>{}); bgMusicResume(); }
+        if(sess.st.type==='chant'&&chantEl)chantEl.play().catch(()=>{});
+        if(sess.relaxBg){ if(S.nightBg) relaxStart(S.nightBg); } else bgMusicResume(); }
 };
 $('#btnStop').onclick=()=>finish(false);
 $('#btnBg').onclick=()=>{
@@ -1294,7 +1567,11 @@ $('#btnBg').onclick=()=>{
 
 $('#startCourse').onclick=()=>startSession(buildCourse());
 $('#startBreath').onclick=()=>{
-  const b=BREATHING.find(x=>x.id===S.breath);
+  const b=BREATHING.find(x=>x.id===S.breath), sec=S.breathMin*60;
+  if(b.blocks){
+    startSession({name:b.name,stages:[{type:'breath',name:b.name,sec,blocks:resolveBreathBlocks(b.blocks,sec)}]});
+    return;
+  }
   let phases;
   if(b.custom){
     phases=[{k:'in',say:'吸って',label:'吸う',sec:S.cIn||4}];
@@ -1302,7 +1579,7 @@ $('#startBreath').onclick=()=>{
     phases.push({k:'out',say:'ゆっくり吐いて',label:'吐く',sec:S.cOut||6});
     if(S.cH2>0) phases.push({k:'hold',say:'止めて',label:'止める',sec:S.cH2});
   } else phases=b.phases;
-  startSession({name:b.name,stages:[{type:'breath',name:b.name,sec:S.breathMin*60,phases}]});
+  startSession({name:b.name,stages:[{type:'breath',name:b.name,sec,phases}]});
 };
 $('#startMed').onclick=()=>{
   const m=MEDITATIONS.find(x=>x.id===S.med), sec=S.medMin*60;
@@ -1310,12 +1587,14 @@ $('#startMed').onclick=()=>{
   if(m.silent) stage={type:'script',name:m.name,sec,tl:[]};
   else if(m.analytical){
     const a=ANALYTICAL.find(x=>x.id===S.topic)||ANALYTICAL[0];
-    stage={type:'script',name:m.name+' — '+a.name,sec,tl:tlAnalytical(S.topic,sec),big:true};
+    stage={type:'script',name:m.name+' — '+a.name,sec,tl:tlAnalytical(S.topic,sec),big:true,bgSound:'brown'};
+  } else if(m.innerguide){
+    stage={type:'script',name:m.name,sec,tl:tlInnerGuide(sec),big:true,bgSound:'gayatri'};
   } else if(m.pillar){
     const p=resolvePillar();
-    stage={type:'script',name:p.name,sec,tl:tlFromScript(p.script,sec,p.id),pillar:p.id};
-  } else stage={type:'script',name:m.name,sec,tl:tlFromScript(m.script,sec,m.id)};
-  startSession({name:m.name,stages:[stage],noClosing:m.noClosing,softBell:m.softBell,freq720:m.freq720});
+    stage={type:'script',name:p.name,sec,tl:tlFromScript(p.script,sec,p.id),pillar:p.id,bgSound:'gayatri'};
+  } else stage={type:'script',name:m.name,sec,tl:tlFromScript(m.script,sec,m.id),bgSound:m.relaxBg?undefined:'gayatri'};
+  startSession({name:m.name,stages:[stage],noClosing:m.noClosing,softBell:m.softBell,freq720:m.freq720,relaxBg:m.relaxBg});
 };
 
 renderCourse(); renderBreath(); renderMed(); renderLog();
