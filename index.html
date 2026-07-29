@@ -264,9 +264,8 @@ input[type=range]{width:150px;accent-color:var(--gold)}
       ・声が一覧に出ないときは、端末の設定で「Google テキスト読み上げ」と日本語の音声データが入っているか確認してください。<br>
       ・端末に明朝体が入っていないと、ゴシック体で表示されます（動作に影響はありません）。<br>
       ・Chrome のメニュー →「ホーム画面に追加」。<br><br>
-      <b>チャンティングを本物に差し替える</b><br>
-      このファイルと同じフォルダに <b>chant.mp3</b> を置くと、合成ドローンの代わりにそれが流れます。
-      置かない間は、WebAudio で合成した倍音ドローン（読経ではなく持続音）が鳴ります。<br><br>
+      <b>チャンティング</b><br>
+      鐘のあとにYouTube動画が流れます（<b>ネット接続が必要</b>）。読み込めない場合は、WebAudio で合成した倍音ドローン（読経ではなく持続音）が代わりに鳴ります。<br><br>
       <b>ガヤトリー・マントラ（背景音）</b><br>
       セッション中ずっと、小さな音量でYouTube動画を流します（曲を変えるには、コード内の <b>BACKGROUND_MUSIC</b> のIDを差し替えてください）。<b>ネット接続が必要</b>で、瞑想本体（声・チャンティング・記録）はオフラインでも動きますが、これだけは通信を使います。うるさく感じたら設定でオフにできます。<br><br>
       <b>自分の声で読み上げる</b><br>
@@ -764,7 +763,7 @@ const MEDITATIONS = [
   { id:'metta', name:'慈悲の瞑想', mins:[5,7,10,15,20], desc:'自分から、大切な人、無関係な人、苦手な人、すべての生き物へ。心が固くなった日に。', script:METTA },
   { id:'mudita', name:'喜びの瞑想', mins:[3,5,7,10,15], pillar:true,
     desc:'『よろこびの書』の八本柱、または随喜（全般）。うらやましさや嫉妬が出た日に。' },
-  { id:'analytical', name:'分析的瞑想（単体）', mins:[10,15,20,25,30], desc:'テーマを選んで、問いに沿って自分の頭で考える。コースの中の分析パートだけを行う。', analytical:true },
+  { id:'analytical', name:'分析的瞑想（単体）', mins:[3,5,10,15,20,25,30], desc:'テーマを選んで、問いに沿って自分の頭で考える。コースの中の分析パートだけを行う。', analytical:true },
   { id:'ajikan', name:'阿字観', mins:[10,15,20,30], desc:'密教の観法。月輪と阿字を観る。※文言はご住職に確認のうえ書き換えてください。',
     script:{
       open:[
@@ -810,10 +809,10 @@ const MEDITATIONS = [
 /* ---- コースの構成（順番はこの配列のとおり）---- */
 const COURSE = [
   { id:'chant', name:'チャンティング', opts:[0,1,2,3,5,10], def:5,
-    desc:'鐘とドローンで場をつくる。chant.mp3 を置けばそれが流れます。' },
+    desc:'鐘のあとに、チャンティングの曲を流す。' },
   { id:'breath', name:'呼吸法', opts:[0,3,4,5,7,10,15], def:4,
     desc:'考える前に、体を静める。プリセットを選べます。' },
-  { id:'analytical', name:'分析的瞑想', opts:[0,8,12,15,20,25,30,40], def:12,
+  { id:'analytical', name:'分析的瞑想', opts:[0,3,5,8,12,15,20,25,30,40], def:12,
     desc:'問いが読まれ、長い沈黙が来ます。その沈黙で自分の頭で考えます。' },
   { id:'metta', name:'慈悲の瞑想', opts:[0,3,5,7,10,15,20], def:0,
     desc:'考えたことを、他者へひらく。四無量心の慈と悲。' },
@@ -869,7 +868,7 @@ const fmt=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${Str
 const mmss=s=>{s=Math.max(0,Math.round(s));return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
 
 /* ---------- 音 ---------- */
-let ac=null, keepAlive=null, drone=null, chantEl=null, chantOK=null;
+let ac=null, keepAlive=null, drone=null;
 function audio(){
   if(!ac){
     ac=new (window.AudioContext||window.webkitAudioContext)();
@@ -904,16 +903,6 @@ function cue(kind){
   o.connect(g);g.connect(c.destination);o.start(t);o.stop(t+1);
 }
 
-/* chant.mp3 があるか調べる（無ければ合成ドローン） */
-function probeChant(){
-  return new Promise(res=>{
-    if(chantOK!==null) return res(chantOK);
-    const a=new Audio('chant.mp3'); a.preload='auto'; a.loop=true;
-    a.oncanplaythrough=()=>{chantOK=true;chantEl=a;res(true)};
-    a.onerror=()=>{chantOK=false;res(false)};
-    setTimeout(()=>{ if(chantOK===null){chantOK=false;res(false)} },2500);
-  });
-}
 /* 合成ドローン：基音＋5度＋オクターブ、ゆっくり揺らす */
 function droneOn(vol){
   if(drone) return;
@@ -1005,23 +994,18 @@ function droneOff(){
   try{ d.out.gain.exponentialRampToValueAtTime(.0001,c.currentTime+3); }catch(e){}
   setTimeout(()=>d.oscs.forEach(o=>{try{o.stop()}catch(e){}}),3400);
 }
-/* チャンティング中に流す曲。優先順位は「chant.mp3（同じフォルダに置けば最優先で使われる。
-   オフラインでも確実に鳴る）」→「YouTube動画（ネット接続が必要）」→「合成ドローン」。
-   YouTubeはコースの最初のステージだと読み込みが間に合わず無音になりがちなので、
-   確実に鳴らしたい場合は chant.mp3 を用意するのがいちばん確実。 */
+/* チャンティング中に流す曲（YouTube）。ネット接続が必要。
+   読み込めない・再生できない場合は合成ドローンにフォールバックする。 */
 const CHANT_MUSIC = { id:'IZkjX_c4hm4', volume:65 };
 let chantYtPlayer=null, chantYtReady=false, chantWantVol=null;
 
-/* セッション開始と同時に、chant.mp3があるか確認し、無ければミュート状態でYouTube動画の
-   読み込み・再生だけ先に始めておく。（チャンティングは大抵コースの最初のステージなので、
-   ここでバッファリングを先に済ませておかないと、実際にそのステージが来た時に間に合わず無音になりがち） */
+/* セッション開始と同時に、ミュート状態で動画の読み込み・再生だけ先に始めておく。
+   （チャンティングは大抵コースの最初のステージなので、ここでバッファリングを
+   先に済ませておかないと、実際にそのステージが来た時に間に合わず無音になりがち） */
 function chantPrewarm(){
   if(chantYtPlayer || !CHANT_MUSIC.id) return;
-  // chant.mp3の確認とYouTubeの読み込みを並行して始める（片方を待ってからだと、
-  // その分だけYouTube側の準備が遅れて、短いチャンティングのステージに間に合わなくなるため）
-  probeChant();
   loadYT().then(()=>{
-    if(chantOK===true || !(window.YT&&window.YT.Player) || chantYtPlayer) return; // mp3が使えると分かっていればYouTubeは不要
+    if(!(window.YT&&window.YT.Player) || chantYtPlayer) return;
     chantYtPlayer=new YT.Player('chantYt',{
       height:'2',width:'2',videoId:CHANT_MUSIC.id,
       playerVars:{autoplay:1,controls:0,disablekb:1,fs:0,modestbranding:1,rel:0,
@@ -1039,10 +1023,6 @@ function chantPrewarm(){
   });
 }
 async function chantStart(vol){
-  if(await probeChant()){
-    chantEl.volume=vol||.7;
-    try{ await chantEl.play(); return; }catch(e){ /* 再生に失敗 → 以下のYouTube/ドローンへ */ }
-  }
   if(CHANT_MUSIC.id){
     const v=Math.round((vol||.7)*100);
     if(chantYtPlayer && chantYtReady){ chantYtPlayer.unMute(); chantYtPlayer.setVolume(v); chantYtPlayer.playVideo(); return; }
@@ -1058,15 +1038,11 @@ function chantFade(vol){
     if(vol<=0) chantYtPlayer.pauseVideo(); else chantYtPlayer.setVolume(Math.round(vol*100));
     return;
   }
-  if(chantEl && !chantEl.paused){
-    const t0=chantEl.volume, steps=30; let i=0;
-    const iv=setInterval(()=>{ i++; chantEl.volume=Math.max(0,t0+(vol-t0)*i/steps);
-      if(i>=steps){ clearInterval(iv); if(vol<=0) chantEl.pause(); } },100);
-  } else if(drone){ if(vol<=0) droneOff(); else { try{ drone.out.gain.exponentialRampToValueAtTime(vol,audio().currentTime+3);}catch(e){} } }
+  if(drone){ if(vol<=0) droneOff(); else { try{ drone.out.gain.exponentialRampToValueAtTime(vol,audio().currentTime+3);}catch(e){} } }
 }
 function chantStop(){
   try{ if(chantYtPlayer&&chantYtReady) chantYtPlayer.pauseVideo(); }catch(e){}
-  if(chantEl){try{chantEl.pause();chantEl.currentTime=0}catch(e){}} droneOff();
+  droneOff();
 }
 
 /* 回向で流す曲（YouTube）。ネット接続が必要。オフラインの時は静かに諦める（回向は短いので無音でも成立する） */
@@ -1634,18 +1610,18 @@ $('#btnSkip').onclick=()=>{ if(sess){ try{speechSynthesis.cancel()}catch(e){} st
 $('#btnPause').onclick=()=>{
   if(!sess)return;
   paused=!paused; $('#btnPause').textContent=paused?'つづける':'一時停止';
-  if(paused){ sess.pAt=performance.now(); try{speechSynthesis.cancel()}catch(e){} stopVoiceEl(); if(chantEl&&!chantEl.paused)chantEl.pause();
+  if(paused){ sess.pAt=performance.now(); try{speechSynthesis.cancel()}catch(e){} stopVoiceEl();
+    if(chantYtPlayer&&chantYtReady) chantYtPlayer.pauseVideo();
     if(sess.relaxBg) relaxStop(); else bgMusicStop(); }
   else{ const d=performance.now()-sess.pAt; sess.stStart+=d; sess.startedAt+=d;
-        if(sess.st.type==='chant'&&chantEl)chantEl.play().catch(()=>{});
+        if(sess.st.type==='chant'&&chantYtPlayer&&chantYtReady) chantYtPlayer.playVideo();
         if(sess.relaxBg){ if(S.nightBg) relaxStart(S.nightBg); } else bgMusicResume(); }
 };
 $('#btnStop').onclick=()=>finish(false);
 $('#btnBg').onclick=()=>{
   if(sess && sess.st && sess.st.type==='chant'){
     // これは本物のユーザータップなので、ミュート解除がブロックされずに確実に音が出る
-    if(chantEl){ chantEl.volume=.7; chantEl.play().catch(()=>{}); }
-    else if(chantYtPlayer){ chantYtPlayer.unMute(); chantYtPlayer.setVolume(CHANT_MUSIC.volume); chantYtPlayer.playVideo(); }
+    if(chantYtPlayer){ chantYtPlayer.unMute(); chantYtPlayer.setVolume(CHANT_MUSIC.volume); chantYtPlayer.playVideo(); }
     else { chantWantVol=CHANT_MUSIC.volume; chantPrewarm(); }
     return;
   }
