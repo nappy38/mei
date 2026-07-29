@@ -1383,15 +1383,17 @@ function buildCourse(){
     if(s.id==='chant') st.push({type:'chant',name:'チャンティング',sec});
     if(s.id==='breath'){
       const b=BREATHING.find(x=>x.id===S.courseBreath)||BREATHING[0];
-      if(b.blocks) st.push({type:'breath',name:b.name,sec,blocks:resolveBreathBlocks(b.blocks,sec),bgSound:'wave'});
-      else st.push({type:'breath',name:b.name,sec,phases:b.phases,bgSound:'wave'});
+      // 呼吸法・分析的瞑想・慈悲の瞑想・喜びの瞑想は、チャンティングの曲をそのまま流し続ける（bgSoundを付けない）。
+      // 朝のひとことからガヤトリーに切り替わる。
+      if(b.blocks) st.push({type:'breath',name:b.name,sec,blocks:resolveBreathBlocks(b.blocks,sec)});
+      else st.push({type:'breath',name:b.name,sec,phases:b.phases});
     }
     if(s.id==='analytical'){
       const a=ANALYTICAL.find(x=>x.id===S.topic)||ANALYTICAL[0];
-      st.push({type:'script',name:'分析的瞑想 — '+a.name,sec,tl:tlAnalytical(S.topic,sec),big:true,bgSound:'brown'});
+      st.push({type:'script',name:'分析的瞑想 — '+a.name,sec,tl:tlAnalytical(S.topic,sec),big:true});
     }
-    if(s.id==='metta') st.push({type:'script',name:'慈悲の瞑想',sec,tl:tlFromScript(METTA,sec,'metta'),bgSound:'gayatri'});
-    if(s.id==='mudita'){ const p=resolvePillar(); st.push({type:'script',name:p.name,sec,tl:tlFromScript(p.script,sec,p.id),pillar:p.id,bgSound:'gayatri'}); }
+    if(s.id==='metta') st.push({type:'script',name:'慈悲の瞑想',sec,tl:tlFromScript(METTA,sec,'metta')});
+    if(s.id==='mudita'){ const p=resolvePillar(); st.push({type:'script',name:p.name,sec,tl:tlFromScript(p.script,sec,p.id),pillar:p.id}); }
     if(s.id==='morningword') st.push({type:'script',name:'朝のひとこと',sec,tl:tlFromScript(MORNING,sec,'morningword'),bgSound:'gayatri'});
     if(s.id==='dedication') st.push({type:'script',name:'回向',sec,tl:tlFromScript(DEDICATION,sec),dedTrack:true});
   });
@@ -1458,7 +1460,11 @@ function nextStage(){
     // 鐘が鳴り終わってから曲を始める（鐘と同時に鳴り出すと鐘の音がかき消されるため）
     setTimeout(()=>{ if(sess && sess.st===st) chantStart(.7); }, 2600);
   }
-  else if(prevSt && prevSt.type==='chant'){ chantFade(S.drone?.05:0); }
+  else if(st.bgSound || st.dedTrack){
+    // 他の音（ガヤトリー等）や回向の曲に切り替わるタイミングで、鳴り続けているチャンティングを止める。
+    // bgSoundが無いステージ（呼吸法・分析的瞑想・慈悲の瞑想）ではチャンティングをそのまま流し続ける。
+    chantFade(S.drone?.05:0);
+  }
 
   if(st.dedTrack) dedicationStart();
   else if(prevSt && prevSt.dedTrack) dedicationStop();
@@ -1689,7 +1695,7 @@ async function updateOfflineStatus(){
     if(reg.waiting && !reg.active){ el.textContent='待機中…（一度タブを閉じて開き直してください）'; return; }
     if(!reg.active){ el.textContent='登録はされたが起動していません'; return; }
 
-    const c=await caches.open('meditation-app-v7');
+    const c=await caches.open('meditation-app-v8');
     const hasHtml = !!(await c.match('./index.html'));
     const hasIcon = !!(await c.match('./icon.png'));
     if(hasHtml && hasIcon){
