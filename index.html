@@ -230,6 +230,7 @@ input[type=range]{width:150px;accent-color:var(--gold)}
   <!-- 設定 -->
   <section id="tab-set" class="hidden">
     <div class="row"><span>音声ガイド</span><button class="sw" id="swVoice" role="switch" aria-checked="true"></button></div>
+    <div class="row"><span>呼吸法での声（吸って・吐いて等）</span><button class="sw" id="swBreathVoice" role="switch" aria-checked="false"></button></div>
     <div class="row"><span>声</span><select id="voiceSel"></select></div>
     <div class="row"><span>話す速さ</span><input type="range" id="rate" min="0.6" max="1.2" step="0.05" value="0.85"></div>
     <div class="row"><span>声の高さ</span><input type="range" id="pitch" min="0.6" max="1.2" step="0.05" value="0.95"></div>
@@ -251,6 +252,7 @@ input[type=range]{width:150px;accent-color:var(--gold)}
     <div class="row"><span>最後に曲を流す</span><button class="sw" id="swMusic" role="switch" aria-checked="true"></button></div>
     <div class="row"><span>セッション中ガヤトリーを小さく流す</span><button class="sw" id="swBgMusic" role="switch" aria-checked="true"></button></div>
     <div class="row"><span style="flex:1">声のテスト</span><button class="chip" id="testVoice">再生</button></div>
+    <div class="row"><span style="flex:1">コースの時間設定を初期値に戻す</span><button class="chip" id="resetStage">リセット</button></div>
     <p class="note">
       <b>iPhone で使うとき</b><br>
       ・<b>マナーモードは解除</b>してください（消音スイッチで音が出ないことがあります）。<br>
@@ -327,14 +329,14 @@ const BREATHING = [
         ]},
       { kind:'cycle', frac:0.4, label:'腹式呼吸 4-6',
         phases:[
-          {k:'in', say:'お腹に吸って',   vid:'hara_in',  label:'吸う', sec:4},
+          {k:'in', say:'おなかに吸って',   vid:'hara_in',  label:'吸う', sec:4},
           {k:'out',say:'ゆっくり吐いて', vid:'out_slow', label:'吐く', sec:6},
         ]},
       { kind:'free', frac:0.6, label:'自然な呼吸',
         sayStart:'呼吸をコントロールするのをやめます。自然に、まかせます。', vid:'natural_start' },
     ]},
   { id:'46', name:'腹式呼吸 4-6', desc:'吐く息を長く。お腹を膨らませて吸い、しぼませて吐く。瞑想の前に心を静めるならこれ。',
-    phases:[{k:'in',say:'お腹に吸って',vid:'hara_in',label:'吸う',sec:4},{k:'out',say:'ゆっくり吐いて',vid:'out_slow',label:'吐く',sec:6}] },
+    phases:[{k:'in',say:'おなかに吸って',vid:'hara_in',label:'吸う',sec:4},{k:'out',say:'ゆっくり吐いて',vid:'out_slow',label:'吐く',sec:6}] },
   { id:'55', name:'コヒーレント呼吸 5-5', desc:'1分間に6回。心拍のゆらぎが整いやすい。長く続けるのに向く。',
     phases:[{k:'in',say:'吸って',vid:'in',label:'吸う',sec:5},{k:'out',say:'吐いて',vid:'out',label:'吐く',sec:5}] },
   { id:'478', name:'4-7-8 呼吸', desc:'吸う4・止める7・吐く8。鎮静に傾く。夜・寝る前に。',
@@ -797,7 +799,7 @@ const MEDITATIONS = [
       open:[{at:0,text:'仰向けか、楽な姿勢で横になります。'},{at:16,text:'一度、大きく息を吸って、口から吐きます。'},
             {at:36,text:'体の重さを、床にあずけます。'},{at:56,text:'左の足の裏に、意識を置きます。'}],
       loop:{every:42,texts:['左のふくらはぎ、ひざ、ふともも。','右の足の裏、ふくらはぎ、ひざ、ふともも。','おしりと、腰のあたり。',
-            'お腹。呼吸で、ふくらんで、しぼむ。','背中。床に触れているところ。','胸。心臓の動き。','両手の指先から、手のひら、腕、肩へ。',
+            'おなか。呼吸で、ふくらんで、しぼむ。','背中。床に触れているところ。','胸。心臓の動き。','両手の指先から、手のひら、腕、肩へ。',
             '首、あご、くちびる、ほお。','目のまわり。眉のあいだ。ゆるめます。','頭のてっぺんまで。','体全体を、ひとつのまとまりとして感じます。',
             '力が入っているところがあれば、息を吐きながら、ほどきます。']},
       close:[{at:-44,text:'体ぜんぶを、もう一度感じます。'},{at:-24,text:'指先を少し動かします。'},{at:-10,text:'ゆっくり目を開けて、起き上がります。'}]
@@ -807,19 +809,19 @@ const MEDITATIONS = [
 
 /* ---- コースの構成（順番はこの配列のとおり）---- */
 const COURSE = [
-  { id:'chant', name:'チャンティング', opts:[0,1,2,3,5,10], def:2,
+  { id:'chant', name:'チャンティング', opts:[0,1,2,3,5,10], def:5,
     desc:'鐘とドローンで場をつくる。chant.mp3 を置けばそれが流れます。' },
-  { id:'breath', name:'呼吸法', opts:[0,3,5,7,10,15], def:5,
+  { id:'breath', name:'呼吸法', opts:[0,3,4,5,7,10,15], def:4,
     desc:'考える前に、体を静める。プリセットを選べます。' },
   { id:'analytical', name:'分析的瞑想', opts:[0,8,12,15,20,25,30,40], def:12,
     desc:'問いが読まれ、長い沈黙が来ます。その沈黙で自分の頭で考えます。' },
-  { id:'metta', name:'慈悲の瞑想', opts:[0,3,5,7,10,15,20], def:7,
+  { id:'metta', name:'慈悲の瞑想', opts:[0,3,5,7,10,15,20], def:0,
     desc:'考えたことを、他者へひらく。四無量心の慈と悲。' },
   { id:'mudita', name:'喜びの瞑想', opts:[0,3,5,7,10,12,15,20], def:5,
     desc:'『よろこびの書』の八本柱を1本ずつ育てる。「今日の柱」にすると毎回自動で次へ進みます。' },
   { id:'morningword', name:'朝のひとこと', opts:[0,1,2,3,5], def:1,
     desc:'今日という日を、自分で定義する短い言葉。回向の前に置きます。' },
-  { id:'dedication', name:'回向', opts:[0,1,2,3], def:1,
+  { id:'dedication', name:'回向', opts:[0,1,2,3,4,5], def:4,
     desc:'生まれた善いものを、自分のものにしないで終える。' },
 ];
 
@@ -847,7 +849,7 @@ const BACKGROUND_MUSIC = { id:'T0ln5OZ1rSE', volume:14 };
 /* ---------- 保存 ---------- */
 const KEY='medapp.v2';
 const S = Object.assign({
-  voice:true, bell:true, cue:true, count:false, dim:false, drone:false, music:true, bgMusic:true,
+  voice:true, breathVoice:false, bell:true, cue:true, count:false, dim:false, drone:false, music:true, bgMusic:true,
   rate:0.85, pitch:0.95, voiceURI:'',
   breath:'reset46', breathMin:5, med:'metta', medMin:10,
   cIn:4, cH1:0, cOut:6, cH2:0,
@@ -1003,18 +1005,23 @@ function droneOff(){
   try{ d.out.gain.exponentialRampToValueAtTime(.0001,c.currentTime+3); }catch(e){}
   setTimeout(()=>d.oscs.forEach(o=>{try{o.stop()}catch(e){}}),3400);
 }
-/* チャンティング中に流す曲（YouTube）。ネット接続が必要。
-   使えない時（オフライン等）は、これまで通り chant.mp3 → 合成ドローンの順にフォールバックする */
+/* チャンティング中に流す曲。優先順位は「chant.mp3（同じフォルダに置けば最優先で使われる。
+   オフラインでも確実に鳴る）」→「YouTube動画（ネット接続が必要）」→「合成ドローン」。
+   YouTubeはコースの最初のステージだと読み込みが間に合わず無音になりがちなので、
+   確実に鳴らしたい場合は chant.mp3 を用意するのがいちばん確実。 */
 const CHANT_MUSIC = { id:'IZkjX_c4hm4', volume:65 };
 let chantYtPlayer=null, chantYtReady=false, chantWantVol=null;
 
-/* セッション開始と同時に、ミュート状態でチャンティング動画の読み込み・再生だけ先に始めておく。
-   （チャンティングは大抵コースの最初のステージなので、ここでYouTube側のバッファリングを
-   先に済ませておかないと、実際にそのステージが来た時に間に合わず無音になりがち） */
+/* セッション開始と同時に、chant.mp3があるか確認し、無ければミュート状態でYouTube動画の
+   読み込み・再生だけ先に始めておく。（チャンティングは大抵コースの最初のステージなので、
+   ここでバッファリングを先に済ませておかないと、実際にそのステージが来た時に間に合わず無音になりがち） */
 function chantPrewarm(){
-  if(!CHANT_MUSIC.id || chantYtPlayer) return;
+  if(chantYtPlayer || !CHANT_MUSIC.id) return;
+  // chant.mp3の確認とYouTubeの読み込みを並行して始める（片方を待ってからだと、
+  // その分だけYouTube側の準備が遅れて、短いチャンティングのステージに間に合わなくなるため）
+  probeChant();
   loadYT().then(()=>{
-    if(!(window.YT&&window.YT.Player) || chantYtPlayer) return;
+    if(chantOK===true || !(window.YT&&window.YT.Player) || chantYtPlayer) return; // mp3が使えると分かっていればYouTubeは不要
     chantYtPlayer=new YT.Player('chantYt',{
       height:'2',width:'2',videoId:CHANT_MUSIC.id,
       playerVars:{autoplay:1,controls:0,disablekb:1,fs:0,modestbranding:1,rel:0,
@@ -1022,12 +1029,20 @@ function chantPrewarm(){
       events:{
         onReady:e=>{ chantYtReady=true; e.target.mute(); e.target.playVideo();
           if(chantWantVol!=null){ e.target.unMute(); e.target.setVolume(chantWantVol); chantWantVol=null; } },
-        onStateChange:e=>{ if(e.data===YT.PlayerState.ENDED) e.target.playVideo(); }
+        onStateChange:e=>{ if(e.data===YT.PlayerState.ENDED) e.target.playVideo(); },
+        onError:e=>{ // この動画がどうしても再生できない環境（埋め込み不可・削除済み等）→ 合成ドローンに切り替える
+          chantYtPlayer=null; chantYtReady=false;
+          if(chantWantVol!=null){ const v=chantWantVol/100; chantWantVol=null; droneOn(v); }
+        }
       }
     });
   });
 }
 async function chantStart(vol){
+  if(await probeChant()){
+    chantEl.volume=vol||.7;
+    try{ await chantEl.play(); return; }catch(e){ /* 再生に失敗 → 以下のYouTube/ドローンへ */ }
+  }
   if(CHANT_MUSIC.id){
     const v=Math.round((vol||.7)*100);
     if(chantYtPlayer && chantYtReady){ chantYtPlayer.unMute(); chantYtPlayer.setVolume(v); chantYtPlayer.playVideo(); return; }
@@ -1035,10 +1050,10 @@ async function chantStart(vol){
     chantWantVol=v; chantPrewarm();
     return;
   }
-  if(await probeChant()){ chantEl.volume=vol||.7; try{ await chantEl.play(); }catch(e){ droneOn(vol); } }
-  else droneOn(vol);
+  droneOn(vol);
 }
 function chantFade(vol){
+  if(vol<=0) chantWantVol=null; // ステージを離れた後に遅れて準備完了しても、鳴り出さないようにする
   if(chantYtPlayer && chantYtReady){
     if(vol<=0) chantYtPlayer.pauseVideo(); else chantYtPlayer.setVolume(Math.round(vol*100));
     return;
@@ -1138,6 +1153,10 @@ function speakSynth(text,force){
   if(!text||(!S.voice&&!force))return;
   try{
     if(speechSynthesis.paused) speechSynthesis.resume();
+    // 前のセリフがまだ喋り終わっていなくても、次のフェーズが来たら即座に切り替える。
+    // cancel()を呼ばずにspeak()だけ重ねると発話がキューに積み上がり、
+    // 短い呼吸フェーズが連続すると「早口で、フェーズとズレた内容」になる。
+    speechSynthesis.cancel();
     const u=new SpeechSynthesisUtterance(text);
     const v=voices.find(v=>v.voiceURI===S.voiceURI); if(v)u.voice=v;
     u.lang='ja-JP';u.rate=+S.rate;u.pitch=+S.pitch;u.volume=1;
@@ -1299,7 +1318,7 @@ $('#gear').onclick=()=>{ $$('.tabs button').forEach(x=>x.setAttribute('aria-sele
 /* 設定UI */
 function bindSwitch(id,key){const el=$(id);el.setAttribute('aria-checked',!!S[key]);
   el.onclick=()=>{S[key]=!S[key];el.setAttribute('aria-checked',S[key]);save()};}
-['#swVoice:voice','#swBell:bell','#swCue:cue','#swCount:count','#swDim:dim','#swDrone:drone','#swMusic:music','#swBgMusic:bgMusic']
+['#swVoice:voice','#swBreathVoice:breathVoice','#swBell:bell','#swCue:cue','#swCount:count','#swDim:dim','#swDrone:drone','#swMusic:music','#swBgMusic:bgMusic']
   .forEach(p=>{const[a,b]=p.split(':');bindSwitch(a,b)});
 $('#rate').value=S.rate; $('#rate').oninput=e=>{S.rate=+e.target.value;save()};
 $('#pitch').value=S.pitch; $('#pitch').oninput=e=>{S.pitch=+e.target.value;save()};
@@ -1307,6 +1326,10 @@ $('#voiceSel').onchange=e=>{S.voiceURI=e.target.value;save()};
 $('#nightBgSel').value=S.nightBg;
 $('#nightBgSel').onchange=e=>{S.nightBg=e.target.value;save()};
 $('#testVoice').onclick=()=>{unlockSpeech();unlockAudioEl();audio();setTimeout(()=>say('ゆっくり、息を吐きます。',null,true),120)};
+$('#resetStage').onclick=()=>{
+  if(!confirm('コースの各ステージの時間を、初期値に戻します。よろしいですか？')) return;
+  S.stage=Object.fromEntries(COURSE.map(s=>[s.id,s.def])); save(); renderCourse();
+};
 ['cIn','cH1','cOut','cH2'].forEach(k=>{const el=$('#'+k);el.value=S[k];el.oninput=()=>{S[k]=Math.max(0,+el.value||0);save()}});
 $('#clearLog').onclick=()=>{ if(confirm('履歴と、八本柱の回数をすべて消しますか？')){
   LOG=[];saveLog(); S.pillarCount={}; S.pillarIdx=0; save(); renderLog(); renderCourse(); } };
@@ -1435,6 +1458,7 @@ function nextStage(){
   if(st.phases) st.cycle=st.phases.reduce((a,p)=>a+p.sec,0);
 
   $('#stageName').textContent=st.name;
+  $('#btnBg').textContent = st.type==='chant' ? '🎵 音を出す（タップ）' : '🎵 ガヤトリー';
   $('#orbWrap').classList.toggle('hide', st.type==='script');
   $('#phaseBox').classList.toggle('hide', st.type!=='breath');
   $('#guideText').classList.toggle('big', !!st.big);
@@ -1479,25 +1503,25 @@ function tick(){
     for(let i=0;i<st.blocks.length;i++){ if(el<st.blocks[i].end){bi=i;break;} }
     const blk=st.blocks[bi];
     if(bi!==sess.lastBlock){ sess.lastBlock=bi; sess.lastPhase=-1; sess.lastCount=-1;
-      if(blk.kind==='free'){ $('#phaseName').textContent=blk.label||'自然に'; $('#phaseCount').textContent=''; say(blk.sayStart,blk.vid); }
+      if(blk.kind==='free'){ $('#phaseName').textContent=blk.label||'自然に'; $('#phaseCount').textContent=''; if(S.breathVoice) say(blk.sayStart,blk.vid); }
     }
     if(blk.kind==='cycle'){
       const inBlk=el-blk.start, c=inBlk%blk.cycleLen; let acc=0,idx=0;
       for(let i=0;i<blk.phases.length;i++){ if(c<acc+blk.phases[i].sec){idx=i;break;} acc+=blk.phases[i].sec; }
       const p=blk.phases[idx],left=Math.ceil(p.sec-(c-acc));
       if(idx!==sess.lastPhase){ sess.lastPhase=idx; sess.lastCount=-1;
-        $('#phaseName').textContent=p.label; cue(p.k); say(p.say,p.vid); }
+        $('#phaseName').textContent=p.label; cue(p.k); if(S.breathVoice) say(p.say,p.vid); }
       $('#phaseCount').textContent=left;
-      if(S.count&&left!==sess.lastCount&&left<p.sec){ sess.lastCount=left; say(String(left)); }
+      if(S.count&&S.breathVoice&&left!==sess.lastCount&&left<p.sec){ sess.lastCount=left; say(String(left)); }
     }
   } else if(st.type==='breath'){
     const c=el%st.cycle; let acc=0,idx=0;
     for(let i=0;i<st.phases.length;i++){ if(c<acc+st.phases[i].sec){idx=i;break;} acc+=st.phases[i].sec; }
     const p=st.phases[idx],left=Math.ceil(p.sec-(c-acc));
     if(idx!==sess.lastPhase){ sess.lastPhase=idx; sess.lastCount=-1;
-      $('#phaseName').textContent=p.label; cue(p.k); say(p.say,p.vid); }
+      $('#phaseName').textContent=p.label; cue(p.k); if(S.breathVoice) say(p.say,p.vid); }
     $('#phaseCount').textContent=left;
-    if(S.count&&left!==sess.lastCount&&left<p.sec){ sess.lastCount=left; say(String(left)); }
+    if(S.count&&S.breathVoice&&left!==sess.lastCount&&left<p.sec){ sess.lastCount=left; say(String(left)); }
   } else if(st.type==='script'){
     // 同じ秒に2行が重なっても取りこぼさないよう、時刻ではなく行番号で管理する
     for(let i=0;i<st.tl.length;i++){
@@ -1618,6 +1642,13 @@ $('#btnPause').onclick=()=>{
 };
 $('#btnStop').onclick=()=>finish(false);
 $('#btnBg').onclick=()=>{
+  if(sess && sess.st && sess.st.type==='chant'){
+    // これは本物のユーザータップなので、ミュート解除がブロックされずに確実に音が出る
+    if(chantEl){ chantEl.volume=.7; chantEl.play().catch(()=>{}); }
+    else if(chantYtPlayer){ chantYtPlayer.unMute(); chantYtPlayer.setVolume(CHANT_MUSIC.volume); chantYtPlayer.playVideo(); }
+    else { chantWantVol=CHANT_MUSIC.volume; chantPrewarm(); }
+    return;
+  }
   S.bgMusic=!S.bgMusic; save();
   $('#btnBg').setAttribute('aria-pressed',S.bgMusic);
   if(S.bgMusic){ if(bgPlayer) bgMusicResume(); else bgMusicStart(); } else bgMusicStop();
@@ -1656,6 +1687,9 @@ $('#startMed').onclick=()=>{
 };
 
 renderCourse(); renderBreath(); renderMed(); renderLog();
+// アプリを開いた時点でYouTube APIの読み込みだけ先に始めておく（チャンティングはコースの最初のステージで
+// 待ち時間がないため、実際に「はじめる」を押すまで待つと最も重い初回読み込みに間に合わないことがある）
+loadYT();
 
 // オープニング：見た目はCSSアニメーションだけで完結している（JSが動かなくても画面はふさがれない）。
 // ここではDOMの掃除だけを、可能なら行う（うまくいかなくてもアプリの動作には影響しない）。
