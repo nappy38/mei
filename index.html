@@ -640,18 +640,18 @@ const DEDICATION = {
 const NIGHT = {
   open:[
     {at:0,  text:'横になって、楽な姿勢をとります。'},
-    {at:16, text:'今日一日を、ここでいったん、終わりにします。'},
+    {at:16, text:'今日、いちにちを、ここでいったん、終わりにします。'},
     {at:34, text:'呼吸が、自然に深くなっていくのを、待ちます。'},
   ],
   loop:{ every:32, fit:true, minGap:17, texts:[
-    // 感謝（THE MAGIC式：見つけて、味わって、ありがとうと言う）
+    // 感謝（THE MAGIC式：3つ見つけて、味わって、ありがとうと言う）
     '今日あったことを、ゆっくり思い出します。',
-    '今日、感謝できることを、ひとつ見つけます。',
-    '小さなことでかまいません。当たり前に思えることほど、実は贈り物です。',
-    '見つけたら、心の中で、ありがとう、と言います。',
-    '今日、助けてくれた人、支えてくれた人を、ひとり思い浮かべます。',
-    'その人にも、ありがとう、と伝えます。',
-    '今日、自分の体がしてくれたことを思い出します。歩いてくれた足に、動いてくれた手に、ありがとう。',
+    '今日、感謝できることを、一つ目、見つけます。小さなことでかまいません。',
+    '見つけたら、その気持ちを味わって、心の中で、ありがとう、と言います。',
+    '二つ目を、見つけます。助けてくれた人、支えてくれた人でも、他のことでもかまいません。',
+    '見つけたら、同じように、ありがとう、と伝えます。',
+    '三つ目を、見つけます。今日、自分の体がしてくれたことでも、他のことでもかまいません。',
+    '見つけたら、ありがとう、と言います。',
     '感謝は、ふくらませるほど、ふくらんでいきます。',
     // ほめ日記（行動→内面・感覚・感情→夢や希望、の順に広げる）
     '次に、今日した、行動をほめます。',
@@ -663,7 +663,7 @@ const NIGHT = {
   close:[
     {at:-46,text:'その満ちた気持ちを、そのまま抱えていきます。'},
     {at:-26,text:'目を開ける必要はありません。'},
-    {at:-10,text:'最後に、アラティを流します。そのまま聴きながら、眠りに入っていってもかまいません。おやすみなさい。'},
+    {at:-10,text:'そのまま、眠りに入っていってもかまいません。おやすみなさい。'},
   ]
 };
 
@@ -707,8 +707,8 @@ const MORNING = {
 function tlInnerGuide(total){
   const fixed=[
     {at:0,  text:'楽な姿勢で、座るか横になります。'},
-    {at:14, text:'呼吸を、吸うより吐く方を長くしていきます。'},
-    {at:34, text:'体の力を、少しずつ抜いていきます。'},
+    {at:14, text:'呼吸を、吸うより吐くほうを長くしていきます。'},
+    {at:34, text:'からだのちからを、少しずつ抜いていきます。'},
     {at:60, text:'深い森を、歩いています。'},
     {at:78, text:'静かな森。鳥の声が聞こえます。'},
     {at:96, text:'木漏れ日が、揺れています。'},
@@ -726,14 +726,24 @@ function tlInnerGuide(total){
     {at:365,text:'森でも、草原でも、湖のほとりでも、かまいません。どこへ向かうかは、任せます。'},
     {at:395,text:'動物が、ある場所へ、あなたを案内します。'},
     {at:415,text:'そこに、ガイドがいます。姿が見えなくても、存在だけ感じられれば、それで十分です。'},
-    {at:440,text:'今日は、いつも同じ問いから始めます。'},
-    {at:460,text:'心の中で、ガイドに尋ねます。「今日、一番大切な行動はなんですか？」'},
-    {at:485,text:'急がず、浮かんでくるものを、待ちます。'},
-    {at:525,text:'ほかにも、聞きたいことがあれば、続けて尋ねます。'},
-    {at:545,text:'手放すべきもの、恐れていること、まだ気付いていない才能——なんでもかまいません。'},
-    {at:568,text:'これらは、ただの例です。自分が本当に聞きたいことを、心の中で選びます。'},
-    {at:588,text:'声には出さず、その問いを、ガイドに向けます。'},
-    {at:608,text:'急がず、答えを待ちます。答えは、言葉とは限りません。映像、感覚、色、感情、静けさそのものかもしれません。全部、メッセージです。'},
+    {at:433,text:'試しに、ひとつだけ、簡単な問いを渡します。「空のどこに、太陽があるか、指で差してみて」'},
+    {at:455,text:'本物のガイドなら、迷わず、はっきりと指し示します。'},
+    {at:471,text:'ためらったり、話をはぐらかしたり、その場から姿を消してしまうなら——それは今はまだ、本物ではないのかもしれません。'},
+    {at:493,text:'どちらであっても、責めずに、ただ観察します。'},
+    {at:513,text:'信頼できると感じたら、まず二つ、決まった問いを渡します。関係を築くための問いです。'},
+    {at:533,text:'一つ目。「友人になり、共に歩んでいくために、私にできることはありますか。あるなら、それは何でしょうか」'},
+    {at:560,text:'急がず、応えを待ちます。'},
+    {at:580,text:'二つ目。「では、その代わりに、あなたは私に何を差し出してくれますか」'},
+    {at:602,text:'言葉でなくてもかまいません。形、色、光、感覚——浮かんでくるものを、そのまま受け取ります。'},
+    {at:628,text:'これで、今日の関係づくりは終わりです。'},
+    {at:648,text:'今日は、いつも同じ問いから始めます。'},
+    {at:668,text:'心の中で、ガイドに尋ねます。「今日、一番大切な行動はなんですか？」'},
+    {at:693,text:'急がず、浮かんでくるものを、待ちます。'},
+    {at:733,text:'ほかにも、聞きたいことがあれば、続けて尋ねます。'},
+    {at:753,text:'手放すべきもの、恐れていること、まだ気付いていない才能——なんでもかまいません。'},
+    {at:776,text:'これらは、ただの例です。自分が本当に聞きたいことを、心の中で選びます。'},
+    {at:796,text:'声には出さず、その問いを、ガイドに向けます。'},
+    {at:816,text:'急がず、答えを待ちます。答えは、言葉とは限りません。映像、感覚、色、感情、静けさそのものかもしれません。全部、メッセージです。'},
   ];
   const closeLines=[
     {off:-70,text:'その存在に、ありがとう、と伝えます。'},
@@ -754,8 +764,8 @@ function tlInnerGuide(total){
 
 /* ---- 単発の瞑想 ---- */
 const MEDITATIONS = [
-  { id:'night', name:'夜の瞑想', mins:[10,15,20], script:NIGHT, softBell:true, relaxBg:true,
-    desc:'今日への感謝と、自分をほめる時間（THE MAGIC式の感謝＋ほめ日記）。目を開けずに、最後はアラティを聴きながら眠りへ。背景に雨音・波・ノイズを選べます。' },
+  { id:'night', name:'夜の瞑想', mins:[10,15,20], script:NIGHT, softBell:true, relaxBg:true, noClosing:true,
+    desc:'今日への感謝(3つ)と、自分をほめる時間（THE MAGIC式の感謝＋ほめ日記）。始まってすぐアラティが流れ、目を開けずに、そのまま眠りへ。背景に雨音・波・ノイズを選べます。' },
   { id:'morning', name:'朝のひとこと', mins:[3,5,7,10],
     desc:'今日は幸福な一日だと、自分で決めて一日を始める。短い朝の儀式。', script:MORNING },
   { id:'innerguide', name:'インナーガイド瞑想', mins:[15,30,45], innerguide:true,
@@ -996,7 +1006,7 @@ function droneOff(){
 }
 /* チャンティング中に流す曲（YouTube）。ネット接続が必要。
    読み込めない・再生できない場合は合成ドローンにフォールバックする。 */
-const CHANT_MUSIC = { id:'IZkjX_c4hm4', volume:65 };
+const CHANT_MUSIC = { id:'IZkjX_c4hm4', volume:65, start:128 };
 let chantYtPlayer=null, chantYtReady=false, chantWantVol=null;
 
 /* セッション開始と同時に、ミュート状態で動画の読み込み・再生だけ先に始めておく。
@@ -1005,11 +1015,16 @@ let chantYtPlayer=null, chantYtReady=false, chantWantVol=null;
 function chantPrewarm(){
   if(chantYtPlayer || !CHANT_MUSIC.id) return;
   loadYT().then(()=>{
-    if(!(window.YT&&window.YT.Player) || chantYtPlayer) return;
+    if(chantYtPlayer) return;
+    if(!(window.YT&&window.YT.Player)){
+      // YouTube自体が読み込めない環境（通信のブロック・圏外等）→ 合成ドローンに切り替える
+      if(chantWantVol!=null){ const v=chantWantVol/100; chantWantVol=null; droneOn(v); }
+      return;
+    }
     chantYtPlayer=new YT.Player('chantYt',{
       height:'2',width:'2',videoId:CHANT_MUSIC.id,
       playerVars:{autoplay:1,controls:0,disablekb:1,fs:0,modestbranding:1,rel:0,
-                  loop:1,playlist:CHANT_MUSIC.id,playsinline:1,mute:1},
+                  loop:1,playlist:CHANT_MUSIC.id,playsinline:1,mute:1,start:CHANT_MUSIC.start||0},
       events:{
         onReady:e=>{ chantYtReady=true; e.target.mute(); e.target.playVideo();
           if(chantWantVol!=null){ e.target.unMute(); e.target.setVolume(chantWantVol); chantWantVol=null; } },
@@ -1026,8 +1041,13 @@ async function chantStart(vol){
   if(CHANT_MUSIC.id){
     const v=Math.round((vol||.7)*100);
     if(chantYtPlayer && chantYtReady){ chantYtPlayer.unMute(); chantYtPlayer.setVolume(v); chantYtPlayer.playVideo(); return; }
-    if(chantYtPlayer){ chantWantVol=v; return; } // 準備中：onReadyが来たら自動で音量を上げる
-    chantWantVol=v; chantPrewarm();
+    if(chantYtPlayer){ chantWantVol=v; } // 準備中：onReadyが来たら自動で音量を上げる
+    else { chantWantVol=v; chantPrewarm(); }
+    // 回線が遅い等でいつまでも読み込みが終わらない環境向け：一定時間待っても鳴らなければ、
+    // 諦めて合成ドローンに切り替える（無音のまま何も鳴らないよりはまし）
+    setTimeout(()=>{
+      if(chantWantVol===v && !(chantYtPlayer&&chantYtReady)){ chantWantVol=null; droneOn(vol); }
+    }, 8000);
     return;
   }
   droneOn(vol);
@@ -1063,6 +1083,20 @@ async function dedicationStart(){
   });
 }
 function dedicationStop(){ try{ if(dedYtPlayer&&dedYtReady) dedYtPlayer.pauseVideo(); }catch(e){} }
+
+/* 夜の瞑想だけ：始まってすぐ、アラティ（回向・締めの曲と同じもの）を1回だけ流す。
+   ループはさせない＝曲の長さ（約4分）で自然に終わり、そのあとは背景音（雨音等）だけが残る。 */
+function nightIntroStart(){
+  if(!DEDICATION_MUSIC.id) return;
+  loadYT().then(()=>{
+    if(!(window.YT&&window.YT.Player)) return;
+    new YT.Player('dedYt',{
+      height:'2',width:'2',videoId:DEDICATION_MUSIC.id,
+      playerVars:{autoplay:1,controls:0,disablekb:1,fs:0,modestbranding:1,rel:0,playsinline:1},
+      events:{ onReady:e=>{ e.target.setVolume(DEDICATION_MUSIC.volume); e.target.playVideo(); } }
+    });
+  });
+}
 
 /* ---------- 背景音（ガヤトリー・マントラ／YouTube） ----------
    セッション中ずっと小さな音量で流す。ネット接続が必要。
@@ -1410,7 +1444,7 @@ function startSession(plan){
   sess={name:plan.name,stages:plan.stages,i:-1,pillarsDone:new Set(),
         noClosing:!!plan.noClosing, softBell:!!plan.softBell, freq720:!!plan.freq720, relaxBg:!!plan.relaxBg,
         total:plan.stages.reduce((a,s)=>a+s.sec,0),startedAt:performance.now()};
-  if(sess.relaxBg){ if(S.nightBg) relaxStart(S.nightBg); }
+  if(sess.relaxBg){ if(S.nightBg) relaxStart(S.nightBg); nightIntroStart(); }
   // それ以外の背景音（ガヤトリー／雨音等）は nextStage() がステージごとに切り替えて鳴らす
   paused=false; $('#btnPause').textContent='一時停止';
   $('#btnSkip').style.display = plan.stages.length>1?'':'none';
@@ -1627,8 +1661,13 @@ $('#btnStop').onclick=()=>finish(false);
 $('#btnBg').onclick=()=>{
   if(sess && sess.st && sess.st.type==='chant'){
     // これは本物のユーザータップなので、ミュート解除がブロックされずに確実に音が出る
-    if(chantYtPlayer){ chantYtPlayer.unMute(); chantYtPlayer.setVolume(CHANT_MUSIC.volume); chantYtPlayer.playVideo(); }
-    else { chantWantVol=CHANT_MUSIC.volume; chantPrewarm(); }
+    const v=CHANT_MUSIC.volume;
+    if(chantYtPlayer && chantYtReady){ chantYtPlayer.unMute(); chantYtPlayer.setVolume(v); chantYtPlayer.playVideo(); }
+    else{
+      chantWantVol=v; if(!chantYtPlayer) chantPrewarm();
+      // タップしても読み込みが終わらない環境向け：数秒待って鳴らなければドローンに切り替える
+      setTimeout(()=>{ if(chantWantVol===v && !(chantYtPlayer&&chantYtReady)){ chantWantVol=null; droneOn(.7); } },5000);
+    }
     return;
   }
   S.bgMusic=!S.bgMusic; save();
