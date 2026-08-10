@@ -298,6 +298,7 @@ input[type=range]{width:150px;accent-color:var(--gold)}
     <div class="row"><span>チャンティングを瞑想中も薄く流す</span><button class="sw" id="swDrone" role="switch" aria-checked="false"></button></div>
     <div class="row"><span>呼吸の合図音</span><button class="sw" id="swCue" role="switch" aria-checked="true"></button></div>
     <div class="row"><span>秒数を数える</span><button class="sw" id="swCount" role="switch" aria-checked="false"></button></div>
+    <div class="row"><span>瞑想中に呼吸の声（英語）<br><span style="font-size:11px;color:var(--faint)">2分半ごとに Breathe in / Breathe out。誘導の合間にだけ入ります</span></span><button class="sw" id="swEnBreath" role="switch" aria-checked="true"></button></div>
     <div class="row"><span>連続日を数える<br><span style="font-size:11px;color:var(--faint)">切ると記録タブの連続日が「—」になります</span></span><button class="sw" id="swStreak" role="switch" aria-checked="true"></button></div>
     <div class="row"><span>画面を暗くする</span><button class="sw" id="swDim" role="switch" aria-checked="false"></button></div>
     <div class="row"><span>夜の瞑想の背景音</span>
@@ -1262,7 +1263,7 @@ const S = Object.assign({
   cIn:4, cH1:0, cOut:6, cH2:0,
   courseBreath:'reset46', topic:'impermanence',
   pillar:'auto', pillarIdx:0, pillarCount:{}, nightBg:'rain',
-  letgo:'core', letgoIdx:0, letgoCount:{}, streak:true,
+  letgo:'core', letgoIdx:0, letgoCount:{}, streak:true, enBreath:true,
   stage:Object.fromEntries(COURSE.map(s=>[s.id,s.def]))
 }, JSON.parse(localStorage.getItem(KEY)||'{}'));
 S.stage = Object.assign(Object.fromEntries(COURSE.map(s=>[s.id,s.def])), S.stage||{});
@@ -1579,12 +1580,14 @@ function bgMusicResume(){ try{ if(bgPlayer&&bgReady&&S.bgMusic) bgPlayer.playVid
 /* ---------- 声 ----------
    音声合成APIが無い環境（アプリ内ブラウザ等）でも、ここで例外が起きて
    アプリ全体が止まってしまわないよう、必ず try/catch と存在チェックを通す。 */
-let voices=[];
+let voices=[], enVoice=null;
 const hasSpeech = ('speechSynthesis' in window);
 function loadVoices(){
   if(!hasSpeech) return;
   try{
     const all=speechSynthesis.getVoices();
+    // 呼吸の声は英語で出す（ヨガと合わせるとき、英語のほうが体が反応する）。無ければ日本語の声で読まれる
+    enVoice = all.find(v=>/^en[-_]US/i.test(v.lang)) || all.find(v=>/^en/i.test(v.lang)) || null;
     voices=all.filter(v=>/^ja/i.test(v.lang)); if(!voices.length) voices=all;
     const sel=$('#voiceSel'); if(!sel) return;
     sel.innerHTML=voices.map(v=>`<option value="${v.voiceURI}">${v.name}</option>`).join('')||'<option>（声が見つかりません）</option>';
@@ -1636,6 +1639,19 @@ function say(text,vid,force){
   if(p&&p.catch) p.then(()=>{done=true; activeVoiceEl=a;}).catch(fallback);
   else done=true; // play()がPromiseを返さない古い実装向け
 }
+/* 英語の呼吸の声。誘導の合間にだけ鳴らす短い一言なので、専用に持っている */
+function speakEn(text){
+  if(!S.voice||!hasSpeech) return;
+  try{
+    if(speechSynthesis.paused) speechSynthesis.resume();
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    if(enVoice) u.voice=enVoice;
+    u.lang='en-US'; u.rate=Math.min(.95,+S.rate); u.pitch=+S.pitch; u.volume=1;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+
 function unlockSpeech(){ try{const u=new SpeechSynthesisUtterance(' ');u.volume=0;speechSynthesis.speak(u);}catch(e){} }
 /* iOS の <audio> は最初にユーザー操作の中で一度再生しないと、後から鳴らないことがある */
 function unlockAudioEl(){
@@ -1829,6 +1845,7 @@ function bindSwitch(id,key){const el=$(id);el.setAttribute('aria-checked',!!S[ke
 ['#swVoice:voice','#swBreathVoice:breathVoice','#swBell:bell','#swCue:cue','#swCount:count','#swDim:dim','#swDrone:drone','#swMusic:music','#swBgMusic:bgMusic']
   .forEach(p=>{const[a,b]=p.split(':');bindSwitch(a,b)});
 bindSwitch('#swStreak','streak'); $('#swStreak').addEventListener('click',()=>renderLog());
+bindSwitch('#swEnBreath','enBreath');
 $('#rate').value=S.rate; $('#rate').oninput=e=>{S.rate=+e.target.value;save()};
 $('#pitch').value=S.pitch; $('#pitch').oninput=e=>{S.pitch=+e.target.value;save()};
 $('#voiceSel').onchange=e=>{S.voiceURI=e.target.value;save()};
@@ -2003,6 +2020,23 @@ function buildCourse(){
   return {name:'コース',stages:st};
 }
 
+/* 誘導の合間に、英語の呼吸の声を挟む（ヨガと合わせるとき用）。
+   誘導文から12秒以上離れた場所にしか置かないので、日本語の声と潰し合わない。
+   画面の文字は変えない——目を閉じていても、動いていても、声だけで呼吸に戻れるようにするため。 */
+const CUE_EVERY=150, CUE_PAIR=5, CUE_MARGIN=12;
+function addBreathCues(tl,total){
+  const out=tl.slice();
+  let at=Math.max(60,(tl[0]?tl[0].at:0)+60);
+  while(at<total-30){
+    const busy=tl.some(l=>Math.abs(l.at-at)<CUE_MARGIN||Math.abs(l.at-(at+CUE_PAIR))<CUE_MARGIN);
+    if(busy){ at+=6; continue; }
+    out.push({at,text:'Breathe in.',en:true});
+    out.push({at:at+CUE_PAIR,text:'Breathe out.',en:true});
+    at+=CUE_EVERY;
+  }
+  return out.sort((a,b)=>a.at-b.at);
+}
+
 /* ---------- セッション ---------- */
 let sess=null,timer=null,raf=null,paused=false;
 
@@ -2010,6 +2044,13 @@ function startSession(plan){
   unlockSpeech(); unlockAudioEl(); audio(); startKeepAlive(); keepAwake();
   loadYT(); // チャンティング等が最初のYouTube利用で足止めされないよう、先に読み込みだけ始めておく
   if(plan.stages && plan.stages.some(s=>s.type==='chant')) chantPrewarm();
+  // 呼吸の声は、5分以上の誘導つき瞑想にだけ入れる。
+  // 分析的瞑想・インナーガイド（big）は考えている最中なので入れない。夜の瞑想（relaxBg）も眠りを妨げるので入れない。
+  if(S.enBreath && !plan.relaxBg){
+    plan.stages.forEach(st=>{
+      if(st.type==='script' && st.sec>=300 && !st.big && st.tl && st.tl.length) st.tl=addBreathCues(st.tl,st.sec);
+    });
+  }
   sess={name:plan.name,stages:plan.stages,i:-1,pillarsDone:new Set(),letgoDone:new Set(),
         noClosing:!!plan.noClosing, softBell:!!plan.softBell, freq720:!!plan.freq720, relaxBg:!!plan.relaxBg,
         total:plan.stages.reduce((a,s)=>a+s.sec,0),startedAt:performance.now()};
@@ -2112,8 +2153,13 @@ function tick(){
     // 同じ秒に2行が重なっても取りこぼさないよう、時刻ではなく行番号で管理する
     for(let i=0;i<st.tl.length;i++){
       const l=st.tl[i];
-      // mute:true の行は画面に出すだけで読み上げない（夢の本文など、自分の言葉をそのまま置く行）
-      if(el>=l.at&&!sess.fired.has(i)){ sess.fired.add(i); showLine(l.text); if(!l.mute) say(l.text,l.vid); }
+      // mute:true の行は画面に出すだけで読み上げない（夢の本文など、自分の言葉をそのまま置く行）。
+      // en:true は英語の呼吸の声。画面は前の誘導文のままにして、声だけを重ねる。
+      if(el>=l.at&&!sess.fired.has(i)){
+        sess.fired.add(i);
+        if(l.en){ speakEn(l.text); continue; }
+        showLine(l.text); if(!l.mute) say(l.text,l.vid);
+      }
     }
   } else if(st.type==='chant'){
     if(el<1&&!sess.fired.has('c')){ sess.fired.add('c'); }
