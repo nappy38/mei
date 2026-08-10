@@ -143,9 +143,12 @@ input[type=range]{width:150px;accent-color:var(--gold)}
   display:flex;justify-content:space-between;align-items:baseline;gap:10px;background:rgba(58,50,38,.035)}
 .lvGrid button .lvS{font-size:11px;color:var(--faint);text-align:right}
 .levelask #lvSkip{margin-top:20px;border:1px solid var(--line);border-radius:99px;padding:11px 28px;font-size:12px;color:var(--faint);letter-spacing:.2em}
-.lvChart{display:flex;align-items:flex-end;gap:3px;height:54px;margin:4px 0 2px}
-.lvChart i{flex:1;background:var(--gold);border-radius:2px 2px 0 0;opacity:.7;min-height:2px}
+.lvChart{display:flex;align-items:flex-end;gap:3px;height:54px;margin:14px 0 2px}
+.lvChart i{flex:1;background:var(--gold);border-radius:2px 2px 0 0;opacity:.7;min-height:2px;position:relative}
 .lvChart i.last{opacity:1}
+/* その瞑想の3日以内に共時性が書かれた日は、棒の上に点をつける */
+.lvChart i.sync::after{content:"";position:absolute;top:-8px;left:50%;transform:translateX(-50%);
+  width:5px;height:5px;border-radius:50%;background:var(--gold-soft)}
 .dreamBox{display:flex;gap:8px;align-items:flex-end;margin-bottom:6px}
 .dreamBox textarea{flex:1;background:rgba(58,50,38,.05);border:1px solid var(--line);color:var(--ink);
   border-radius:10px;padding:10px 12px;font-size:13px;font-family:inherit;line-height:1.8;resize:vertical}
@@ -269,6 +272,12 @@ input[type=range]{width:150px;accent-color:var(--gold)}
       <button class="chip" id="dreamSave">のこす</button>
     </div>
     <div id="dreamList"></div>
+    <div class="label">共時性（意味のある偶然）</div>
+    <div class="dreamBox">
+      <textarea id="syncIn" rows="2" placeholder="考えていた人から連絡が来た、同じ言葉に三回出会った、探していたものが向こうから来た——など。"></textarea>
+      <button class="chip" id="syncSave">のこす</button>
+    </div>
+    <div id="syncList"></div>
     <div class="label">手放し・いまの高さ</div>
     <div id="lvChart"></div>
     <div class="label">喜びの八本柱</div>
@@ -1285,6 +1294,19 @@ let DREAMS = JSON.parse(localStorage.getItem(DREAMKEY)||'[]');
 const saveDreams=()=>localStorage.setItem(DREAMKEY,JSON.stringify(DREAMS));
 const latestDream=()=>DREAMS.length?DREAMS[DREAMS.length-1]:null;
 
+/* 共時性（意味のある偶然）。ユングは夢と対にして、外側で起きる符合を見ていた。
+   内側＝夢、外側＝共時性。両方あって初めて、無意識が何を言っているかが立体になる。
+   このアプリでは、それに加えて検証の道具でもある——「手放したら現実が動くのか」を、
+   いまの高さ（内側）と共時性（外側）の並びで自分の目で確かめるため。
+   ここも意味づけはしない。ただ、起きたことを書いて日付を残すだけ。 */
+const SYNCKEY='medapp.sync';
+let SYNCS = JSON.parse(localStorage.getItem(SYNCKEY)||'[]');
+const saveSyncs=()=>localStorage.setItem(SYNCKEY,JSON.stringify(SYNCS));
+/* その瞑想のあと3日以内に符合が書かれたか（手放し→現実が動く、の対応を見るため） */
+const syncAfter=(d)=>SYNCS.some(s=>{
+  const gap=(new Date(s.d)-new Date(d))/86400000; return gap>=0&&gap<=3;
+});
+
 const LOGKEY='medapp.log';
 let LOG = JSON.parse(localStorage.getItem(LOGKEY)||'[]');
 const saveLog=()=>localStorage.setItem(LOGKEY,JSON.stringify(LOG));
@@ -1292,6 +1314,8 @@ const saveLog=()=>localStorage.setItem(LOGKEY,JSON.stringify(LOG));
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const fmt=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 const mmss=s=>{s=Math.max(0,Math.round(s));return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
+/* 自分で書いた文（夢・共時性）をそのまま画面に出すので、記号はエスケープしてから入れる */
+const esc=t=>String(t).replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
 
 /* ---------- 音 ---------- */
 let ac=null, keepAlive=null, drone=null;
@@ -1721,6 +1745,7 @@ function renderLog(){
   $('#stWeek').textContent=LOG.filter(l=>l.d>=wks).reduce((a,b)=>a+b.m,0);
   $('#stTotal').textContent=LOG.reduce((a,b)=>a+b.m,0);
   renderDreams();
+  renderSyncs();
   renderLevels();
   renderPillars();
   $('#logList').innerHTML=LOG.slice(-40).reverse().map(l=>
@@ -1732,11 +1757,24 @@ function renderDreams(){
   const el=$('#dreamList'); if(!el) return;
   el.innerHTML = DREAMS.slice(-10).reverse().map(d=>
     `<div class="dream"><span class="dd">${d.d.slice(5).replace('-','/')}</span>`
-    + `<span class="dt">${d.t.replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]))}</span>`
+    + `<span class="dt">${esc(d.t)}</span>`
     + `<button class="dx" data-del="${d.id}" aria-label="消す">×</button></div>`).join('')
     || '<div class="note" style="margin-top:2px">起きてすぐ、覚えている断片を入れておくと、「影と話す」を始めるときに出てきます。意味は考えなくていいです。覚えていない日は、空のままで。</div>';
   $$('#dreamList .dx').forEach(b=>b.onclick=()=>{
     DREAMS=DREAMS.filter(x=>String(x.id)!==b.dataset.del); saveDreams(); renderDreams();
+  });
+}
+
+function renderSyncs(){
+  const el=$('#syncList'); if(!el) return;
+  el.innerHTML = SYNCS.slice(-10).reverse().map(s=>
+    `<div class="dream"><span class="dd">${s.d.slice(5).replace('-','/')}</span>`
+    + `<span class="dt">${esc(s.t)}</span>`
+    + `<button class="dx" data-del="${s.id}" aria-label="消す">×</button></div>`).join('')
+    || '<div class="note" style="margin-top:2px">夢が内側、こちらが外側です。手放したあとに現実が動いたなら、ここに残ります。'
+      + '意味は考えなくていいです。日付だけあれば、あとで下の高さと並べて見られます。</div>';
+  $$('#syncList .dx').forEach(b=>b.onclick=()=>{
+    SYNCS=SYNCS.filter(x=>String(x.id)!==b.dataset.del); saveSyncs(); renderLog();
   });
 }
 
@@ -1748,10 +1786,14 @@ function renderLevels(){
     return;
   }
   const now=last[last.length-1];
+  const marked=last.filter(x=>syncAfter(x.d)).length;
   el.innerHTML='<div class="lvChart">'+last.map((x,i)=>
-      `<i class="${i===last.length-1?'last':''}" style="height:${Math.round((x.lv+1)/LADDER.length*100)}%"></i>`).join('')+'</div>'
+      `<i class="${i===last.length-1?'last':''} ${syncAfter(x.d)?'sync':''}" style="height:${Math.round((x.lv+1)/LADDER.length*100)}%"></i>`).join('')+'</div>'
     + `<div class="note" style="margin-top:2px">直近 ${last.length} 回。いちばん新しいのは「${LADDER[now.lv].name}」（${now.d.slice(5).replace('-','/')}）。`
-    + `上げようとしなくていいです。動いたかどうかだけを見ます。</div>`;
+    + `上げようとしなくていいです。動いたかどうかだけを見ます。`
+    + (marked?`<br>棒の上の点は、その3日以内に共時性が書かれた日です（${marked}/${last.length}）。`
+             :`<br>上に共時性を書くと、その3日以内にやった回の棒に点がつきます。`)
+    + `</div>`;
 }
 
 function renderPillars(){
@@ -1807,6 +1849,14 @@ $('#dreamSave').onclick=()=>{
   if(!t) return;
   DREAMS.push({id:Date.now(),d:fmt(new Date()),t}); saveDreams();
   el.value=''; renderDreams(); renderMed();
+};
+
+/* 共時性も同じ。書いたら、いまの高さのグラフに点がつく */
+$('#syncSave').onclick=()=>{
+  const el=$('#syncIn'), t=el.value.trim();
+  if(!t) return;
+  SYNCS.push({id:Date.now(),d:fmt(new Date()),t}); saveSyncs();
+  el.value=''; renderLog();
 };
 
 /* ---------- タイムライン生成 ----------
