@@ -1,0 +1,10 @@
+# GitHub Pages に公開するのは、アプリが動くのに必要な5つだけ。
+# 録音リスト・zip・写真・作業用ファイルは、うっかり公開されないようにここで止める。
+# 新しく公開したいファイルが増えたら、下に「!ファイル名」の行を足すこと。
+*
+!.gitignore
+!index.html
+!sw.js
+!manifest.json
+!icon.png
+!decor_leaves.png
