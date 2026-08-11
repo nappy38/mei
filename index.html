@@ -313,6 +313,7 @@ input[type=range]{width:150px;accent-color:var(--gold)}
     <div class="row"><span>オフライン保存</span><span id="offlineStatus" style="font-size:12px;color:var(--dim)">確認中…</span></div>
     <div class="row"><span>最後に曲を流す</span><button class="sw" id="swMusic" role="switch" aria-checked="true"></button></div>
     <div class="row"><span>セッション中ガヤトリーを小さく流す</span><button class="sw" id="swBgMusic" role="switch" aria-checked="true"></button></div>
+    <div class="row"><span>ガヤトリーの音量<br><span style="font-size:11px;color:var(--faint)" id="bgVolNum">14</span></span><input type="range" id="bgVol" min="4" max="70" step="1" value="14"></div>
     <div class="row"><span style="flex:1">声のテスト</span><button class="chip" id="testVoice">再生</button></div>
     <div class="row"><span style="flex:1">コースの時間設定を初期値に戻す</span><button class="chip" id="resetStage">リセット</button></div>
     <p class="note">
@@ -429,6 +430,8 @@ const BREATHING = [
     phases:[{k:'in',say:'おなかに吸って',vid:'hara_in',label:'吸う',sec:4},{k:'out',say:'ゆっくり吐いて',vid:'out_slow',label:'吐く',sec:6}] },
   { id:'55', name:'コヒーレント呼吸 5-5', desc:'1分間に6回。心拍のゆらぎが整いやすい。長く続けるのに向く。',
     phases:[{k:'in',say:'吸って',vid:'in',label:'吸う',sec:5},{k:'out',say:'吐いて',vid:'out',label:'吐く',sec:5}] },
+  { id:'r21', name:'2対1の呼吸（ヒマラヤ）', desc:'吐く息を、吸う息の倍の長さにする。ヒマラヤの伝統で瞑想の前に置かれる。息を止めず、途切れさせず、音を立てないのが要点。苦しければ3-6から。',
+    phases:[{k:'in',say:'静かに吸って',vid:'sr_in',label:'吸う',sec:4},{k:'out',say:'その倍、ゆっくり吐いて',vid:'sr_out',label:'吐く',sec:8}] },
   { id:'478', name:'4-7-8 呼吸', desc:'吸う4・止める7・吐く8。鎮静に傾く。夜・寝る前に。',
     phases:[{k:'in',say:'吸って',vid:'in',label:'吸う',sec:4},{k:'hold',say:'止めて',vid:'hold',label:'止める',sec:7},{k:'out',say:'吐いて',vid:'out',label:'吐く',sec:8}] },
   { id:'box', name:'ボックス呼吸 4-4-4-4', desc:'正方形の呼吸。頭が散らかっている時、集中に入る前に。',
@@ -1263,7 +1266,7 @@ const S = Object.assign({
   cIn:4, cH1:0, cOut:6, cH2:0,
   courseBreath:'reset46', topic:'impermanence',
   pillar:'auto', pillarIdx:0, pillarCount:{}, nightBg:'rain',
-  letgo:'core', letgoIdx:0, letgoCount:{}, streak:true, enBreath:true,
+  letgo:'core', letgoIdx:0, letgoCount:{}, streak:true, enBreath:true, bgVol:14,
   stage:Object.fromEntries(COURSE.map(s=>[s.id,s.def]))
 }, JSON.parse(localStorage.getItem(KEY)||'{}'));
 S.stage = Object.assign(Object.fromEntries(COURSE.map(s=>[s.id,s.def])), S.stage||{});
@@ -1555,12 +1558,15 @@ function loadYT(){
   });
   return ytApiPromise;
 }
+/* 背景音の音量は設定から変えられる。既定の14は「気づかないくらい薄く」の値で、
+   動きながら（ヨガ等）だとまず聞こえない。聞きたいときは上げる。 */
+const bgVol=()=>Math.max(0,Math.min(100, S.bgVol==null?BACKGROUND_MUSIC.volume:+S.bgVol));
 function bgMusicStart(){
   if(!S.bgMusic||!BACKGROUND_MUSIC.id) return;
   loadYT().then(()=>{
     if(!window.YT||!window.YT.Player) return; // 読み込めなかった＝オフライン等。諦める
     if(bgPlayer){
-      if(bgReady){ bgPlayer.setVolume(BACKGROUND_MUSIC.volume); bgPlayer.playVideo(); }
+      if(bgReady){ bgPlayer.setVolume(bgVol()); bgPlayer.playVideo(); }
       return;
     }
     bgPlayer=new YT.Player('bgYt',{
@@ -1568,7 +1574,7 @@ function bgMusicStart(){
       playerVars:{autoplay:1,controls:0,disablekb:1,fs:0,modestbranding:1,rel:0,
                   loop:1,playlist:BACKGROUND_MUSIC.id,playsinline:1},
       events:{
-        onReady:e=>{ bgReady=true; e.target.setVolume(BACKGROUND_MUSIC.volume); if(S.bgMusic) e.target.playVideo(); },
+        onReady:e=>{ bgReady=true; e.target.setVolume(bgVol()); if(S.bgMusic) e.target.playVideo(); },
         onStateChange:e=>{ if(e.data===YT.PlayerState.ENDED) e.target.playVideo(); }
       }
     });
@@ -1846,6 +1852,12 @@ function bindSwitch(id,key){const el=$(id);el.setAttribute('aria-checked',!!S[ke
   .forEach(p=>{const[a,b]=p.split(':');bindSwitch(a,b)});
 bindSwitch('#swStreak','streak'); $('#swStreak').addEventListener('click',()=>renderLog());
 bindSwitch('#swEnBreath','enBreath');
+/* 音量は動かした瞬間に反映する（瞑想中に調整して、ちょうどいいところで止められるように） */
+$('#bgVol').value=bgVol(); $('#bgVolNum').textContent=bgVol();
+$('#bgVol').oninput=e=>{
+  S.bgVol=+e.target.value; save(); $('#bgVolNum').textContent=S.bgVol;
+  try{ if(bgPlayer&&bgReady) bgPlayer.setVolume(S.bgVol); }catch(err){}
+};
 $('#rate').value=S.rate; $('#rate').oninput=e=>{S.rate=+e.target.value;save()};
 $('#pitch').value=S.pitch; $('#pitch').oninput=e=>{S.pitch=+e.target.value;save()};
 $('#voiceSel').onchange=e=>{S.voiceURI=e.target.value;save()};
@@ -1996,6 +2008,10 @@ function letgoOptions(){
 /* ---------- ステージ組み立て ---------- */
 function buildCourse(){
   const st=[];
+  // 手放しでガヤトリーに切り替えたら、そこから先もガヤトリーのままにする。
+  // 切り替えた時点でチャンティングは消えるので、次のステージを無音にしないため。
+  // 手放しを入れていないコースは、今までどおり（チャンティング→朝のひとことでガヤトリー）。
+  let gaya=false;
   COURSE.forEach(s=>{
     const min=S.stage[s.id]; if(!min) return;
     const sec=min*60;
@@ -2011,9 +2027,11 @@ function buildCourse(){
       const a=ANALYTICAL.find(x=>x.id===S.topic)||ANALYTICAL[0];
       st.push({type:'script',name:'分析的瞑想 — '+a.name,sec,tl:tlAnalytical(S.topic,sec),big:true});
     }
-    if(s.id==='letgo'){ const g=resolveLetgo(); st.push({type:'script',name:g.name,sec,tl:tlFromScript(g.script,sec,g.id),letgo:g.id}); }
-    if(s.id==='metta') st.push({type:'script',name:'慈悲の瞑想',sec,tl:tlFromScript(METTA,sec,'metta')});
-    if(s.id==='mudita'){ const p=resolvePillar(); st.push({type:'script',name:p.name,sec,tl:tlFromScript(p.script,sec,p.id),pillar:p.id}); }
+    // 手放しは単体でもコースでもガヤトリーを流す（他の瞑想と同じ音楽）
+    if(s.id==='letgo'){ const g=resolveLetgo(); gaya=true;
+      st.push({type:'script',name:g.name,sec,tl:tlFromScript(g.script,sec,g.id),letgo:g.id,bgSound:'gayatri'}); }
+    if(s.id==='metta') st.push({type:'script',name:'慈悲の瞑想',sec,tl:tlFromScript(METTA,sec,'metta'),bgSound:gaya?'gayatri':undefined});
+    if(s.id==='mudita'){ const p=resolvePillar(); st.push({type:'script',name:p.name,sec,tl:tlFromScript(p.script,sec,p.id),pillar:p.id,bgSound:gaya?'gayatri':undefined}); }
     if(s.id==='morningword') st.push({type:'script',name:'朝のひとこと',sec,tl:tlFromScript(MORNING,sec,'morningword'),bgSound:'gayatri'});
     if(s.id==='dedication') st.push({type:'script',name:'回向',sec,tl:tlFromScript(DEDICATION,sec),dedTrack:true});
   });
