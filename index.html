@@ -312,8 +312,8 @@ input[type=range]{width:150px;accent-color:var(--gold)}
     </div>
     <div class="row"><span>オフライン保存</span><span id="offlineStatus" style="font-size:12px;color:var(--dim)">確認中…</span></div>
     <div class="row"><span>最後に曲を流す</span><button class="sw" id="swMusic" role="switch" aria-checked="true"></button></div>
-    <div class="row"><span>セッション中ガヤトリーを小さく流す</span><button class="sw" id="swBgMusic" role="switch" aria-checked="true"></button></div>
-    <div class="row"><span>ガヤトリーの音量<br><span style="font-size:11px;color:var(--faint)" id="bgVolNum">14</span></span><input type="range" id="bgVol" min="4" max="70" step="1" value="14"></div>
+    <div class="row"><span>セッション中に音楽を小さく流す<br><span style="font-size:11px;color:var(--faint)">手放しはチャンティング、それ以外はガヤトリー</span></span><button class="sw" id="swBgMusic" role="switch" aria-checked="true"></button></div>
+    <div class="row"><span>その音楽の音量<br><span style="font-size:11px;color:var(--faint)" id="bgVolNum">14</span></span><input type="range" id="bgVol" min="4" max="70" step="1" value="14"></div>
     <div class="row"><span style="flex:1">声のテスト</span><button class="chip" id="testVoice">再生</button></div>
     <div class="row"><span style="flex:1">コースの時間設定を初期値に戻す</span><button class="chip" id="resetStage">リセット</button></div>
     <p class="note">
@@ -2008,10 +2008,11 @@ function letgoOptions(){
 /* ---------- ステージ組み立て ---------- */
 function buildCourse(){
   const st=[];
-  // 手放しでガヤトリーに切り替えたら、そこから先もガヤトリーのままにする。
-  // 切り替えた時点でチャンティングは消えるので、次のステージを無音にしないため。
-  // 手放しを入れていないコースは、今までどおり（チャンティング→朝のひとことでガヤトリー）。
-  let gaya=false;
+  // 手放しの背景はチャンティング。コースは最初のチャンティングの曲がそのまま流れ続けるので、
+  // 普通は何も指定しなくていい（bgSound なし＝鳴っているものが続く）。
+  // ただし「チャンティング＝なし」のコースだと無音になるので、その場合だけ手放しから鳴らし始め、
+  // そのあとの慈悲・喜びにも引き継ぐ（朝のひとことでガヤトリーに切り替わる）。
+  let after;
   COURSE.forEach(s=>{
     const min=S.stage[s.id]; if(!min) return;
     const sec=min*60;
@@ -2027,11 +2028,11 @@ function buildCourse(){
       const a=ANALYTICAL.find(x=>x.id===S.topic)||ANALYTICAL[0];
       st.push({type:'script',name:'分析的瞑想 — '+a.name,sec,tl:tlAnalytical(S.topic,sec),big:true});
     }
-    // 手放しは単体でもコースでもガヤトリーを流す（他の瞑想と同じ音楽）
-    if(s.id==='letgo'){ const g=resolveLetgo(); gaya=true;
-      st.push({type:'script',name:g.name,sec,tl:tlFromScript(g.script,sec,g.id),letgo:g.id,bgSound:'gayatri'}); }
-    if(s.id==='metta') st.push({type:'script',name:'慈悲の瞑想',sec,tl:tlFromScript(METTA,sec,'metta'),bgSound:gaya?'gayatri':undefined});
-    if(s.id==='mudita'){ const p=resolvePillar(); st.push({type:'script',name:p.name,sec,tl:tlFromScript(p.script,sec,p.id),pillar:p.id,bgSound:gaya?'gayatri':undefined}); }
+    if(s.id==='letgo'){ const g=resolveLetgo();
+      if(!S.stage.chant) after='chant';
+      st.push({type:'script',name:g.name,sec,tl:tlFromScript(g.script,sec,g.id),letgo:g.id,bgSound:after}); }
+    if(s.id==='metta') st.push({type:'script',name:'慈悲の瞑想',sec,tl:tlFromScript(METTA,sec,'metta'),bgSound:after});
+    if(s.id==='mudita'){ const p=resolvePillar(); st.push({type:'script',name:p.name,sec,tl:tlFromScript(p.script,sec,p.id),pillar:p.id,bgSound:after}); }
     if(s.id==='morningword') st.push({type:'script',name:'朝のひとこと',sec,tl:tlFromScript(MORNING,sec,'morningword'),bgSound:'gayatri'});
     if(s.id==='dedication') st.push({type:'script',name:'回向',sec,tl:tlFromScript(DEDICATION,sec),dedTrack:true});
   });
@@ -2061,7 +2062,7 @@ let sess=null,timer=null,raf=null,paused=false;
 function startSession(plan){
   unlockSpeech(); unlockAudioEl(); audio(); startKeepAlive(); keepAwake();
   loadYT(); // チャンティング等が最初のYouTube利用で足止めされないよう、先に読み込みだけ始めておく
-  if(plan.stages && plan.stages.some(s=>s.type==='chant')) chantPrewarm();
+  if(plan.stages && plan.stages.some(s=>s.type==='chant'||s.bgSound==='chant')) chantPrewarm();
   // 呼吸の声は、5分以上の誘導つき瞑想にだけ入れる。
   // 分析的瞑想・インナーガイド（big）は考えている最中なので入れない。夜の瞑想（relaxBg）も眠りを妨げるので入れない。
   if(S.enBreath && !plan.relaxBg){
@@ -2114,8 +2115,10 @@ function nextStage(){
     const prevBg = prevSt ? prevSt.bgSound : undefined;
     const newBg = st.bgSound;
     if(newBg!==prevBg){
-      if(prevBg==='gayatri') bgMusicStop(); else if(prevBg) relaxStop();
-      if(newBg==='gayatri'){ if(S.bgMusic) bgMusicStart(); } else if(newBg) relaxStart(newBg,.22);
+      if(prevBg==='gayatri') bgMusicStop(); else if(prevBg==='chant') chantStop(); else if(prevBg) relaxStop();
+      if(newBg==='gayatri'){ if(S.bgMusic) bgMusicStart(); }
+      else if(newBg==='chant'){ if(S.bgMusic) chantStart(bgVol()/100); } // 手放し単体：チャンティングを薄く流す
+      else if(newBg) relaxStart(newBg,.22);
     }
   }
 
@@ -2123,8 +2126,9 @@ function nextStage(){
     // 鐘が鳴り終わってから曲を始める（鐘と同時に鳴り出すと鐘の音がかき消されるため）
     setTimeout(()=>{ if(sess && sess.st===st) chantStart(.7); }, 2600);
   }
-  else if(st.bgSound || st.dedTrack){
+  else if((st.bgSound && st.bgSound!=='chant') || st.dedTrack){
     // 他の音（ガヤトリー等）や回向の曲に切り替わるタイミングで、鳴り続けているチャンティングを止める。
+    // bgSound==='chant' のステージ（手放し単体）は、そのチャンティング自体が背景音なので下げない。
     // bgSoundが無いステージ（呼吸法・分析的瞑想・慈悲の瞑想）ではチャンティングをそのまま流し続ける。
     chantFade(S.drone?.05:0);
   }
@@ -2373,7 +2377,7 @@ $('#startMed').onclick=()=>{
     stage={type:'script',name:p.name,sec,tl:tlFromScript(p.script,sec,p.id),pillar:p.id,bgSound:'gayatri'};
   } else if(m.letgo){
     const g=resolveLetgo();
-    stage={type:'script',name:g.name,sec,tl:tlFromScript(g.script,sec,g.id),letgo:g.id,bgSound:'gayatri'};
+    stage={type:'script',name:g.name,sec,tl:tlFromScript(g.script,sec,g.id),letgo:g.id,bgSound:'chant'};
   } else if(m.quick){
     // 応急処置なので、背景音の読み込みを待たせない
     stage={type:'script',name:m.name,sec,tl:tlFromScript(m.script,sec,m.id)};
