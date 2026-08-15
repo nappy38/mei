@@ -1155,6 +1155,11 @@ const MEDITATIONS = [
     desc:'今日への感謝(3つ)と、自分をほめる時間（THE MAGIC式の感謝＋ほめ日記）。始まってすぐアラティが流れ、目を開けずに、そのまま眠りへ。背景に雨音・波・ノイズを選べます。' },
   { id:'morning', name:'朝のひとこと', mins:[3,5,7,10],
     desc:'今日は幸福な一日だと、自分で決めて一日を始める。短い朝の儀式。', script:MORNING },
+  /* コースの最後に置いているものと同じ台本。単体でも回せるようにしてある。
+     他の瞑想のあとに続けて回向したいとき、アプリを閉じずにこれだけ流せる。
+     専用の曲（DEDICATION_MUSIC）が鳴るので、終わりの曲は重ねない。 */
+  { id:'dedication', name:'回向', mins:[1,2,3,5], dedication:true, noClosing:true,
+    desc:'今日の実りを、自分のものにしないで終える。コースの最後と同じもの。他の瞑想をやったあと、続けて手渡すときに。' },
   { id:'innerguide', name:'インナーガイド瞑想', mins:[15,30,45], innerguide:true,
     desc:'呼吸→森→洞窟→光→動物→ガイドとの対話、という本人設計の台本。お手本の質問を聞いたあとは沈黙の中で自分の問いを選ぶ。ガイドが本物かは瞑想後の現実の変化で判断する。' },
   { id:'metta', name:'慈悲の瞑想', mins:[5,7,10,15,20], desc:'自分から、大切な人、無関係な人、苦手な人、すべての生き物へ。心が固くなった日に。', script:METTA },
@@ -2067,7 +2072,7 @@ function startSession(plan){
   // 分析的瞑想・インナーガイド（big）は考えている最中なので入れない。夜の瞑想（relaxBg）も眠りを妨げるので入れない。
   if(S.enBreath && !plan.relaxBg){
     plan.stages.forEach(st=>{
-      if(st.type==='script' && st.sec>=300 && !st.big && st.tl && st.tl.length) st.tl=addBreathCues(st.tl,st.sec);
+      if(st.type==='script' && st.sec>=300 && !st.big && !st.noCue && st.tl && st.tl.length) st.tl=addBreathCues(st.tl,st.sec);
     });
   }
   sess={name:plan.name,stages:plan.stages,i:-1,pillarsDone:new Set(),letgoDone:new Set(),
@@ -2378,6 +2383,8 @@ $('#startMed').onclick=()=>{
   } else if(m.letgo){
     const g=resolveLetgo();
     stage={type:'script',name:g.name,sec,tl:tlFromScript(g.script,sec,g.id),letgo:g.id,bgSound:'chant'};
+  } else if(m.dedication){
+    stage={type:'script',name:m.name,sec,tl:tlFromScript(DEDICATION,sec,'dedication'),dedTrack:true,noCue:true};
   } else if(m.quick){
     // 応急処置なので、背景音の読み込みを待たせない
     stage={type:'script',name:m.name,sec,tl:tlFromScript(m.script,sec,m.id)};
