@@ -2179,12 +2179,74 @@ function chantStop(){
    音源ファイルは一切持たない（埋め込みなので配布にならず、著作権的にきれい）。
    そのぶんネット接続が必須で、圏内でないと成立しない＝オフラインでは選ばない。
    足すときは YT_GUIDES に1行増やして、MEDITATIONS に ytGuide:'キー' の項目を作る。 */
+
+/* 端末に置いた音源で誘導する ---------------------------------------------
+   YouTube埋め込みは、投稿者が収益化していると広告が入る。瞑想の途中で広告が
+   流れると台無しなので、音源は「アプリに同梱する」のではなく「この端末にだけ置く」。
+   ・公開されるアプリには音源が1バイトも入らない（＝配布にならない）
+   ・端末のIndexedDBに入るので、次からはオフラインでも広告なしで鳴る
+   ・取り込んでいなければYouTube埋め込みに落ちる（広告は出るが、とりあえず鳴る） */
+const GDB='medGuideAudio';
+function gdb(){
+  return new Promise((res,rej)=>{
+    const r=indexedDB.open(GDB,1);
+    r.onupgradeneeded=()=>{ if(!r.result.objectStoreNames.contains('files')) r.result.createObjectStore('files'); };
+    r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);
+  });
+}
+async function guidePut(key,blob){
+  const db=await gdb();
+  return new Promise((res,rej)=>{
+    const t=db.transaction('files','readwrite'); t.objectStore('files').put(blob,key);
+    t.oncomplete=()=>res(true); t.onerror=()=>rej(t.error);
+  });
+}
+async function guideGet(key){
+  try{
+    const db=await gdb();
+    return await new Promise((res)=>{
+      const t=db.transaction('files','readonly'); const q=t.objectStore('files').get(key);
+      q.onsuccess=()=>res(q.result||null); q.onerror=()=>res(null);
+    });
+  }catch(e){ return null; }
+}
+async function guideDel(key){
+  try{ const db=await gdb();
+    await new Promise(res=>{ const t=db.transaction('files','readwrite'); t.objectStore('files').delete(key); t.oncomplete=res; t.onerror=res; });
+  }catch(e){}
+}
+/* 取り込み済みかどうかを画面に出すためだけの控え。実体はIndexedDBにある */
+const GHAVE='medGuideHave';
+function guideHave(key){ try{ return (JSON.parse(localStorage.getItem(GHAVE)||'{}'))[key]||null; }catch(e){ return null; } }
+function guideHaveSet(key,val){
+  let o={}; try{ o=JSON.parse(localStorage.getItem(GHAVE)||'{}'); }catch(e){}
+  if(val) o[key]=val; else delete o[key];
+  try{ localStorage.setItem(GHAVE,JSON.stringify(o)); }catch(e){}
+}
 const YT_GUIDES = {
   surrender: { id:'_w_qhBEy85U', start:878, sec:457,
                by:'mika霊視CH', label:'手放し・明け渡し' }
 };
 let guideYtPlayer=null, guideYtReady=false, guideYtKey=null, guideActive=false;
+/* 端末の音源が入っていればそれで鳴らす。無ければYouTubeに落ちる（広告は出る） */
+let guideEl=null, guideUrl=null;
+async function guidePlayLocal(key){
+  const blob=await guideGet(key);
+  if(!blob) return false;
+  guideStopLocal();
+  guideUrl=URL.createObjectURL(blob);
+  guideEl=new Audio(guideUrl);
+  guideEl.preload='auto';
+  try{ await guideEl.play(); }catch(e){ guideStopLocal(); return false; }
+  return true;
+}
+function guideStopLocal(){
+  if(guideEl){ try{ guideEl.pause(); }catch(e){} guideEl=null; }
+  if(guideUrl){ try{ URL.revokeObjectURL(guideUrl); }catch(e){} guideUrl=null; }
+}
 async function guideStart(key){
+  guideActive=true;
+  if(await guidePlayLocal(key)) return; // 端末に音源があればそれで鳴らす（広告なし・オフライン可）
   const g=YT_GUIDES[key]; if(!g) return;
   await loadYT();
   if(!(window.YT&&window.YT.Player)) return; // 圏外・ブロック時は無音のまま座る（鐘とタイマーは動く）
@@ -2204,9 +2266,9 @@ async function guideStart(key){
     }
   });
 }
-function guidePause(){ if(!guideActive) return; try{ if(guideYtPlayer&&guideYtReady) guideYtPlayer.pauseVideo(); }catch(e){} }
-function guideResume(){ if(!guideActive) return; try{ if(guideYtPlayer&&guideYtReady) guideYtPlayer.playVideo(); }catch(e){} }
-function guideStop(){ guideActive=false; try{ if(guideYtPlayer&&guideYtReady) guideYtPlayer.pauseVideo(); }catch(e){} }
+function guidePause(){ if(!guideActive) return; if(guideEl){ try{guideEl.pause()}catch(e){} return; } try{ if(guideYtPlayer&&guideYtReady) guideYtPlayer.pauseVideo(); }catch(e){} }
+function guideResume(){ if(!guideActive) return; if(guideEl){ try{guideEl.play()}catch(e){} return; } try{ if(guideYtPlayer&&guideYtReady) guideYtPlayer.playVideo(); }catch(e){} }
+function guideStop(){ guideActive=false; guideStopLocal(); try{ if(guideYtPlayer&&guideYtReady) guideYtPlayer.pauseVideo(); }catch(e){} }
 /* 回向で流す曲（YouTube）。ネット接続が必要。オフラインの時は静かに諦める（回向は短いので無音でも成立する） */
 const DEDICATION_MUSIC = { id:'f2cIRYXgJbY', volume:55 };
 let dedYtPlayer=null, dedYtReady=false;
@@ -2461,7 +2523,24 @@ function renderMed(){
         <option value="pink" ${S.nightBg==='pink'?'selected':''}>ピンクノイズ</option>
         <option value="brown" ${S.nightBg==='brown'?'selected':''}>ブラウンノイズ</option>
         <option value="" ${!S.nightBg?'selected':''}>なし</option>
-      </select>`:'');
+      </select>`:'')
+    /* 誘導音声の瞑想だけ、音源を端末に取り込むための欄を出す。
+       アプリ側は音源を持たない（＝公開しても配布にならない）。取り込むとIndexedDBに入り、
+       次からは広告なし・オフラインで鳴る。未取り込みならYouTube埋め込みに落ちる。 */
+    + (()=>{ const m=MEDITATIONS.find(x=>x.id===S.med);
+        if(!m||!m.ytGuide) return '';
+        const h=guideHave(m.ytGuide);
+        return `<div class="note" style="margin-top:8px">
+          <b>音源</b>：${h?`この端末に取り込み済み（${h}）— 広告なしで鳴ります`:'未取り込み — YouTubeから再生します（<b>広告が入ります</b>）'}
+          <div style="margin-top:6px">
+            <button class="chip" id="guidePick">${h?'別の音源に入れ替える':'端末から音源を取り込む'}</button>
+            ${h?`<button class="chip" id="guideClear">取り消す</button>`:''}
+          </div>
+          <div style="color:var(--dim);font-size:11px;margin-top:6px">
+            取り込んだ音源はこの端末の中だけに保存されます。アプリには含まれないので、公開しても配られません。
+          </div>
+          <input type="file" id="guideFile" accept="audio/*" style="display:none">
+        </div>`; })();
   $$('#medList .card').forEach(el=>el.onclick=()=>{
     S.med=el.dataset.m;
     const mm=MEDITATIONS.find(x=>x.id===S.med);
@@ -2472,6 +2551,27 @@ function renderMed(){
   const sp=$('#soloPillar'); if(sp) sp.onchange=()=>{S.pillar=sp.value;save();renderMed()};
   const sl=$('#soloLetgo'); if(sl) sl.onchange=()=>{S.letgo=sl.value;save();renderMed()};
   const nb=$('#soloNightBg'); if(nb) nb.onchange=()=>{S.nightBg=nb.value;save();const sel=$('#nightBgSel');if(sel)sel.value=S.nightBg;};
+  /* 音源の取り込み。ファイルはIndexedDBへ、名前だけlocalStorageへ（画面表示用） */
+  const gp=$('#guidePick'), gf=$('#guideFile'), gc=$('#guideClear');
+  if(gp&&gf){
+    gp.onclick=()=>gf.click();
+    gf.onchange=async()=>{
+      const m=MEDITATIONS.find(x=>x.id===S.med); const f=gf.files&&gf.files[0];
+      if(!m||!m.ytGuide||!f) return;
+      gp.textContent='取り込み中…';
+      try{
+        await guidePut(m.ytGuide,f);
+        guideHaveSet(m.ytGuide,f.name);
+      }catch(e){ alert('取り込めませんでした：'+(e&&e.message||e)); }
+      renderMed();
+    };
+  }
+  if(gc){
+    gc.onclick=async()=>{
+      const m=MEDITATIONS.find(x=>x.id===S.med); if(!m||!m.ytGuide) return;
+      await guideDel(m.ytGuide); guideHaveSet(m.ytGuide,null); renderMed();
+    };
+  }
   const mm=MEDITATIONS.find(x=>x.id===S.med)||MEDITATIONS[0];
   // 選べる時間が変わった瞑想（手放しは15分から）で、前に選んだ分数が残っているとどれも選択されずに見えるので、
   // ここで近い方に寄せておく
