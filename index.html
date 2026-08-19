@@ -394,6 +394,8 @@ input[type=range]{width:150px;accent-color:var(--gold)}
     <div class="bar"><i id="barFill"></i></div>
     <div class="ctrl">
       <button id="btnSkip">次へ</button>
+      <button id="btnBack15" class="hidden">◀ 15秒</button>
+      <button id="btnFwd15" class="hidden">15秒 ▶</button>
       <button id="btnPause">一時停止</button>
       <button id="btnBg" aria-pressed="true">🎵 ガヤトリー</button>
       <button id="btnStop">おわる</button>
@@ -3003,6 +3005,7 @@ function nextStage(){
   if(sess.i>=sess.stages.length){ finish(true); return; }
   const st=sess.stages[sess.i];
   sess.st=st; sess.stStart=performance.now(); sess.fired=new Set(); sess.lastPhase=-1; sess.lastCount=-1; sess.lastBlock=-1;
+  guideBtns(); // 誘導音声のステージのときだけ早送りボタンを出す
   if(st.phases) st.cycle=st.phases.reduce((a,p)=>a+p.sec,0);
 
   $('#stageName').textContent=st.name;
@@ -3136,6 +3139,7 @@ function draw(){
 }
 
 function finish(complete){
+  { const b=$("#btnBack15"),f=$("#btnFwd15"); if(b)b.classList.add("hidden"); if(f)f.classList.add("hidden"); }
   clearInterval(timer); cancelAnimationFrame(raf);
   try{ speechSynthesis.cancel(); }catch(e){}
   stopVoiceEl();
@@ -3236,7 +3240,34 @@ $('#btnPause').onclick=()=>{
         if(sess.st.type==='chant'&&chantYtPlayer&&chantYtReady) chantYtPlayer.playVideo(); guideResume();
         if(sess.relaxBg){ if(S.nightBg) relaxStart(S.nightBg); } else bgMusicResume(); }
 };
+
+/* 誘導音声のときだけ出る早送り／巻き戻し。
+   タイマーも同じだけ動かすので、音と残り時間がずれない。
+   ⚠️ YouTube再生時は「動画の中」を動くだけで、広告そのものは飛ばせない
+   （埋め込みAPIに広告の制御が無いため）。端末に音源を取り込めば広告自体が無くなる。 */
+function guideCanSeek(){ return !!(sess && sess.st && sess.st.ytGuide); }
+function guideSeek(delta){
+  if(!sess||!sess.st) return;
+  // 音を動かす
+  if(guideEl){ try{ guideEl.currentTime=Math.max(0,guideEl.currentTime+delta); }catch(e){} }
+  else if(guideYtPlayer&&guideYtReady){
+    try{ guideYtPlayer.seekTo(Math.max(0,guideYtPlayer.getCurrentTime()+delta),true); }catch(e){}
+  }
+  // タイマーも同じだけ動かす（進めたぶんだけ残り時間を減らす）
+  const el=(performance.now()-sess.stStart)/1000;
+  const next=Math.max(0,Math.min(sess.st.sec-1, el+delta));
+  const d=(next-el)*1000;
+  sess.stStart-=d; sess.startedAt-=d;
+}
+function guideBtns(){
+  const on=guideCanSeek();
+  const b=$('#btnBack15'), f=$('#btnFwd15');
+  if(b) b.classList.toggle('hidden',!on);
+  if(f) f.classList.toggle('hidden',!on);
+}
 $('#btnStop').onclick=()=>finish(false);
+$('#btnBack15').onclick=()=>guideSeek(-15);
+$('#btnFwd15').onclick=()=>guideSeek(15);
 $('#btnBg').onclick=()=>{
   if(sess && sess.st && sess.st.type==='chant'){
     // これは本物のユーザータップなので、ミュート解除がブロックされずに確実に音が出る
@@ -3291,7 +3322,7 @@ $('#startMed').onclick=()=>{
     // 誘導は動画側が全部やるので、こちらは読み上げも背景音も鳴らさず、鐘とタイマーだけ回す。
     // 尺は分の選択ではなく動画の実尺に合わせる（途中で切れたり無音が残ったりしないように）。
     const g=YT_GUIDES[m.ytGuide];
-    stage={type:'script',name:m.name,sec:(g?g.sec:sec),tl:[],noCue:true};
+    stage={type:'script',name:m.name,sec:(g?g.sec:sec),tl:[],noCue:true,ytGuide:m.ytGuide};
     guideStart(m.ytGuide);
   } else if(m.quick){
     // 応急処置なので、背景音の読み込みを待たせない
