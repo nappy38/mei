@@ -349,6 +349,14 @@ input[type=range]{width:150px;accent-color:var(--gold)}
     <div class="row"><span>最後に曲を流す</span><button class="sw" id="swMusic" role="switch" aria-checked="true"></button></div>
     <div class="row"><span>セッション中に音楽を小さく流す<br><span style="font-size:11px;color:var(--faint)">手放しはチャンティング、それ以外はガヤトリー</span></span><button class="sw" id="swBgMusic" role="switch" aria-checked="true"></button></div>
     <div class="row"><span>その音楽の音量<br><span style="font-size:11px;color:var(--faint)" id="bgVolNum">14</span></span><input type="range" id="bgVol" min="4" max="70" step="1" value="14"></div>
+    <div class="row" style="display:block">
+      <div><b>曲を端末に置く</b><br><span style="font-size:11px;color:var(--faint)">
+        取り込むとYouTubeを使わなくなり、<b>広告なし・オフライン</b>で鳴ります。<br>
+        音源はこの端末の中だけに入り、アプリには含まれません（公開しても配られません）。<br>
+        未取り込みの曲は、これまでどおりYouTubeから流れます（広告が入ることがあります）。</span></div>
+      <div id="localSlots" style="margin-top:8px"></div>
+      <input type="file" id="slotFile" accept="audio/*" style="display:none">
+    </div>
     <div class="row"><span style="flex:1">声のテスト</span><button class="chip" id="testVoice">再生</button></div>
     <div class="row"><span style="flex:1">コースの時間設定を初期値に戻す</span><button class="chip" id="resetStage">リセット</button></div>
     <p class="note">
@@ -2146,6 +2154,8 @@ function chantPrewarm(){
   });
 }
 async function chantStart(vol){
+  // 端末に取り込んであればそれで鳴らす（広告なし・オフライン可）
+  if(await localStart('chant',{volume:Math.round((vol||.7)*100)})) return;
   if(CHANT_MUSIC.id){
     const v=Math.round((vol||.7)*100);
     if(chantYtPlayer && chantYtReady){ chantYtPlayer.unMute(); chantYtPlayer.setVolume(v); chantYtPlayer.playVideo(); return; }
@@ -2161,6 +2171,7 @@ async function chantStart(vol){
   droneOn(vol);
 }
 function chantFade(vol){
+  if(localOn('chant')){ if(vol<=0) localPause('chant'); else localVol('chant',vol); return; }
   if(vol<=0) chantWantVol=null; // ステージを離れた後に遅れて準備完了しても、鳴り出さないようにする
   if(chantYtPlayer && chantYtReady){
     if(vol<=0) chantYtPlayer.pauseVideo(); else chantYtPlayer.setVolume(Math.round(vol*100));
@@ -2169,6 +2180,7 @@ function chantFade(vol){
   if(drone){ if(vol<=0) droneOff(); else { try{ drone.out.gain.exponentialRampToValueAtTime(vol,audio().currentTime+3);}catch(e){} } }
 }
 function chantStop(){
+  localPause('chant');
   try{ if(chantYtPlayer&&chantYtReady) chantYtPlayer.pauseVideo(); }catch(e){}
   droneOff();
 }
@@ -2273,6 +2285,7 @@ function guideStop(){ guideActive=false; guideStopLocal(); try{ if(guideYtPlayer
 const DEDICATION_MUSIC = { id:'f2cIRYXgJbY', volume:55 };
 let dedYtPlayer=null, dedYtReady=false;
 async function dedicationStart(){
+  if(await localStart('dedication',{volume:DEDICATION_MUSIC.volume})) return;
   if(!DEDICATION_MUSIC.id) return;
   await loadYT();
   if(!(window.YT&&window.YT.Player)) return;
@@ -2286,7 +2299,7 @@ async function dedicationStart(){
     }
   });
 }
-function dedicationStop(){ try{ if(dedYtPlayer&&dedYtReady) dedYtPlayer.pauseVideo(); }catch(e){} }
+function dedicationStop(){ localPause('dedication'); try{ if(dedYtPlayer&&dedYtReady) dedYtPlayer.pauseVideo(); }catch(e){} }
 
 /* 夜の瞑想だけ：始まってすぐ、アラティ（回向・締めの曲と同じもの）を1回だけ流す。
    ループはさせない＝曲の長さ（約4分）で自然に終わり、そのあとは背景音（雨音等）だけが残る。 */
@@ -2320,8 +2333,43 @@ function loadYT(){
 }
 /* 背景音の音量は設定から変えられる。既定の14は「気づかないくらい薄く」の値で、
    動きながら（ヨガ等）だとまず聞こえない。聞きたいときは上げる。 */
+
+/* 端末に置いた音源で鳴らす汎用の再生器 ------------------------------------
+   YouTubeは投稿者が収益化していると広告が入る。瞑想の途中で広告が流れると
+   台無しなので、音源は「アプリに同梱」ではなく「この端末にだけ置く」。
+   取り込んでいないスロットは、これまでどおりYouTube埋め込みに落ちる。
+   ・アプリ（公開されるindex.html）には音源が1バイトも入らない＝配布にならない
+   ・取り込めば広告なし・オフラインで鳴る */
+const LOCAL_SLOTS = [
+  { key:'bg',         name:'背景音楽',       hint:'セッション中ずっと薄く流れる曲' },
+  { key:'chant',      name:'チャンティング', hint:'チャンティングのステージと、手放しの背景' },
+  { key:'dedication', name:'アラティ',       hint:'回向と終わりの曲。夜の瞑想の冒頭にも鳴ります' },
+];
+const localPlayers={};
+async function localStart(key,opt){
+  opt=opt||{};
+  let p=localPlayers[key];
+  if(!p){
+    const blob=await guideGet(key); if(!blob) return false;
+    const url=URL.createObjectURL(blob);
+    const el=new Audio(url); el.preload='auto'; el.loop=(opt.loop!==false);
+    p={el,url}; localPlayers[key]=p;
+    if(opt.start){ try{ el.currentTime=opt.start; }catch(e){} }
+  }
+  p.el.volume=Math.max(0,Math.min(1,(opt.volume==null?100:opt.volume)/100));
+  try{ await p.el.play(); }catch(e){ return false; }
+  return true;
+}
+function localVol(key,v){ const p=localPlayers[key]; if(p) p.el.volume=Math.max(0,Math.min(1,v)); }
+function localPause(key){ const p=localPlayers[key]; if(p){ try{ p.el.pause(); }catch(e){} return true; } return false; }
+function localOn(key){ return !!localPlayers[key]; }
 const bgVol=()=>Math.max(0,Math.min(100, S.bgVol==null?BACKGROUND_MUSIC.volume:+S.bgVol));
 function bgMusicStart(){
+  if(!S.bgMusic) return;
+  // 端末に取り込んであればそれで鳴らす。無ければYouTubeに落ちる
+  localStart('bg',{volume:bgVol()}).then(ok=>{ if(!ok) bgMusicStartYT(); });
+}
+function bgMusicStartYT(){
   if(!S.bgMusic||!BACKGROUND_MUSIC.id) return;
   loadYT().then(()=>{
     if(!window.YT||!window.YT.Player) return; // 読み込めなかった＝オフライン等。諦める
@@ -2340,8 +2388,8 @@ function bgMusicStart(){
     });
   });
 }
-function bgMusicStop(){ try{ if(bgPlayer&&bgReady) bgPlayer.pauseVideo(); }catch(e){} }
-function bgMusicResume(){ try{ if(bgPlayer&&bgReady&&S.bgMusic) bgPlayer.playVideo(); }catch(e){} }
+function bgMusicStop(){ localPause('bg'); try{ if(bgPlayer&&bgReady) bgPlayer.pauseVideo(); }catch(e){} }
+function bgMusicResume(){ if(!S.bgMusic) return; if(localOn('bg')){ localStart('bg',{volume:bgVol()}); return; } try{ if(bgPlayer&&bgReady) bgPlayer.playVideo(); }catch(e){} }
 
 /* ---------- 声 ----------
    音声合成APIが無い環境（アプリ内ブラウザ等）でも、ここで例外が起きて
@@ -3253,7 +3301,48 @@ $('#startMed').onclick=()=>{
   startSession({name:m.name,stages:[stage],noClosing:m.noClosing,softBell:m.softBell,freq720:m.freq720,relaxBg:m.relaxBg});
 };
 
-renderCourse(); renderBreath(); renderMed(); renderLog();
+
+/* 設定画面：曲を端末に取り込む欄。誘導音声（YT_GUIDES）も同じ仕組みなので一緒に並べる */
+let slotPicking=null;
+function renderSlots(){
+  const box=$('#localSlots'); if(!box) return;
+  const rows=LOCAL_SLOTS.concat(
+    Object.keys(YT_GUIDES).map(k=>({key:k,name:(YT_GUIDES[k].label||k)+'（誘導）',hint:YT_GUIDES[k].by||''})));
+  box.innerHTML=rows.map(s=>{
+    const h=guideHave(s.key);
+    return `<div style="padding:8px 0;border-top:1px solid var(--line)">
+      <div style="display:flex;gap:8px;align-items:center;justify-content:space-between">
+        <div style="min-width:0">
+          <div style="font-size:13px">${s.name}</div>
+          <div style="font-size:11px;color:var(--faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+            ${h?('端末にあり：'+h):(s.hint||'未取り込み')}</div>
+        </div>
+        <div style="flex:none;display:flex;gap:6px">
+          <button class="chip" data-slot="${s.key}">${h?'入れ替え':'取り込む'}</button>
+          ${h?`<button class="chip" data-del="${s.key}">消す</button>`:''}
+        </div>
+      </div></div>`;
+  }).join('');
+  const f=$('#slotFile');
+  $$('#localSlots [data-slot]').forEach(b=>b.onclick=()=>{ slotPicking=b.dataset.slot; f.value=''; f.click(); });
+  $$('#localSlots [data-del]').forEach(b=>b.onclick=async()=>{
+    const k=b.dataset.del;
+    await guideDel(k); guideHaveSet(k,null);
+    // 鳴っている途中なら止めて、次からはYouTube側に戻す
+    localPause(k); delete localPlayers[k];
+    renderSlots(); renderMed();
+  });
+  if(f) f.onchange=async()=>{
+    const file=f.files&&f.files[0]; if(!file||!slotPicking) return;
+    const k=slotPicking; slotPicking=null;
+    try{
+      await guidePut(k,file); guideHaveSet(k,file.name);
+      localPause(k); delete localPlayers[k]; // 入れ替えたら古い方を捨てる
+    }catch(e){ alert('取り込めませんでした：'+(e&&e.message||e)); }
+    renderSlots(); renderMed();
+  };
+}
+renderCourse(); renderBreath(); renderMed(); renderLog(); renderSlots();
 // アプリを開いた時点でYouTube APIの読み込みだけ先に始めておく（チャンティングはコースの最初のステージで
 // 待ち時間がないため、実際に「はじめる」を押すまで待つと最も重い初回読み込みに間に合わないことがある）
 loadYT();
