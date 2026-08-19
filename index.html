@@ -355,7 +355,7 @@ input[type=range]{width:150px;accent-color:var(--gold)}
         音源はこの端末の中だけに入り、アプリには含まれません（公開しても配られません）。<br>
         未取り込みの曲は、これまでどおりYouTubeから流れます（広告が入ることがあります）。</span></div>
       <div id="localSlots" style="margin-top:8px"></div>
-      <input type="file" id="slotFile" accept="audio/*" style="display:none">
+      <input type="file" id="slotFile" style="display:none">
     </div>
     <div class="row"><span style="flex:1">声のテスト</span><button class="chip" id="testVoice">再生</button></div>
     <div class="row"><span style="flex:1">コースの時間設定を初期値に戻す</span><button class="chip" id="resetStage">リセット</button></div>
@@ -2587,7 +2587,7 @@ function renderMed(){
           <div style="color:var(--dim);font-size:11px;margin-top:6px">
             取り込んだ音源はこの端末の中だけに保存されます。アプリには含まれないので、公開しても配られません。
           </div>
-          <input type="file" id="guideFile" accept="audio/*" style="display:none">
+          <input type="file" id="guideFile" style="display:none">
         </div>`; })();
   $$('#medList .card').forEach(el=>el.onclick=()=>{
     S.med=el.dataset.m;
@@ -2610,7 +2610,7 @@ function renderMed(){
       try{
         await guidePut(m.ytGuide,f);
         guideHaveSet(m.ytGuide,f.name);
-      }catch(e){ alert('取り込めませんでした：'+(e&&e.message||e)); }
+      }catch(e){ alert('取り込めませんでした：'+(e&&e.message||e)+'\n\nファイル：'+f.name+'（'+Math.round(f.size/1048576)+'MB）'); }
       renderMed();
     };
   }
@@ -3338,7 +3338,7 @@ function renderSlots(){
     try{
       await guidePut(k,file); guideHaveSet(k,file.name);
       localPause(k); delete localPlayers[k]; // 入れ替えたら古い方を捨てる
-    }catch(e){ alert('取り込めませんでした：'+(e&&e.message||e)); }
+    }catch(e){ alert('取り込めませんでした：'+(e&&e.message||e)+'\n\nファイル：'+file.name+'（'+Math.round(file.size/1048576)+'MB）\n端末の空き容量か、ブラウザの保存制限に当たっている可能性があります。'); }
     renderSlots(); renderMed();
   };
 }
