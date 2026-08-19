@@ -394,6 +394,7 @@ input[type=range]{width:150px;accent-color:var(--gold)}
 
   <div id="bgYt" style="position:fixed;width:2px;height:2px;overflow:hidden;opacity:0;pointer-events:none"></div>
   <div id="chantYt" style="position:fixed;width:2px;height:2px;overflow:hidden;opacity:0;pointer-events:none"></div>
+  <div id="guideYt" style="position:fixed;width:2px;height:2px;overflow:hidden;opacity:0;pointer-events:none"></div>
   <div id="dedYt" style="position:fixed;width:2px;height:2px;overflow:hidden;opacity:0;pointer-events:none"></div>
 
   <!-- 手放しのあとだけ出る。上げるためではなく、動いたことを見るためのもの -->
@@ -1213,6 +1214,11 @@ const MEDITATIONS = [
         'そこに、いるだけ。','逃げなければ、減ります。','理由は、考えません。','まだ残っていても、かまいません。']},
       close:[{at:-12,text:'ひと呼吸して、戻ります。'}]
     }},
+  /* 自分で読み上げるのではなく、他の人の誘導音声をそのまま流す。動画をその場で埋め込むので
+     音源ファイルは持たない＝公開しても配布にならない。そのかわりネットが要る。
+     尺は動画の長さで決まる（分の選択は出さない）。終わりの曲は重ねない。 */
+  { id:'ytsurrender', name:'手放し・明け渡し（誘導音声）', mins:[8], ytGuide:'surrender', noClosing:true, quiet:true,
+    desc:'mika霊視CHの誘導をそのまま流します。「もっと任せていい」から入って、肩を撫でながら「あなたは十分よくやってる」で終わる7分37秒。自分の声ではなく人の声で誘導されたい日に。ネット接続が必要です。' },
   /* 記録タブの「やること／やってもらうこと」の音声版。あちらが紙、こちらが座ってやる方。
      手放しの瞑想が「感情を感じきる」のに対して、こちらは「引き受けた状態そのものを降ろす」。
      中身は解決しない。解決しないまま降ろせる、というのがこの練習の主張なので、
@@ -1637,6 +1643,104 @@ const MEDITATIONS = [
         {at:-40,text:'いちばん濃かったところまで、戻ります。'},
         {at:-22,text:'明日は、そこから一歩だけ外へ出ます。'},
         {at:-10,text:'ゆっくり、目を開けます。'},
+      ]
+    }},
+
+  /* 維摩経・不思議品。方丈に三万二千の獅子座が入る。部屋も座も大きさを変えていない、というのが要。
+     「大きい小さいは、どこにあったか」を体で問うため、最後に自分の手に負えない問題を持ってこさせる。 */
+  { id:'yuima_hojo', name:'維摩の部屋（方丈）', mins:[10,15,20],
+    desc:'維摩詰の十畳ほどの部屋に、部屋より大きな獅子の座が三万二千も入ってしまう。部屋は広がらず、座も小さくならない。手に負えないと思っている問題は、この部屋より大きいですか。維摩経・不思議品。',
+    script:{
+      open:[
+        {at:0, text:'楽な姿勢で、目を閉じます。'},
+        {at:16,text:'今日は、維摩詰の部屋に入ります。'},
+        {at:38,text:'十畳ほどの、何もない小さな部屋です。'},
+      ],
+      loop:{every:46, fit:true, minGap:24, texts:[
+        '見舞いの一行が入ってきます。文殊菩薩と、大勢の菩薩と、弟子たち。',
+        '座るものが、ありません。',
+        '維摩が、はるか遠い仏の国から、獅子の座を借りてきます。',
+        '巨大な座が、ひとつ運ばれてきます。部屋よりも、大きい。',
+        'それが、部屋に入ります。',
+        '二つ目が入ります。三つ目が入ります。',
+        '三万二千の座が、その部屋に、全部入ってしまいました。',
+        '部屋は、広がっていません。座も、小さくなっていません。',
+        'どちらも、そのままです。',
+        '大きい、小さいは、どこにありましたか。',
+        '手に負えないと思っている問題を、ひとつ思い浮かべます。',
+        'それは、この部屋より大きいですか。',
+      ]},
+      close:[
+        {at:-40,text:'部屋の中に、まだいます。'},
+        {at:-22,text:'大きさが決まっていない場所の感じを、持って帰ります。'},
+        {at:-10,text:'ゆっくり、目を開けます。'},
+      ]
+    }},
+
+  /* 維摩経・観衆生品。天女の花は、分別のあるところにだけくっつく。
+     払おうとするほど取れない＝手放しの構造そのものなので、最後は「払うのをやめる」に着地させる。 */
+  { id:'yuima_tennyo', name:'天女散華', mins:[10,15,20],
+    desc:'天女が花を散らすと、菩薩には触れずに落ち、弟子たちにはくっついて離れない。払おうとするほど取れない。花は分け隔てをせず、分けているのはこちら側。維摩経・観衆生品。',
+    script:{
+      open:[
+        {at:0, text:'楽な姿勢で、目を閉じます。'},
+        {at:16,text:'今日は、維摩詰の部屋にいる、天女の場面に入ります。'},
+        {at:40,text:'話を聞いている人たちの上に、天女が花を散らします。'},
+      ],
+      loop:{every:46, fit:true, minGap:24, texts:[
+        '花が、降ってきます。',
+        '菩薩たちの体に触れた花は、そのまま落ちていきます。',
+        '弟子たちの体に触れた花は、くっついて、離れません。',
+        '弟子たちは、力ずくで払い落とそうとします。取れません。',
+        '天女が聞きます。どうして、払うのですか。',
+        '花は、分け隔てをしません。分けているのは、こちらです。',
+        'これは似合わない、これはふさわしくない。そう思ったところに、くっつきます。',
+        '自分にくっついているものを、ひとつ探します。',
+        'それは、自分にふさわしくないと思っているものではありませんか。',
+        '払おうとするほど、離れません。',
+        '払うのを、やめてみます。',
+        '花は、もともと、ただ落ちていくものでした。',
+      ]},
+      close:[
+        {at:-36,text:'ついたままでも、かまいません。'},
+        {at:-10,text:'ゆっくり、目を開けます。'},
+      ]
+    }},
+
+  /* 維摩経・入不二法門品。菩薩たちが順に不二を語り、文殊が「語れないことが不二だ」と言い、
+     維摩は黙る。「維摩の一黙、雷の如し」。
+     この台本の本体は最後の沈黙なので、close の先頭を -300 に置いて、
+     終わりの5分を意図的に無音にしてある（loop は closeStart の8秒前で止まる）。
+     語り続ける他の台本とは、そこだけ作りが違う。減らさないこと。 */
+  { id:'yuima_moku', name:'維摩の一黙', mins:[15,20,30],
+    desc:'不二とは何か。菩薩たちが順に答え、文殊菩薩が「語ることも示すことも知ることもできない、それが不二だ」と答える。最後に維摩が答える番になり、維摩はただ黙る。※終わりの5分は誘導が入りません。沈黙がこの瞑想の本体です。維摩経・入不二法門品。',
+    script:{
+      open:[
+        {at:0, text:'楽な姿勢で、目を閉じます。'},
+        {at:18,text:'今日は、維摩経の、不二の法門の場面に入ります。'},
+        {at:44,text:'街に住む維摩詰という在家の人が、病に伏せています。見舞いに来た菩薩たちが、順に語っています。'},
+        {at:72,text:'問いは、ひとつ。二つに分かれていないとは、どういうことか。'},
+      ],
+      loop:{every:48, fit:true, minGap:26, texts:[
+        'ひとりが言います。生と滅を、二つに見ない。それが不二です。',
+        'ひとりが言います。我と、我がものを、二つに見ない。',
+        'ひとりが言います。汚れと、清らかさを、二つに見ない。',
+        'ひとりが言います。動くことと、動かないこと。',
+        'ひとりが言います。善と悪。罪と、福。',
+        'どれも、正しく聞こえます。そして、どれも、言葉です。',
+        '最後に、文殊菩薩が言います。',
+        'すべてについて、語ることも、示すことも、知ることもできない。問いも答えも離れている。それが、不二に入ることです。',
+        'そして文殊は、維摩に問い返します。',
+        '私たちは、めいめい語りました。あなたにとって、不二の法門とは何ですか。',
+        '維摩は、答えません。',
+        '何も、言いません。',
+        '言葉では説けない、と「言う」ことも、まだ言葉でした。',
+        'そこに、います。',
+      ]},
+      close:[
+        {at:-300,text:'ここから先は、言葉がありません。'},
+        {at:-40, text:'その沈黙が、答えでした。'},
+        {at:-12, text:'ゆっくり、目を開けます。'},
       ]
     }},
 
@@ -2069,6 +2173,40 @@ function chantStop(){
   droneOff();
 }
 
+
+/* 外部の誘導音声（YouTube埋め込み） ------------------------------------
+   自分の台本を読み上げるのではなく、他の人の誘導をそのまま流すモード。
+   音源ファイルは一切持たない（埋め込みなので配布にならず、著作権的にきれい）。
+   そのぶんネット接続が必須で、圏内でないと成立しない＝オフラインでは選ばない。
+   足すときは YT_GUIDES に1行増やして、MEDITATIONS に ytGuide:'キー' の項目を作る。 */
+const YT_GUIDES = {
+  surrender: { id:'_w_qhBEy85U', start:878, sec:457,
+               by:'mika霊視CH', label:'手放し・明け渡し' }
+};
+let guideYtPlayer=null, guideYtReady=false, guideYtKey=null, guideActive=false;
+async function guideStart(key){
+  const g=YT_GUIDES[key]; if(!g) return;
+  await loadYT();
+  if(!(window.YT&&window.YT.Player)) return; // 圏外・ブロック時は無音のまま座る（鐘とタイマーは動く）
+  if(guideYtPlayer && guideYtKey===key){
+    guideActive=true;
+    if(guideYtReady){ guideYtPlayer.seekTo(g.start,true); guideYtPlayer.setVolume(100); guideYtPlayer.playVideo(); }
+    return;
+  }
+  guideYtKey=key; guideYtReady=false; guideActive=true;
+  guideYtPlayer=new YT.Player('guideYt',{
+    height:'2',width:'2',videoId:g.id,
+    playerVars:{autoplay:1,controls:0,disablekb:1,fs:0,modestbranding:1,rel:0,playsinline:1,start:g.start},
+    events:{
+      // 準備が終わる前に瞑想をやめていた場合は鳴らさない（読み込みが遅い回線で置き去りにならないように）
+      onReady:e=>{ guideYtReady=true; if(!guideActive) return; e.target.setVolume(100); e.target.playVideo(); },
+      onError:()=>{ guideYtPlayer=null; guideYtReady=false; guideYtKey=null; }
+    }
+  });
+}
+function guidePause(){ if(!guideActive) return; try{ if(guideYtPlayer&&guideYtReady) guideYtPlayer.pauseVideo(); }catch(e){} }
+function guideResume(){ if(!guideActive) return; try{ if(guideYtPlayer&&guideYtReady) guideYtPlayer.playVideo(); }catch(e){} }
+function guideStop(){ guideActive=false; try{ if(guideYtPlayer&&guideYtReady) guideYtPlayer.pauseVideo(); }catch(e){} }
 /* 回向で流す曲（YouTube）。ネット接続が必要。オフラインの時は静かに諦める（回向は短いので無音でも成立する） */
 const DEDICATION_MUSIC = { id:'f2cIRYXgJbY', volume:55 };
 let dedYtPlayer=null, dedYtReady=false;
@@ -2290,6 +2428,8 @@ const MED_PACKS = [
       'birthdeath','sanpokai','order',            // 第2章 自由自在に見る
       'rinjo','hannya','fiction','chusho'] },     // 第3章 臨場感を維持する
   { name:'華厳', ids:['nyuhokkai','kegon'] },
+  /* 維摩経は「方丈→天女→一黙」の順。だんだん言葉が減っていって、最後に無音で終わる並びにしてある */
+  { name:'維摩経', ids:['yuima_hojo','yuima_tennyo','yuima_moku'] },
 ];
 function medGroups(){
   const packed=new Set(MED_PACKS.flatMap(p=>p.ids));
@@ -2852,6 +2992,7 @@ function finish(complete){
   try{ speechSynthesis.cancel(); }catch(e){}
   stopVoiceEl();
   chantStop();
+  guideStop();
   dedicationStop();
   bgMusicStop();
   relaxStop();
@@ -2941,10 +3082,10 @@ $('#btnPause').onclick=()=>{
   if(!sess)return;
   paused=!paused; $('#btnPause').textContent=paused?'つづける':'一時停止';
   if(paused){ sess.pAt=performance.now(); try{speechSynthesis.cancel()}catch(e){} stopVoiceEl();
-    if(chantYtPlayer&&chantYtReady) chantYtPlayer.pauseVideo();
+    if(chantYtPlayer&&chantYtReady) chantYtPlayer.pauseVideo(); guidePause();
     if(sess.relaxBg) relaxStop(); else bgMusicStop(); }
   else{ const d=performance.now()-sess.pAt; sess.stStart+=d; sess.startedAt+=d;
-        if(sess.st.type==='chant'&&chantYtPlayer&&chantYtReady) chantYtPlayer.playVideo();
+        if(sess.st.type==='chant'&&chantYtPlayer&&chantYtReady) chantYtPlayer.playVideo(); guideResume();
         if(sess.relaxBg){ if(S.nightBg) relaxStart(S.nightBg); } else bgMusicResume(); }
 };
 $('#btnStop').onclick=()=>finish(false);
@@ -2998,6 +3139,12 @@ $('#startMed').onclick=()=>{
     stage={type:'script',name:g.name,sec,tl:tlFromScript(g.script,sec,g.id),letgo:g.id,bgSound:'chant'};
   } else if(m.dedication){
     stage={type:'script',name:m.name,sec,tl:tlFromScript(DEDICATION,sec,'dedication'),dedTrack:true,noCue:true};
+  } else if(m.ytGuide){
+    // 誘導は動画側が全部やるので、こちらは読み上げも背景音も鳴らさず、鐘とタイマーだけ回す。
+    // 尺は分の選択ではなく動画の実尺に合わせる（途中で切れたり無音が残ったりしないように）。
+    const g=YT_GUIDES[m.ytGuide];
+    stage={type:'script',name:m.name,sec:(g?g.sec:sec),tl:[],noCue:true};
+    guideStart(m.ytGuide);
   } else if(m.quick){
     // 応急処置なので、背景音の読み込みを待たせない
     stage={type:'script',name:m.name,sec,tl:tlFromScript(m.script,sec,m.id)};
