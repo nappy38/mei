@@ -1,6 +1,6 @@
 // オフライン対応：一度開ければ、次からは電波が無くても開ける。
 // 同じ場所（オリジン）のファイルだけキャッシュし、YouTube等は素通しする（オフラインでは単に鳴らないだけ）。
-const CACHE = 'meditation-app-v8';
+const CACHE = 'meditation-app-v9';
 const CORE = ['./', './index.html', './icon.png', './manifest.json', './decor_leaves.png'];
 // index.html（本体）だけはネット優先にする。開発中に更新しても、電波さえあれば
 // 毎回すぐ最新版が反映されるように（キャッシュ優先だと、更新の反映が1回遅れてしまうため）。
