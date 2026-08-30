@@ -2479,18 +2479,17 @@ async function dedicationStart(){
 }
 function dedicationStop(){ localPause('dedication'); try{ if(dedYtPlayer&&dedYtReady) dedYtPlayer.pauseVideo(); }catch(e){} }
 
-/* 夜の瞑想だけ：始まってすぐ、アラティ（回向・締めの曲と同じもの）を1回だけ流す。
-   ループはさせない＝曲の長さ（約4分）で自然に終わり、そのあとは背景音（雨音等）だけが残る。 */
+/* 夜の瞑想：始まってすぐアラティを流す。
+   【2026-08-30 変更（この夜専用版のみ）】本体は「1回だけ流して、あとは背景音に任せる」作りだが、
+   背景音を「なし」にしていると曲が終わった時点から最後まで無音になってしまう。
+   そこで dedicationStart() に載せ替えた。これで
+     ・端末に取り込んだアラティがあればそれを使う（オフラインで鳴る・広告なし）
+     ・端末に無ければYouTubeに落ちる
+     ・どちらもループする
+     ・終了時の dedicationStop() でちゃんと止まる（旧実装は自前のプレーヤーを持っていて止まらなかった）
+   が全部そろう。 */
 function nightIntroStart(){
-  if(!DEDICATION_MUSIC.id) return;
-  loadYT().then(()=>{
-    if(!(window.YT&&window.YT.Player)) return;
-    new YT.Player('dedYt',{
-      height:'2',width:'2',videoId:DEDICATION_MUSIC.id,
-      playerVars:{autoplay:1,controls:0,disablekb:1,fs:0,modestbranding:1,rel:0,playsinline:1},
-      events:{ onReady:e=>{ e.target.setVolume(DEDICATION_MUSIC.volume); e.target.playVideo(); } }
-    });
-  });
+  dedicationStart();
 }
 
 /* ---------- 背景音（ガヤトリー・マントラ／YouTube） ----------
