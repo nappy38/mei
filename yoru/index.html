@@ -1,0 +1,3657 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="瞑想">
+<meta name="theme-color" content="#F7F1E3">
+<link rel="icon" href="icon.png" type="image/png">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="manifest" href="manifest.json">
+<title>夜の瞑想</title>
+<style>
+:root{
+  --bg:#F7F1E3; --bg2:#ECE2C8;
+  --ink:#3A3226; --dim:#8B8270; --faint:#B3A990;
+  --gold:#7C8F63; --gold-soft:#94A879;
+  --line:rgba(58,50,38,.14);
+  /* Android には Hiragino / Yu Mincho が無いので、Noto Serif CJK 系を先に試す */
+  --serif:"Hiragino Mincho ProN","Yu Mincho",YuMincho,"Noto Serif JP","Noto Serif CJK JP","Source Han Serif JP",serif;
+  --sans:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP","Noto Sans CJK JP",sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+  background-image:radial-gradient(120% 80% at 50% -10%, #FBF6E9 0%, var(--bg2) 45%, var(--bg) 100%);
+  background-attachment:fixed;-webkit-font-smoothing:antialiased;overscroll-behavior:none}
+button{font-family:inherit;color:inherit;background:none;border:none;padding:0;cursor:pointer}
+.wrap{max-width:520px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 16px) 18px calc(env(safe-area-inset-bottom) + 30px)}
+
+.head{display:flex;align-items:center;justify-content:space-between;margin:2px 0 16px}
+.head h1{font-family:var(--serif);font-style:italic;font-size:15px;font-weight:400;letter-spacing:.03em;margin:0 10px 0 0;color:var(--gold-soft);flex:1;text-align:center}
+.head button{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);color:var(--dim);font-size:14px;flex:0 0 auto}
+
+.deco{text-align:center;margin:-6px 0 20px}
+.deco img{width:100%;max-width:300px;height:auto;opacity:.85}
+
+.tabs{display:flex;gap:5px;background:rgba(58,50,38,.05);border-radius:12px;padding:4px;margin-bottom:20px}
+.tabs button{flex:1;padding:9px 0;font-size:12.5px;border-radius:9px;color:var(--dim);transition:.2s;letter-spacing:.04em}
+.tabs button[aria-selected=true]{background:rgba(58,50,38,.08);color:var(--ink)}
+
+.card{display:block;width:100%;text-align:left;border:1px solid var(--line);border-radius:14px;
+  padding:14px 16px;margin-bottom:10px;background:rgba(58,50,38,.035);transition:.15s}
+.card[aria-selected=true]{border-color:var(--gold);background:rgba(124,143,99,.12)}
+.card .t{font-family:var(--serif);font-size:16px;letter-spacing:.06em}
+.card .d{font-size:12px;color:var(--dim);margin-top:4px;line-height:1.7}
+.card .n{font-size:11px;color:var(--faint);margin-top:6px;font-variant-numeric:tabular-nums}
+
+/* コースのステージ */
+.stage{border:1px solid var(--line);border-radius:14px;padding:13px 15px;margin-bottom:9px;background:rgba(58,50,38,.035)}
+.stage.off{opacity:.42}
+.stage .sh{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.stage .sn{font-family:var(--serif);font-size:15.5px;letter-spacing:.06em}
+.stage .sd{font-size:11.5px;color:var(--faint);line-height:1.7;margin-top:5px}
+.stage .mins{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.mini{border:1px solid var(--line);border-radius:99px;padding:5px 11px;font-size:11.5px;color:var(--dim);font-variant-numeric:tabular-nums}
+.mini[aria-selected=true]{border-color:var(--gold);color:var(--ink);background:rgba(124,143,99,.16)}
+.stage select{margin-top:9px;width:100%;max-width:none}
+.total{text-align:center;font-size:12px;color:var(--faint);letter-spacing:.16em;margin-top:16px;font-variant-numeric:tabular-nums}
+
+.label{font-size:11px;letter-spacing:.2em;color:var(--faint);margin:22px 0 8px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);border-radius:999px;padding:8px 15px;font-size:13px;color:var(--dim);font-variant-numeric:tabular-nums}
+.chip[aria-selected=true]{border-color:var(--gold);color:var(--ink);background:rgba(124,143,99,.14)}
+
+.start{width:100%;margin-top:22px;padding:17px;border-radius:14px;font-family:var(--serif);
+  font-size:16px;letter-spacing:.3em;color:#24291c;background:linear-gradient(180deg,var(--gold-soft),var(--gold))}
+
+.row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 2px;border-bottom:1px solid var(--line);font-size:13px}
+.row:last-of-type{border-bottom:none}
+select,input[type=number]{background:rgba(58,50,38,.05);border:1px solid var(--line);color:var(--ink);
+  border-radius:9px;padding:8px 10px;font-size:13px;font-family:inherit;max-width:190px}
+input[type=range]{width:150px;accent-color:var(--gold)}
+.sw{width:48px;height:28px;border-radius:99px;background:rgba(58,50,38,.16);position:relative;flex:0 0 auto;transition:.2s}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:99px;background:var(--ink);transition:.2s}
+.sw[aria-checked=true]{background:var(--gold)}
+.sw[aria-checked=true]::after{left:23px;background:#24291c}
+.custom{display:flex;gap:8px;margin-top:10px}
+.custom label{flex:1;font-size:11px;color:var(--faint);text-align:center}
+.custom input{width:100%;max-width:none;text-align:center;margin-top:5px}
+
+/* 実行画面 */
+#run{position:fixed;inset:0;z-index:50;display:none;flex-direction:column;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  background:radial-gradient(90% 60% at 50% 40%, #F3ECDA 0%, #E6D9B4 70%);
+  padding:calc(env(safe-area-inset-top) + 16px) 22px calc(env(safe-area-inset-bottom) + 24px)}
+#run.on{display:flex}
+/* 内容が画面より長くなっても切れないよう、中央寄せは margin:auto で行う（justify-content:centerだとスクロールできず上が隠れるため） */
+.runmain,.endmusic{margin:auto}
+#run.dim{background:#000}
+#run.dim .orb{opacity:.35}
+#stageName{font-size:11px;letter-spacing:.34em;color:var(--faint);margin-bottom:18px;text-align:center}
+.orb-wrap{position:relative;width:min(70vw,280px);height:min(70vw,280px);display:grid;place-items:center}
+.orb-wrap.hide{display:none}
+.orb{position:absolute;inset:0;border-radius:50%;
+  background:radial-gradient(circle at 50% 45%, rgba(148,168,121,.42), rgba(124,143,99,.14) 55%, transparent 72%);
+  border:1px solid rgba(124,143,99,.35);transform:scale(.55);will-change:transform}
+.orb.ring{inset:-16px;border-color:rgba(124,143,99,.16);background:none;transform:scale(1)!important}
+.phase{position:relative;text-align:center}
+.phase.hide{display:none}
+.phase .p{font-family:var(--serif);font-size:24px;letter-spacing:.28em;color:var(--gold-soft)}
+.phase .c{font-size:38px;font-weight:200;font-variant-numeric:tabular-nums;margin-top:6px;color:rgba(58,50,38,.55)}
+#guideText{font-family:var(--serif);font-size:17.5px;line-height:2.15;text-align:center;
+  max-width:20em;color:#4A4232;transition:opacity .9s;opacity:0;margin-top:6px}
+#guideText.show{opacity:1}
+#guideText.big{font-size:19px;line-height:2.2}
+.meta{margin-top:24px;font-size:12.5px;color:var(--faint);font-variant-numeric:tabular-nums;letter-spacing:.12em}
+.bar{width:min(76vw,290px);height:1px;background:rgba(58,50,38,.15);margin-top:13px;position:relative;overflow:hidden}
+.bar i{position:absolute;inset:0 auto 0 0;background:var(--gold);width:0;transition:width .25s linear}
+.ctrl{display:flex;gap:11px;margin-top:28px;flex-wrap:wrap;justify-content:center}
+.ctrl button{border:1px solid var(--line);border-radius:99px;padding:11px 24px;font-size:12.5px;color:var(--dim);letter-spacing:.1em}
+.ctrl button[aria-pressed=false]{opacity:.45}
+.ctrl button[aria-pressed=true]{border-color:var(--gold);color:var(--ink)}
+
+.stats{display:flex;gap:10px;margin-bottom:18px}
+.stat{flex:1;border:1px solid var(--line);border-radius:14px;padding:14px 8px;text-align:center}
+.stat b{display:block;font-size:25px;font-weight:300;font-variant-numeric:tabular-nums;color:var(--gold-soft)}
+.stat span{font-size:10px;color:var(--faint);letter-spacing:.14em}
+.log{font-size:12px;color:var(--dim);padding:9px 2px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;font-variant-numeric:tabular-nums}
+.pil{display:flex;align-items:center;gap:11px;padding:9px 2px;font-size:12.5px;border-bottom:1px solid var(--line)}
+.pil .pn{width:5.4em;color:var(--dim);flex:0 0 auto}
+.pil .pb{flex:1;height:4px;border-radius:99px;background:rgba(58,50,38,.12);overflow:hidden}
+.pil .pb i{display:block;height:100%;background:var(--gold);border-radius:99px}
+.pil .pc{width:3em;text-align:right;color:var(--faint);font-variant-numeric:tabular-nums;flex:0 0 auto}
+.pil.next .pn{color:var(--gold-soft)}
+.pil .pg{width:2.4em;color:var(--faint);font-size:10px;flex:0 0 auto}
+.note{font-size:11px;color:var(--faint);line-height:1.85;margin-top:20px}
+
+.runmain{display:flex;flex-direction:column;align-items:center}
+.endmusic{display:flex;flex-direction:column;align-items:center;width:100%;max-width:420px}
+.endmusic .emT{font-family:var(--serif);font-size:19px;letter-spacing:.3em;color:var(--gold-soft);margin-bottom:22px}
+#ytBox{width:100%;border-radius:12px;overflow:hidden;background:rgba(58,50,38,.05);min-height:60px}
+#ytBox iframe{display:block;width:100%;border:0}
+.endmusic a{margin-top:16px;font-size:12.5px;color:var(--dim);letter-spacing:.06em}
+.endmusic #btnClose{margin-top:24px;border:1px solid var(--line);border-radius:99px;padding:12px 32px;font-size:13px;color:var(--dim);letter-spacing:.24em}
+
+/* 手放しのあとに出る「いまの高さ」。階段なので、上が受容・下が無気力になるよう上から並べる */
+.levelask{margin:auto;display:flex;flex-direction:column;align-items:center;width:100%;max-width:420px}
+.levelask .lvNote{font-size:12px;color:var(--dim);line-height:1.9;text-align:center;margin-bottom:20px}
+.lvGrid{display:flex;flex-direction:column;gap:7px;width:100%}
+.lvGrid button{border:1px solid var(--line);border-radius:12px;padding:12px 16px;font-size:13.5px;color:var(--dim);
+  display:flex;justify-content:space-between;align-items:baseline;gap:10px;background:rgba(58,50,38,.035)}
+.lvGrid button .lvS{font-size:11px;color:var(--faint);text-align:right}
+.levelask #lvSkip{margin-top:20px;border:1px solid var(--line);border-radius:99px;padding:11px 28px;font-size:12px;color:var(--faint);letter-spacing:.2em}
+.lvChart{display:flex;align-items:flex-end;gap:3px;height:54px;margin:14px 0 2px}
+.lvChart i{flex:1;background:var(--gold);border-radius:2px 2px 0 0;opacity:.7;min-height:2px;position:relative}
+.lvChart i.last{opacity:1}
+/* その瞑想の3日以内に共時性が書かれた日は、棒の上に点をつける */
+.lvChart i.sync::after{content:"";position:absolute;top:-8px;left:50%;transform:translateX(-50%);
+  width:5px;height:5px;border-radius:50%;background:var(--gold-soft)}
+.dreamBox{display:flex;gap:8px;align-items:flex-end;margin-bottom:6px}
+.dreamBox textarea{flex:1;background:rgba(58,50,38,.05);border:1px solid var(--line);color:var(--ink);
+  border-radius:10px;padding:10px 12px;font-size:13px;font-family:inherit;line-height:1.8;resize:vertical}
+.dreamBox .chip{flex:0 0 auto}
+.dream{font-size:12px;color:var(--dim);padding:9px 2px;border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:flex-start}
+.dream .dd{flex:0 0 auto;color:var(--faint);font-variant-numeric:tabular-nums}
+.dream .dt{flex:1;line-height:1.8;white-space:pre-wrap}
+.dream .dx{flex:0 0 auto;color:var(--faint);font-size:14px;padding:0 2px}
+/* やること／やってもらうこと。紙を二列に折って、重い方を右へ渡す練習をそのまま画面にした。
+   一覧を「読み返す場所」ではなく「毎日いじる場所」にしたいので、項目そのものを押せる的にしてある。 */
+.hoBox{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px}
+.hoCol{min-width:0}
+.hoHd{font-size:11px;color:var(--faint);letter-spacing:.08em;padding:0 2px 6px;border-bottom:1px solid var(--line)}
+.hoItem{display:flex;gap:6px;align-items:flex-start;font-size:12px;line-height:1.7;color:var(--dim);
+  padding:9px 2px;border-bottom:1px solid var(--line);cursor:pointer}
+.hoItem .ht{flex:1;white-space:pre-wrap;word-break:break-word}
+.hoItem .hm{flex:0 0 auto;color:var(--faint);font-size:13px}
+.hoItem .hx{flex:0 0 auto;color:var(--faint);font-size:13px;padding:0 2px;background:none;border:0;font-family:inherit;cursor:pointer}
+.hoCol.over .hoItem{color:var(--faint)}
+.hoEmpty{font-size:11px;color:var(--faint);padding:9px 2px;line-height:1.8}
+/* 渡すときだけ、ほんの少し動く。ここが「一瞬だけ軽くなる」に当たる場所なので、音も達成表示も付けない */
+@keyframes hoSlideR{to{transform:translateX(16px);opacity:0}}
+@keyframes hoSlideL{to{transform:translateX(-16px);opacity:0}}
+.hoItem.movingR{animation:hoSlideR .26s ease forwards}
+.hoItem.movingL{animation:hoSlideL .26s ease forwards}
+.hidden{display:none}
+
+/* オープニング：アイコンがぼわっと浮かび上がってから、本体が現れる。
+   JSのタイマーに頼らず、CSSアニメーションだけで自動的に終わるようにしてある
+   （何らかの理由でJSが動かなくても、画面がふさがれたままにはならない）。 */
+@keyframes splashImgBloom{
+  0%{opacity:0;transform:scale(.82);filter:blur(6px)}
+  35%{opacity:1;transform:scale(1);filter:blur(0)}
+  75%{opacity:1;transform:scale(1);filter:blur(0)}
+  100%{opacity:0;transform:scale(1);filter:blur(0)}
+}
+@keyframes splashBgFade{
+  0%{opacity:1;pointer-events:auto}
+  75%{opacity:1;pointer-events:auto}
+  100%{opacity:0;pointer-events:none}
+}
+#splash{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;
+  background:var(--bg);animation:splashBgFade 2.6s ease forwards}
+#splash img{width:38vw;max-width:190px;border-radius:24px;
+  animation:splashImgBloom 2.6s cubic-bezier(.2,.7,.3,1) forwards}
+
+#gate{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;
+  background:var(--bg);background-image:radial-gradient(120% 80% at 50% -10%, #FBF6E9 0%, var(--bg2) 45%, var(--bg) 100%);
+  padding:20px}
+#gate.hidden{display:none}
+.gateBox{max-width:280px;width:100%;text-align:center}
+.gateBox img{width:72px;height:72px;border-radius:16px;margin-bottom:18px}
+.gateBox p{color:var(--dim);font-size:14px;margin:0 0 14px}
+.gateBox input{width:100%;text-align:center;font-size:16px;padding:12px;border-radius:10px;
+  border:1px solid var(--line);background:rgba(255,255,255,.5);color:var(--ink);margin-bottom:12px;letter-spacing:.1em}
+.gateBox button{width:100%;padding:12px;border-radius:10px;background:var(--gold);color:#fff;font-size:14px}
+#gateErr{color:#B3604D;margin-top:10px}
+#gateErr.hidden{display:none}
+</style>
+</head>
+<body>
+
+<div id="gate">
+  <div class="gateBox">
+    <img src="icon.png" alt="">
+    <p>合言葉を入れてください</p>
+    <input id="gateInput" type="password" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <button id="gateBtn">入る</button>
+    <p id="gateErr" class="hidden">違うみたい、もう一度</p>
+  </div>
+</div>
+
+<div id="splash"><img src="icon.png" alt=""></div>
+
+<div class="wrap">
+  <div class="head">
+    <h1>Live the life you love</h1>
+    <button id="gear" aria-label="設定">⚙</button>
+  </div>
+  <div class="deco"><img src="decor_leaves.png" alt=""></div>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" data-tab="course" aria-selected="true">コース</button>
+    <button role="tab" data-tab="breath" aria-selected="false">呼吸法</button>
+    <button role="tab" data-tab="med" aria-selected="false">単発</button>
+    <button role="tab" data-tab="log" aria-selected="false">記録</button>
+  </div>
+
+  <!-- コース -->
+  <section id="tab-course">
+    <div class="label" style="margin-top:0">合計から決める</div>
+    <div class="chips" id="coursePresets"></div>
+    <div class="label">ステージ</div>
+    <div id="stageList"></div>
+    <div class="total" id="courseTotal"></div>
+    <button class="start" id="startCourse">は じ め る</button>
+    <p class="note">
+      分析的瞑想は「聞く瞑想」ではなく「考える瞑想」です。問いが読み上げられたあとは長い沈黙になります。
+      その沈黙が本体なので、言葉を待たずに、自分の頭で考えてください。
+      考えて何か腑に落ちたら、分析をやめて、その感じにただ留まります（止住）。
+    </p>
+  </section>
+
+  <!-- 呼吸法 -->
+  <section id="tab-breath" class="hidden">
+    <div id="breathList"></div>
+    <div id="customBox" class="hidden">
+      <div class="custom">
+        <label>吸う<input type="number" id="cIn" min="1" max="20" value="4"></label>
+        <label>止める<input type="number" id="cH1" min="0" max="20" value="0"></label>
+        <label>吐く<input type="number" id="cOut" min="1" max="20" value="6"></label>
+        <label>止める<input type="number" id="cH2" min="0" max="20" value="0"></label>
+      </div>
+    </div>
+    <div class="label">時間</div>
+    <div class="chips" id="breathMin"></div>
+    <button class="start" id="startBreath">は じ め る</button>
+  </section>
+
+  <!-- 単発瞑想 -->
+  <section id="tab-med" class="hidden">
+    <div id="medList"></div>
+    <div class="label">時間</div>
+    <div class="chips" id="medMin"></div>
+    <button class="start" id="startMed">は じ め る</button>
+  </section>
+
+  <!-- 記録 -->
+  <section id="tab-log" class="hidden">
+    <div class="stats">
+      <div class="stat"><b id="stStreak">0</b><span>連続日</span></div>
+      <div class="stat"><b id="stWeek">0</b><span>今週の分</span></div>
+      <div class="stat"><b id="stTotal">0</b><span>累計の分</span></div>
+    </div>
+    <div class="label">やること／やってもらうこと</div>
+    <div class="dreamBox">
+      <textarea id="hoIn" rows="2" placeholder="いまやらなきゃと思っていること。超えたいこと、直したいこと。"></textarea>
+      <button class="chip" id="hoSave">くわえる</button>
+    </div>
+    <div class="hoBox">
+      <div class="hoCol"><div class="hoHd">やること</div><div id="hoTodo"></div></div>
+      <div class="hoCol over"><div class="hoHd">やってもらうこと</div><div id="hoOver"></div></div>
+    </div>
+    <p class="note">
+      「自分がやらなきゃ」と思った瞬間に、それは背負う荷物になります。重いのは課題そのものではなく、
+      背負っているという状態のほうです。だから解決しなくても、降ろした時点で軽くなります。
+      手放しの瞑想と同じことを、紙の上でやります。<br><br>
+      左に書いたら、ひとつずつ声に出して読みます。読んで胸が重くなったものを押すと、右へ移ります。
+      押した瞬間にほんの少しだけ軽くなれば、それで足りています。一分後にまた重くなっても構いません。
+      思い出したときに押すだけでいいので、毎日やらなくていいです。右の項目を押すと左へ戻ります。<br><br>
+      これは気持ちの持ち方の練習であって、治療ではありません。つらい症状があるときは医療機関で診てもらってください。
+    </p>
+    <div class="label">夢</div>
+    <div class="dreamBox">
+      <textarea id="dreamIn" rows="2" placeholder="覚えている断片だけでいい。ひとことでも。"></textarea>
+      <button class="chip" id="dreamSave">のこす</button>
+    </div>
+    <div id="dreamList"></div>
+    <div class="label">共時性（意味のある偶然）</div>
+    <div class="dreamBox">
+      <textarea id="syncIn" rows="2" placeholder="考えていた人から連絡が来た、同じ言葉に三回出会った、探していたものが向こうから来た——など。"></textarea>
+      <button class="chip" id="syncSave">のこす</button>
+    </div>
+    <div id="syncList"></div>
+    <div class="label">手放し・いまの高さ</div>
+    <div id="lvChart"></div>
+    <div class="label">喜びの八本柱</div>
+    <div id="pillarGrid"></div>
+    <div class="label">履歴</div>
+    <div id="logList"></div>
+    <button class="card" id="clearLog" style="margin-top:20px;text-align:center;color:var(--faint);font-size:12px">記録を消す</button>
+  </section>
+
+  <!-- 設定 -->
+  <section id="tab-set" class="hidden">
+    <div class="row"><span>音声ガイド</span><button class="sw" id="swVoice" role="switch" aria-checked="true"></button></div>
+    <div class="row"><span>呼吸法での声（吸って・吐いて等）</span><button class="sw" id="swBreathVoice" role="switch" aria-checked="false"></button></div>
+    <div class="row"><span>声</span><select id="voiceSel"></select></div>
+    <div class="row"><span>話す速さ</span><input type="range" id="rate" min="0.6" max="1.2" step="0.05" value="0.85"></div>
+    <div class="row"><span>声の高さ</span><input type="range" id="pitch" min="0.6" max="1.2" step="0.05" value="0.95"></div>
+    <div class="row"><span>鐘</span><button class="sw" id="swBell" role="switch" aria-checked="true"></button></div>
+    <div class="row"><span>チャンティングを瞑想中も薄く流す</span><button class="sw" id="swDrone" role="switch" aria-checked="false"></button></div>
+    <div class="row"><span>呼吸の合図音</span><button class="sw" id="swCue" role="switch" aria-checked="true"></button></div>
+    <div class="row"><span>秒数を数える</span><button class="sw" id="swCount" role="switch" aria-checked="false"></button></div>
+    <div class="row"><span>瞑想中に呼吸の声（英語）<br><span style="font-size:11px;color:var(--faint)">2分半ごとに Breathe in / Breathe out。誘導の合間にだけ入ります</span></span><button class="sw" id="swEnBreath" role="switch" aria-checked="true"></button></div>
+    <div class="row"><span>連続日を数える<br><span style="font-size:11px;color:var(--faint)">切ると記録タブの連続日が「—」になります</span></span><button class="sw" id="swStreak" role="switch" aria-checked="true"></button></div>
+    <div class="row"><span>画面を暗くする</span><button class="sw" id="swDim" role="switch" aria-checked="false"></button></div>
+    <div class="row"><span>夜の瞑想の背景音</span>
+      <select id="nightBgSel">
+        <option value="rain">雨音</option>
+        <option value="wave">波の音</option>
+        <option value="pink">ピンクノイズ</option>
+        <option value="brown">ブラウンノイズ</option>
+        <option value="">なし</option>
+      </select>
+    </div>
+    <div class="row"><span>オフライン保存</span><span id="offlineStatus" style="font-size:12px;color:var(--dim)">確認中…</span></div>
+    <div class="row"><span>最後に曲を流す</span><button class="sw" id="swMusic" role="switch" aria-checked="true"></button></div>
+    <div class="row"><span>セッション中に音楽を小さく流す<br><span style="font-size:11px;color:var(--faint)">手放しはチャンティング、それ以外はガヤトリー</span></span><button class="sw" id="swBgMusic" role="switch" aria-checked="true"></button></div>
+    <div class="row"><span>その音楽の音量<br><span style="font-size:11px;color:var(--faint)" id="bgVolNum">14</span></span><input type="range" id="bgVol" min="4" max="70" step="1" value="14"></div>
+    <div class="row" style="display:block">
+      <div><b>曲を端末に置く</b><br><span style="font-size:11px;color:var(--faint)">
+        取り込むとYouTubeを使わなくなり、<b>広告なし・オフライン</b>で鳴ります。<br>
+        音源はこの端末の中だけに入り、アプリには含まれません（公開しても配られません）。<br>
+        未取り込みの曲は、これまでどおりYouTubeから流れます（広告が入ることがあります）。</span></div>
+      <div id="localSlots" style="margin-top:8px"></div>
+      <input type="file" id="slotFile" style="display:none">
+    </div>
+    <div class="row"><span style="flex:1">声のテスト</span><button class="chip" id="testVoice">再生</button></div>
+    <div class="row"><span style="flex:1">コースの時間設定を初期値に戻す</span><button class="chip" id="resetStage">リセット</button></div>
+    <p class="note">
+      <b>iPhone で使うとき</b><br>
+      ・<b>マナーモードは解除</b>してください（消音スイッチで音が出ないことがあります）。<br>
+      ・「はじめる」を押した瞬間に音声が有効になります。押さずに待っていても喋りません。<br>
+      ・セッション中は画面が消えないようにしています。それでもロックされると音声は止まります。<br>
+      ・共有ボタン →「ホーム画面に追加」でアプリのように使えます。<br><br>
+      <b>Android で使うとき</b><br>
+      ・声は Google の日本語音声になります（iPhone とは別の声）。上の「声」で選び直してください。<br>
+      ・声が一覧に出ないときは、端末の設定で「Google テキスト読み上げ」と日本語の音声データが入っているか確認してください。<br>
+      ・端末に明朝体が入っていないと、ゴシック体で表示されます（動作に影響はありません）。<br>
+      ・Chrome のメニュー →「ホーム画面に追加」。<br><br>
+      <b>チャンティング</b><br>
+      鐘のあとにYouTube動画が流れます（<b>ネット接続が必要</b>）。読み込めない場合は、WebAudio で合成した倍音ドローン（読経ではなく持続音）が代わりに鳴ります。<br><br>
+      <b>ガヤトリー・マントラ（背景音）</b><br>
+      セッション中ずっと、小さな音量でYouTube動画を流します（曲を変えるには、コード内の <b>BACKGROUND_MUSIC</b> のIDを差し替えてください）。<b>ネット接続が必要</b>で、瞑想本体（声・チャンティング・記録）はオフラインでも動きますが、これだけは通信を使います。うるさく感じたら設定でオフにできます。<br><br>
+      <b>自分の声で読み上げる</b><br>
+      このファイルと同じ場所に <b>voice</b> フォルダを作り、決まった名前の mp3 を置くと、その行だけ合成音声の代わりに自分の声が再生されます。録っていない行はそのまま合成音声が読みます。ファイル名の一覧は「録音リスト.txt」を見てください。
+    </p>
+  </section>
+</div>
+
+<!-- 実行画面 -->
+<div id="run">
+  <div class="runmain" id="runMain">
+    <div id="stageName"></div>
+    <div class="orb-wrap" id="orbWrap">
+      <div class="orb ring"></div>
+      <div class="orb" id="orb"></div>
+      <div class="phase" id="phaseBox"><div class="p" id="phaseName"></div><div class="c" id="phaseCount"></div></div>
+    </div>
+    <div id="guideText"></div>
+    <div class="meta" id="remain">00:00</div>
+    <div class="bar"><i id="barFill"></i></div>
+    <div class="ctrl">
+      <button id="btnSkip">次へ</button>
+      <button id="btnBack15" class="hidden">◀ 15秒</button>
+      <button id="btnFwd15" class="hidden">15秒 ▶</button>
+      <button id="btnPause">一時停止</button>
+      <button id="btnBg" aria-pressed="true">🎵 ガヤトリー</button>
+      <button id="btnStop">おわる</button>
+    </div>
+  </div>
+
+  <div id="bgYt" style="position:fixed;width:2px;height:2px;overflow:hidden;opacity:0;pointer-events:none"></div>
+  <div id="chantYt" style="position:fixed;width:2px;height:2px;overflow:hidden;opacity:0;pointer-events:none"></div>
+  <div id="guideYt" style="position:fixed;width:2px;height:2px;overflow:hidden;opacity:0;pointer-events:none"></div>
+  <div id="dedYt" style="position:fixed;width:2px;height:2px;overflow:hidden;opacity:0;pointer-events:none"></div>
+
+  <!-- 手放しのあとだけ出る。上げるためではなく、動いたことを見るためのもの -->
+  <div class="levelask hidden" id="levelAsk">
+    <div class="emT">い ま の 高 さ</div>
+    <div class="lvNote">終わった時点で、どのあたりにいましたか。<br>上を選ぼうとしなくていいです。正直なところを。</div>
+    <div class="lvGrid" id="lvGrid"></div>
+    <button id="lvSkip">記録しない</button>
+  </div>
+
+  <div class="endmusic hidden" id="endMusic">
+    <div class="emT">おわりました</div>
+    <div id="ytBox"></div>
+    <a id="ytRadio" target="_blank" rel="noopener noreferrer">YouTubeで続きを聴く（ラジオ）</a>
+    <button id="btnClose">と じ る</button>
+  </div>
+</div>
+
+<script>
+/* 合言葉ゲート：知り合いだけに配るための簡易的な入口。本格的なセキュリティではなく、
+   通りすがりの人がURLを踏んでも中身が見えないようにする程度のもの。 */
+(function(){
+  const GATE_PASS = 'god';
+  const GATE_KEY = 'medapp.gate.ok';
+  const gate = document.getElementById('gate');
+  if(localStorage.getItem(GATE_KEY)==='1'){ gate.classList.add('hidden'); return; }
+  const input = document.getElementById('gateInput');
+  const err = document.getElementById('gateErr');
+  const tryEnter = ()=>{
+    if(input.value.trim().toLowerCase()===GATE_PASS){
+      localStorage.setItem(GATE_KEY,'1');
+      gate.classList.add('hidden');
+    } else {
+      err.classList.remove('hidden');
+      input.value=''; input.focus();
+    }
+  };
+  document.getElementById('gateBtn').onclick = tryEnter;
+  input.addEventListener('keydown', e=>{ if(e.key==='Enter') tryEnter(); });
+})();
+/* ============================================================================
+   ▼▼▼ 中身（誘導文）はこのブロックだけ書き換えれば変えられます ▼▼▼
+   そのまま YouTube 瞑想動画・リトリートの台本に転用できる形にしてあります。
+     open  : 開始からの秒数（at）で読み上げ
+     loop  : 中盤で every 秒ごとに順に読み上げ（時間を伸ばしても崩れない）
+     close : 終了からの秒数（マイナス）で読み上げ
+   ============================================================================ */
+
+/* ---- 呼吸法 ---- */
+const BREATHING = [
+  { id:'reset46', name:'リセット呼吸（既定）',
+    desc:'生理的ため息を5回 → 腹式呼吸4-6 → そのまま自然な呼吸を観察。選んだ時間に合わせて配分が自動で変わります。',
+    blocks:[
+      { kind:'cycle', reps:5, label:'生理的ため息',
+        phases:[
+          {k:'in', say:'吸って',        vid:'sigh_in1', label:'吸う',   sec:1.3},
+          {k:'in', say:'もう一度、少し吸って', vid:'sigh_in2', label:'もう一度', sec:0.7},
+          {k:'out',say:'長く、口から吐いて',   vid:'sigh_out', label:'長く吐く', sec:6},
+        ]},
+      { kind:'cycle', frac:0.4, label:'腹式呼吸 4-6',
+        phases:[
+          {k:'in', say:'おなかに吸って',   vid:'hara_in',  label:'吸う', sec:4},
+          {k:'out',say:'ゆっくり吐いて', vid:'out_slow', label:'吐く', sec:6},
+        ]},
+      { kind:'free', frac:0.6, label:'自然な呼吸',
+        sayStart:'呼吸をコントロールするのをやめます。自然に、まかせます。', vid:'natural_start' },
+    ]},
+  /* ネドじゅん『左脳さん、右脳さん。』の「エレベーターの呼吸」。
+     意識をあたまからおなかへ降ろすための呼吸。深呼吸＋エレベーターの床のイメージで、
+     思考が止まり、意識がおなかに降りる、という組み立て。
+     鼻から吸う＝床が下がる／口から吐く＝床が上がる（本の図のとおり）。
+     ⚠️【深さのルール・混ぜないこと】これは「おなかの中まで」で意識を止める。それより下には降ろさない。
+        足の下の地面まで降ろすのは「せせらぎ」のほう（MEDITATIONS id:'stream' 参照）。
+        この境界は本が明示しているので、台本で足や地面に触れないこと。
+     文章は原文を写さず、このアプリ用に書き下ろした。 */
+  { id:'elevator', name:'エレベーターの呼吸',
+    desc:'意識をあたまからおなかへ降ろすための呼吸。鼻から吸うとエレベーターの床が下がり、口から吐くと床が上がる。この上下を繰り返すうちに、思考が止まって意識がおなかに降ります。頭で考えごとが止まらない日、思考が上に張りついている感じがする日に。※意識はおなかの中までで止めます。それより下には降ろしません（足の下の地面まで降ろすのは瞑想タブの「せせらぎ」のほう）。ネドじゅん『左脳さん、右脳さん。』より（文章はこのアプリ用に書き下ろし）。',
+    phases:[
+      {k:'in', say:'鼻から吸って。エレベーターの床が、下がります', vid:'elev_in',  label:'吸う（床が下がる）', sec:4},
+      {k:'out',say:'口から吐いて。床が、上がります',               vid:'elev_out', label:'吐く（床が上がる）', sec:6},
+    ]},
+  { id:'46', name:'腹式呼吸 4-6', desc:'吐く息を長く。お腹を膨らませて吸い、しぼませて吐く。瞑想の前に心を静めるならこれ。',
+    phases:[{k:'in',say:'おなかに吸って',vid:'hara_in',label:'吸う',sec:4},{k:'out',say:'ゆっくり吐いて',vid:'out_slow',label:'吐く',sec:6}] },
+  { id:'55', name:'コヒーレント呼吸 5-5', desc:'1分間に6回。心拍のゆらぎが整いやすい。長く続けるのに向く。',
+    phases:[{k:'in',say:'吸って',vid:'in',label:'吸う',sec:5},{k:'out',say:'吐いて',vid:'out',label:'吐く',sec:5}] },
+  { id:'r21', name:'2対1の呼吸（ヒマラヤ）', desc:'吐く息を、吸う息の倍の長さにする。ヒマラヤの伝統で瞑想の前に置かれる。息を止めず、途切れさせず、音を立てないのが要点。苦しければ3-6から。',
+    phases:[{k:'in',say:'静かに吸って',vid:'sr_in',label:'吸う',sec:4},{k:'out',say:'その倍、ゆっくり吐いて',vid:'sr_out',label:'吐く',sec:8}] },
+  { id:'478', name:'4-7-8 呼吸', desc:'吸う4・止める7・吐く8。鎮静に傾く。夜・寝る前に。',
+    phases:[{k:'in',say:'吸って',vid:'in',label:'吸う',sec:4},{k:'hold',say:'止めて',vid:'hold',label:'止める',sec:7},{k:'out',say:'吐いて',vid:'out',label:'吐く',sec:8}] },
+  { id:'box', name:'ボックス呼吸 4-4-4-4', desc:'正方形の呼吸。頭が散らかっている時、集中に入る前に。',
+    phases:[{k:'in',say:'吸って',vid:'in',label:'吸う',sec:4},{k:'hold',say:'止めて',vid:'hold',label:'止める',sec:4},{k:'out',say:'吐いて',vid:'out',label:'吐く',sec:4},{k:'hold',say:'止めて',vid:'hold',label:'止める',sec:4}] },
+  { id:'nadi', name:'片鼻呼吸（ナーディ・ショーダナ）', desc:'右手で鼻を交互に押さえる。左右のバランスを整えるヨーガの調気法。',
+    phases:[{k:'in',say:'左の鼻から吸って',vid:'nadi_left_in',label:'左から吸う',sec:4},{k:'hold',say:'止めて',vid:'hold',label:'止める',sec:4},
+            {k:'out',say:'右の鼻から吐いて',vid:'nadi_right_out',label:'右から吐く',sec:6},{k:'in',say:'右の鼻から吸って',vid:'nadi_right_in',label:'右から吸う',sec:4},
+            {k:'hold',say:'止めて',vid:'hold',label:'止める',sec:4},{k:'out',say:'左の鼻から吐いて',vid:'nadi_left_out',label:'左から吐く',sec:6}] },
+  { id:'sudarshan', name:'スダルシャン・クリヤ（簡易版）',
+    desc:'ウジャイ → バストリカ → オーム → 速さを変える循環呼吸 → 休息。ストレスや抑うつへの効果の検証が進んでいる調気法です。※本来の完全な形は対面の講座で伝えられるものなので、これは公開されている要素だけで組んだ簡易版です。※速く強い呼吸を含みます。妊娠中・高血圧・心疾患・てんかん・緑内障のある方、体調の悪い日は行わないでください。めまいや手のしびれを感じたらすぐ自然な呼吸に戻します。持病がある場合は医師に相談を。10分以上で選ぶと配分が安定します。',
+    blocks:[
+      { kind:'cycle', frac:0.30, label:'ウジャイ呼吸',
+        phases:[
+          {k:'in', say:'喉を細くして、静かに吸って',   vid:'sk_uj_in',  label:'吸う', sec:5},
+          {k:'out',say:'同じ細さのまま、ゆっくり吐いて', vid:'sk_uj_out', label:'吐く', sec:7},
+        ]},
+      { kind:'cycle', reps:1, label:'ここから速い呼吸',
+        phases:[{k:'hold', say:'ここから速い呼吸に入ります。苦しければ、いつでもやめて大丈夫です。', vid:'sk_bhas_intro', label:'準備', sec:8}]},
+      { kind:'cycle', reps:15, label:'バストリカ 1',
+        phases:[{k:'in',say:'',label:'吸う',sec:1},{k:'out',say:'',label:'吐く',sec:1}]},
+      { kind:'cycle', reps:1, label:'休息',
+        phases:[{k:'hold', say:'自然な呼吸に戻します。体の感じを見ます。', vid:'sk_rest1', label:'休息', sec:12}]},
+      { kind:'cycle', reps:15, label:'バストリカ 2',
+        phases:[{k:'in',say:'',label:'吸う',sec:1},{k:'out',say:'',label:'吐く',sec:1}]},
+      { kind:'cycle', reps:1, label:'休息',
+        phases:[{k:'hold', say:'そのまま、変化を感じます。', vid:'sk_rest2', label:'休息', sec:12}]},
+      { kind:'cycle', reps:15, label:'バストリカ 3',
+        phases:[{k:'in',say:'',label:'吸う',sec:1},{k:'out',say:'',label:'吐く',sec:1}]},
+      { kind:'cycle', reps:1, label:'休息',
+        phases:[{k:'hold', say:'ゆっくり、息を整えます。', vid:'sk_rest3', label:'休息', sec:15}]},
+      { kind:'cycle', reps:3, label:'オーム',
+        phases:[
+          {k:'in', say:'吸って', vid:'in',     label:'吸う',   sec:3},
+          {k:'out',say:'オーム', vid:'sk_om',  label:'唱える', sec:12},
+        ]},
+      { kind:'cycle', frac:0.22, label:'循環呼吸（ゆっくり）',
+        phases:[{k:'in',say:'吸って',vid:'in',label:'吸う',sec:4},{k:'out',say:'吐いて',vid:'out',label:'吐く',sec:4}]},
+      { kind:'cycle', frac:0.16, label:'循環呼吸（中）',
+        phases:[{k:'in',say:'',label:'吸う',sec:2},{k:'out',say:'',label:'吐く',sec:2}]},
+      { kind:'cycle', frac:0.12, label:'循環呼吸（速い）',
+        phases:[{k:'in',say:'',label:'吸う',sec:1},{k:'out',say:'',label:'吐く',sec:1}]},
+      { kind:'free', frac:0.20, label:'休息',
+        sayStart:'呼吸を、まかせます。できれば横になって、何もしないで、しばらく休みます。', vid:'sk_final_rest' },
+    ]},
+  { id:'custom', name:'カスタム', desc:'秒数を自分で決める。設定した値は保存されます。', custom:true },
+];
+
+/* ---- 分析的瞑想のテーマ（ダライ・ラマの言う「観察修」）----
+   分析 → 何か腑に落ちたら、分析をやめてそこに留まる（止住修）。
+   問いのあとの沈黙が本体なので、文は短く、間を長くとっています。            */
+const ANALYTICAL = [
+  { id:'impermanence', name:'無常', short:'すべては、とどまらない',
+    intro:'今日は、無常について考えます。信じるのではなく、確かめます。',
+    qs:[
+      '今、目の前にあるもので、十年前と同じ形のものがありますか。',
+      '自分の体は、今この瞬間も変わり続けています。それを、頭ではなく、感覚として確かめられますか。',
+      '一年前の自分の悩みを思い出してください。それは、今もありますか。',
+      '今いちばん重く感じている問題も、同じ法則の中にあります。それは、いつまで続きますか。',
+      '変わらないでほしいと思っているものは、何ですか。',
+      'それが変わることを、なぜ、こわいと感じるのでしょうか。',
+      'もしすべてが変わらないとしたら、何が起きなくなりますか。成長も、回復も、出会いも。',
+      '無常は、失うことだけを意味していますか。',
+    ],
+    settle:'考えるのをやめます。今、無常だと分かったその感じに、ただ留まります。' },
+
+  { id:'death', name:'死の想念', short:'必ず来る。いつかは分からない',
+    intro:'今日は、死について考えます。暗くするためではなく、今日を正確に見るためです。',
+    qs:[
+      '自分がいつか死ぬことは、確実ですか。例外を、ひとつでも挙げられますか。',
+      'それが、いつ来るかは、分かりますか。',
+      'もし今日が最後の一日だとしたら、今日やろうとしていたことのうち、どれが残りますか。',
+      'そのとき、集めたもの、地位、評価は、どこまでついてきますか。',
+      '何が、そのとき自分を支えるでしょうか。',
+      '死を思うと、こわくなりますか。それとも、はっきりしますか。',
+      'こわいのは、死そのものですか。それとも、まだやっていないことがある、ということですか。',
+      'では、まだやっていないことは、何ですか。',
+    ],
+    settle:'考えるのをやめます。いま浮かんだ、はっきりした感じに、ただ留まります。' },
+
+  { id:'suffering', name:'苦の正体', short:'何が本当に自分を苦しめているのか',
+    intro:'今日は、自分の苦しみを、原因までたどって見ていきます。',
+    qs:[
+      '最近いちばん心が乱れたのは、いつでしたか。場面を思い出してください。',
+      'そのとき、何が起きましたか。事実だけを、言葉にしてみてください。',
+      'その事実に、自分はどんな意味を足しましたか。',
+      '苦しかったのは、事実のほうですか。足した意味のほうですか。',
+      '同じ出来事を、まったく気にしない人はいますか。いるとしたら、その差は何ですか。',
+      '自分は、何を守ろうとしていましたか。',
+      'それは、本当に守る価値のあるものでしたか。',
+      '怒りは、そのとき自分を助けましたか。',
+    ],
+    settle:'考えるのをやめます。原因が見えたその静けさに、ただ留まります。' },
+
+  { id:'equality', name:'自他は等しい', short:'望みは、みな同じ',
+    intro:'今日は、自分と他人が等しいということを、理屈で確かめます。',
+    qs:[
+      '自分は、幸せになりたいですか。苦しみたくないですか。',
+      '目の前を歩いている知らない人も、同じことを望んでいますか。',
+      '苦手なあの人も、同じことを望んでいますか。',
+      '望みが同じなら、自分の望みだけが特別に重い理由は、どこにありますか。',
+      '「自分だから」以外の理由を、ひとつでも挙げられますか。',
+      '十人の痛みと、一人の痛み。どちらが重いですか。その一人が自分でも、答えは同じですか。',
+      '自分を大事にすることと、他人を大事にすること。ぶつかると思っているのは、なぜですか。',
+      '自分のことばかり考えていたとき、自分は幸せでしたか。',
+    ],
+    settle:'考えるのをやめます。等しさが分かったその感じに、ただ留まります。' },
+
+  { id:'tonglen', name:'自他交換（トンレン）', short:'吸って引き受け、吐いて与える',
+    intro:'今日は、自分と他人を入れ替えます。呼吸と一緒に行います。',
+    qs:[
+      '苦しんでいる人を、ひとり思い浮かべてください。',
+      '息を吸いながら、その人の苦しみを、黒い煙として自分の中に引き受けます。',
+      '息を吐きながら、自分の持っている安らぎを、白い光としてその人に送ります。',
+      'それを、しばらく続けます。',
+      '引き受けることに、抵抗がありますか。その抵抗は、何を守っていますか。',
+      '対象を広げます。同じ苦しみを持つ人が、他にも大勢います。',
+      'その全員の苦しみを吸い、全員に安らぎを送ります。',
+      '最後に、自分自身も、その全員の中に入れます。',
+    ],
+    settle:'呼吸を、ふつうに戻します。開いた感じに、ただ留まります。' },
+
+  { id:'emptiness', name:'「私」を探す', short:'縁起と空',
+    intro:'今日は、いつも守っているこの「私」を、探しにいきます。',
+    qs:[
+      '「私」と言うとき、それはどこを指していますか。',
+      '体が私ですか。では、手を失っても私は残りますか。',
+      '心が私ですか。では、さっきの考えと今の考え、どちらが私ですか。',
+      '名前が私ですか。役割が私ですか。それは、いつから私になりましたか。',
+      '部分をひとつずつ取り除いていったとき、最後に残る「私そのもの」は、ありますか。',
+      '見つからないのに、なぜ、これほど強く「私」を守ろうとするのでしょうか。',
+      '私が見つからないことは、私がいないという意味ですか。それとも、そういう形では存在していない、という意味ですか。',
+      '固まった「私」がゆるむと、何が起きますか。',
+    ],
+    settle:'考えるのをやめます。探しても見つからなかった、その広がりに、ただ留まります。' },
+
+  { id:'precious', name:'この一日', short:'なぜ今日は貴いのか',
+    intro:'今日は、今この条件のありがたさを、確かめます。',
+    qs:[
+      '今、考えることのできる頭が、ありますか。',
+      '今日、命の危険にさらされていますか。',
+      '学ぼうと思えば学べる自由が、ありますか。',
+      'それは、世界の何割の人が持っているものでしょうか。',
+      'この条件は、いつまで続きますか。',
+      'この条件を、自分は何に使っていますか。',
+      '一年後、今日をどう思い出したいですか。',
+      'そのために、今日できる小さなことは、何ですか。',
+    ],
+    settle:'考えるのをやめます。今日という条件の重みに、ただ留まります。' },
+];
+
+/* ---- 台本（慈悲・回向・単発瞑想）---- */
+const METTA = {
+  open:[
+    {at:0,  text:'姿勢はそのままで、胸のあたりに意識を置きます。'},
+    {at:16, text:'まず、自分自身に向けます。'},
+  ],
+  loop:{ every:32, fit:true, minGap:16, texts:[
+    '私が、安らかでありますように。',
+    '私の悩み、苦しみが、なくなりますように。',
+    '私の願いが、かなえられますように。',
+    '次に、大切な人を思い浮かべます。',
+    'その人が、安らかでありますように。',
+    'その人の悩み、苦しみが、なくなりますように。',
+    '次に、名前も知らない、すれ違うだけの人を思い浮かべます。',
+    'その人も、安らかでありますように。',
+    '次に、苦手な人、嫌いな人を思い浮かべます。',
+    'その人も、安らかでありますように。無理に好きにならなくてかまいません。',
+    'その人にも、その人の理由があります。',
+    '生きとし生けるものが、安らかでありますように。',
+    '生きとし生けるものの願いが、かなえられますように。',
+  ]},
+  close:[{at:-24,text:'その気持ちを、胸のあたりに置いておきます。'}]
+};
+
+/* 喜びの瞑想＝随喜（ムディター）。四無量心の三番目。嫉妬の解毒剤。 */
+const MUDITA = {
+  open:[
+    {at:0,  text:'胸のあたりを、少しゆるめます。'},
+    {at:16, text:'ここからは、人の幸せを、自分の喜びにします。'},
+  ],
+  loop:{ every:32, fit:true, minGap:16, texts:[
+    '最近いいことがあった人を、ひとり思い浮かべます。',
+    'その人が、うれしそうにしているところを見ます。',
+    'よかったね、と心の中で言います。',
+    'その喜びが、自分の胸まで届くのを、待ちます。',
+    '次に、自分よりも恵まれている人を思い浮かべます。',
+    'うらやましさが出てきたら、それを責めません。ただ、気づきます。',
+    'その人の幸せは、自分から何かを奪いましたか。',
+    'その人が幸せでいることを、よろこべますか。',
+    '次に、自分がした小さな善いことを、ひとつ思い出します。',
+    'それに、けちをつけずに、よろこびます。',
+    '今この瞬間にも、世界のどこかで、誰かが救われています。',
+    'その全部を、よろこびます。',
+    '喜びは、分けても、減りません。',
+  ]},
+  close:[{at:-22,text:'その温かさを、胸に残しておきます。'}]
+};
+
+/* 喜びの八本柱。『よろこびの書』（ダライ・ラマ／デズモンド・ツツ）の枠組みに基づく。
+   心の四本＝視点・謙虚さ・ユーモア・受容／心臓の四本＝許し・感謝・思いやり・寛大さ。
+   ※本文は引用ではなく全文オリジナル。外に出すときは出典を明示すること。 */
+const JOY_PILLARS = [
+  { id:'perspective', name:'視点', short:'引いて見る', group:'心',
+    open:[{at:0,text:'胸のあたりを、ゆるめます。'},{at:16,text:'今日の柱は、視点です。'}],
+    loop:{every:30,fit:true,minGap:16,texts:[
+      '今いちばん気になっていることを、ひとつ思い浮かべます。',
+      'それを、自分の目から見ています。とても大きく見えます。',
+      '少し離れて、部屋の天井から見おろしてみます。',
+      'さらに離れて、街の上から。国の上から。',
+      'その高さから見ても、まだ同じ大きさですか。',
+      '同じことで悩んでいる人が、他に何人いるでしょうか。',
+      '自分だけが背負っている、と思っていましたか。',
+      '一年後の自分が、今の自分を見ています。何と言っていますか。',
+      '見え方が変わると、出来事そのものも変わりましたか。',
+    ]},
+    close:[{at:-22,text:'その広さを、胸に残しておきます。'}] },
+
+  { id:'humility', name:'謙虚さ', short:'自分は特別ではない', group:'心',
+    open:[{at:0,text:'姿勢を整えます。'},{at:16,text:'今日の柱は、謙虚さです。'}],
+    loop:{every:30,fit:true,minGap:16,texts:[
+      '今日、自分が口にした食べものを思い出します。',
+      'それを作った人、運んだ人、売った人。何人が関わっていますか。',
+      '着ているもの、使っている道具も、同じです。',
+      '自分ひとりで作れたものが、ひとつでもありますか。',
+      '自分の得意なことを、ひとつ思い浮かべます。',
+      'それは、誰かに教わったものではありませんか。',
+      '自分を低く見る必要はありません。ただ、特別でもありません。',
+      '特別でなくていい、と思うと、何が軽くなりますか。',
+      '肩の力が、少し抜けるのを待ちます。',
+    ]},
+    close:[{at:-22,text:'その軽さを、胸に残しておきます。'}] },
+
+  { id:'humor', name:'ユーモア', short:'自分を笑える', group:'心',
+    open:[{at:0,text:'口元の力を抜きます。'},{at:16,text:'今日の柱は、ユーモアです。'}],
+    loop:{every:30,fit:true,minGap:16,texts:[
+      '最近、自分がむきになっていた場面を思い出します。',
+      'そのときの自分の顔を、外から見てみます。',
+      'ずいぶん真剣な顔をしていますね。',
+      'それは、笑ってはいけないことですか。',
+      '自分の失敗を、ひとつ思い出します。',
+      '十年後、それを笑って話している自分を想像します。',
+      '笑えるなら、今笑ってしまってもかまいません。',
+      '自分を笑うことは、自分を下げることではありません。',
+      '深刻さが少しゆるむと、まわりに何が起きますか。',
+    ]},
+    close:[{at:-22,text:'そのゆるみを、そのままにしておきます。'}] },
+
+  { id:'acceptance', name:'受容', short:'抵抗をやめる', group:'心',
+    open:[{at:0,text:'呼吸を、深くします。'},{at:16,text:'今日の柱は、受容です。'}],
+    loop:{every:30,fit:true,minGap:16,texts:[
+      '今、変えられないことを、ひとつ思い浮かべます。',
+      '「そうであってほしくない」と、心が言っています。',
+      'その抵抗は、体のどこにありますか。',
+      '抵抗している間、状況は変わりましたか。',
+      '受け入れることは、あきらめることではありません。',
+      '受け入れることは、それでいいと認めることでもありません。',
+      'ただ、それが今そこにある、と見ることです。',
+      '抵抗をやめたとき、はじめて使えるようになる力があります。',
+      'その力で、何ができますか。',
+    ]},
+    close:[{at:-22,text:'抵抗のゆるんだ感じに、留まります。'}] },
+
+  { id:'forgiveness', name:'許し', short:'自分をほどく', group:'心臓',
+    open:[{at:0,text:'胸に手を当ててもかまいません。'},{at:16,text:'今日の柱は、許しです。'}],
+    loop:{every:30,fit:true,minGap:16,texts:[
+      'まだ許せていない人を、ひとり思い浮かべます。',
+      'その人を思い出すと、体のどこが固くなりますか。',
+      'その固さを、何年持っていますか。',
+      '許すことは、されたことを正しいと認めることではありません。',
+      '許すことは、もう一度その人を近づけることでもありません。',
+      '許すことは、自分がそれを持ち歩くのをやめる、ということです。',
+      'その人にも、そうするに至った事情があったかもしれません。',
+      '手放したら、自分は何を失いますか。本当に失いますか。',
+      '最後に、自分自身が許せていないことを、ひとつ。',
+      'それも、置いていきます。',
+    ]},
+    close:[{at:-22,text:'ほどけた分だけで、かまいません。'}] },
+
+  { id:'gratitude', name:'感謝', short:'当たり前に気づく', group:'心臓',
+    open:[{at:0,text:'呼吸を、静かにします。'},{at:16,text:'今日の柱は、感謝です。'}],
+    loop:{every:30,fit:true,minGap:16,texts:[
+      '今、息ができています。',
+      '今日、目が覚めました。目が覚めなかった人が、世界にいます。',
+      '今日あった小さないいことを、ひとつ思い出します。',
+      'それは、当たり前でしたか。',
+      '今日、自分に何かをしてくれた人を、ひとり思い浮かべます。',
+      'その人に、心の中で、ありがとうと言います。',
+      '今日うまくいかなかったことを、ひとつ思い出します。',
+      'そこから学べたことは、ありますか。',
+      'なくなってはじめて気づくものを、なくなる前に、今数えます。',
+    ]},
+    close:[{at:-22,text:'その満ちた感じを、胸に残しておきます。'}] },
+
+  { id:'compassion', name:'思いやり', short:'苦しみに心を向ける', group:'心臓',
+    open:[{at:0,text:'胸のあたりに意識を置きます。'},{at:16,text:'今日の柱は、思いやりです。'}],
+    loop:{every:30,fit:true,minGap:16,texts:[
+      '今、苦しんでいる人を、ひとり思い浮かべます。',
+      'その人の苦しみを、なおそうとしなくてかまいません。ただ、見ます。',
+      '自分にも、同じ苦しみがありましたか。',
+      '苦しみは、自分と他人を分けますか。それとも、つなぎますか。',
+      '思いやりは、かわいそうだと思うことではありません。',
+      '相手と同じ高さに立つ、ということです。',
+      '今日会う人の中に、何も抱えていない人はいますか。',
+      '目の前の人が、何を抱えているか、自分は知っていますか。',
+      '知らないまま、やさしくできますか。',
+    ]},
+    close:[{at:-22,text:'その温かさを、胸に残しておきます。'}] },
+
+  { id:'generosity', name:'寛大さ', short:'与えることで満ちる', group:'心臓',
+    open:[{at:0,text:'手のひらを、上に向けて開きます。'},{at:16,text:'今日の柱は、寛大さです。'}],
+    loop:{every:30,fit:true,minGap:16,texts:[
+      '最近、人に何かを与えた場面を思い出します。',
+      'そのとき、自分は減りましたか。',
+      '与えられる側だったときのことも、思い出します。',
+      '与えるのは、お金やものだけではありません。',
+      '時間。話を聞くこと。先を譲ること。名前を呼ぶこと。',
+      '今日、誰かに渡せるものが、ひとつあるとしたら何ですか。',
+      '出し惜しんでいるものは、ありますか。それは、なぜですか。',
+      '握っている手には、次のものが入りません。',
+      '明日、いちばん最初に渡すものを、決めます。',
+    ]},
+    close:[{at:-22,text:'開いた手のまま、留まります。'}] },
+];
+
+/* 手放しの瞑想。「頭では手放したほうがいいと分かっているのに、感情がまだ握っている」状態のための台本。
+   分析的瞑想（考えて答えを出す）とは目的が逆で、こちらは考えさせない。
+
+   ■ 監修の二本柱（本人の指名。2026-08-09）
+   ・デヴィッド・ホーキンス『手放す』の手放しメカニズム＝感情の扱い方には抑圧・表現・逃避の三つしかなく、
+     どれも終わらせない。第四の道が「抵抗をやめて最後まで感じきる」で、感情は逃げずにいると自然に尽きる。
+     感情の並び（無気力→悲しみ→恐怖→欲望→怒り→誇り→勇気→受容）も、のぼる目印として使っている。
+     ※「意識のマップ」の数値（20〜1000のキャリブレーション）は意図的に使っていない。検証されていないため、
+       体験の話を測定の話にしてしまう。順番だけなら自分の体で確かめられる。
+   ・ユングの影（シャドウ）＝手放せない相手は、認めたくない自分を映すスクリーンになっている。
+     影は消すものではなく迎え入れるもの。ペルソナ、投影の引き戻し、アクティブ・イマジネーション、
+     対立を抱えたまま第三のものを待つ（超越機能）を、それぞれ一段に落としてある。
+   ・セドナメソッド（レヴェンソン／ドゥオスキン）の三問「手放せますか／手放しますか／いつ」は、
+     対象別の六段のほうに残してある。ただし三問だけでは根が残るので、基本の型のほうを既定にしている。
+   本文はいずれも引用ではなく全文オリジナル。外に出すときは枠組みの出典を明示すること。
+
+   ■ 使い方の設計
+   ・既定は「基本の型」。毎日おなじ型を繰り返すことで効くので、バリエーションは飽き防止でしかない。
+   ・「今日の対象（自動で回す）」を選んだときだけ、下の LETGO_STEPS が1つずつ順に回る。
+   ・どの段にも「できなくてよい」を必ず入れてある。「手放そう」と力むこと自体が新しい執着になるため、
+     ここを削ると効かなくなる。
+   ・既存の「受容」「許し」の柱と近いが、あちらは出来事への態度、こちらは握っている手そのものを扱う。 */
+
+/* 基本の型。既定であり、毎日これだけでもいい。長い沈黙が本体なので、間隔は詰めすぎないこと。 */
+const LETGO_CORE = {
+  open:[
+    {at:0,  text:'楽な姿勢で、目を閉じます。'},
+    {at:16, text:'今日は、考えません。感じるだけです。'},
+    {at:38, text:'考えは、いくらでも湧きます。多すぎて、追いきれません。その下に、感情があります。'},
+    {at:60, text:'感情のほうが、数は少ないです。だから、そちらへ降ります。'},
+  ],
+  loop:{ every:46, fit:true, minGap:30, texts:[
+    '今、体の中にある感じを、ひとつ見つけます。名前は、つけなくていいです。',
+    'それは、どこにありますか。胸、喉、みぞおち、お腹。',
+    'そこに意識を置いたまま、動きません。',
+    'なくそうとしません。良くしようとも、しません。',
+    'なぜこれがあるのか、理由は考えません。考えると、また頭に戻ります。',
+    '正当化も、批判もしません。あるままに、させます。',
+    '押さえこんでいませんか。ぶつけようとしていませんか。他のことで、そらしていませんか。',
+    'その三つは、どれも、これを終わらせません。',
+    '終わる道は、ひとつです。最後まで、感じきること。',
+    'いちばん奥にある圧を、そのまま感じます。',
+    '逃げずにいると、それは、ひとりでに減っていきます。',
+    '減らそうとしなくていいです。いるだけで、減ります。',
+    '軽くなる。笑いが出る。涙が出る。どれも、抜けたしるしです。',
+    'まだ残っていたら、同じことを、もう一度します。',
+    '同じものが何度も来ます。層になっているからです。今日は、一枚でじゅうぶんです。',
+  ]},
+  close:[
+    {at:-44,text:'手放そうとしていた努力も、ここで下ろします。'},
+    {at:-26,text:'何も解決していなくても、かまいません。'},
+    {at:-10,text:'ゆっくり、目を開けます。'},
+  ]
+};
+
+const LETGO_STEPS = [
+  /* ---- ホーキンス側：感じきるための補助 ---- */
+  { id:'small', name:'小さいものから', short:'重い執着には、まだ触らない', group:'手放す',
+    open:[{at:0,text:'肩の力を抜きます。'},{at:20,text:'今日は、小さいものだけを扱います。'}],
+    loop:{every:40,fit:true,minGap:26,texts:[
+      'いちばん重い執着は、今日は触りません。',
+      '代わりに、今日あった、小さな引っかかりを思い出します。',
+      '返事が来なかった。順番を抜かされた。言い方が気になった。',
+      'その程度のものを、ひとつ選びます。',
+      'それは、体のどこにありますか。',
+      '小さいので、すぐには見つからないかもしれません。ゆっくり探します。',
+      '見つけたら、消そうとせず、そこにいます。',
+      '小さいものは、早く尽きます。',
+      '尽きたら、もうひとつ、別の小さいものを選びます。',
+      '小さいから、何度も練習できます。練習した回数だけ、型が体に入ります。',
+      '大きいものは、型が入ってから扱います。順番を、飛ばしません。',
+    ]},
+    close:[{at:-30,text:'今日は、これでじゅうぶんです。'},{at:-10,text:'ゆっくり、目を開けます。'}] },
+
+  { id:'fear', name:'恐れの底', short:'欲しさの裏を見る', group:'手放す',
+    open:[{at:0,text:'呼吸を、静かにします。'},{at:20,text:'今日は、欲しがっているものの裏を見ます。'}],
+    loop:{every:44,fit:true,minGap:28,texts:[
+      '今、いちばん欲しいものを、ひとつ思い浮かべます。',
+      '手に入らなかったら、どうなりますか。',
+      'その「どうなる」のところに、恐れがあります。',
+      '欲しい、の裏には、失うのが怖い、が必ずあります。',
+      '怖いのは、何を失うことですか。',
+      'お金ですか。人ですか。それとも、自分がどう見られるか、ですか。',
+      'その恐れを、消そうとしません。体のどこにあるか、探します。',
+      '見つけたら、そこにいます。逃げません。',
+      '恐れは、見られていると、小さくなります。',
+      '恐れが小さくなると、欲しさも、少しゆるみます。',
+      '欲しくなくなるのではありません。しがみつかなくなるだけです。',
+      '手に入っても、入らなくても大丈夫。体がそう思えたら、それが手放しです。',
+    ]},
+    close:[{at:-30,text:'恐れの薄くなった感じに、留まります。'},{at:-10,text:'ゆっくり、目を開けます。'}] },
+
+  { id:'ladder', name:'階段をのぼる', short:'今いる高さから、一段だけ', group:'手放す',
+    open:[{at:0,text:'姿勢を整えます。'},{at:20,text:'今日は、感情の階段をのぼります。'}],
+    loop:{every:40,fit:true,minGap:26,texts:[
+      '今の自分は、どのあたりにいますか。',
+      'いちばん下は、どうでもいい、という無気力。',
+      'その上が、悲しみ。もう終わった、という気持ち。',
+      'その上が、恐れ。まだ起きていないことを、心配しています。',
+      'その上が、欲しさ。手に入れば解決する、と思っています。',
+      'その上が、怒り。力が戻ってきた合図でもあります。',
+      'その上が、誇り。守るものができた分、傷つきやすくもなります。',
+      'その上が、勇気。自分で何とかできる、と思えるところ。',
+      'その上が、受容。そのままでいい、と手が開くところ。',
+      '今いる場所を、責めません。下にいるのが悪いのではありません。',
+      '一つ上へ、移れそうですか。一段で、じゅうぶんです。',
+      '無気力なら、悲しんでいい。悲しいなら、怖がっていい。怖いなら、怒っていい。',
+      '下から見ると上は遠いですが、一段ずつなら、必ず動きます。',
+    ]},
+    close:[{at:-30,text:'今日のぶんだけ、のぼりました。'},{at:-10,text:'ゆっくり、目を開けます。'}] },
+
+  /* ---- ユング側：影を迎える ---- */
+  { id:'projection', name:'投影を取り戻す', short:'許せない人は、鏡', group:'影',
+    open:[{at:0,text:'胸のあたりを、ゆるめます。'},{at:20,text:'今日は、人に向けている強い感情を見ます。'}],
+    loop:{every:40,fit:true,minGap:26,texts:[
+      '今、どうしても許せない人を、ひとり思い浮かべます。',
+      'その人の、どこが、いちばん嫌ですか。',
+      'その一点を、言葉にします。ずるい。えらそう。だらしない。',
+      '同じことをしている人が他にいても、そこまで腹は立ちますか。',
+      '腹の立ち方が強すぎるとき、それは相手だけの話ではありません。',
+      '自分の中に、同じものは、ありませんか。',
+      'あるいは、自分が、絶対にしないと決めていることではありませんか。',
+      '認めたくない自分を、その人が、代わりに見せてくれています。',
+      '嫌なままで、かまいません。ただ、それが自分の一部でもある、と見ます。',
+      '見た瞬間、その人への熱は、少し下がりましたか。',
+      '相手が変わらなくても、こちらの握りは、ゆるみます。',
+    ]},
+    close:[{at:-30,text:'下がった分だけで、かまいません。'},{at:-10,text:'ゆっくり、目を開けます。'}] },
+
+  { id:'persona', name:'ペルソナ', short:'こうあるべき顔を、外す', group:'影',
+    open:[{at:0,text:'呼吸を、深くします。'},{at:20,text:'今日は、こうあるべき自分を見ます。'}],
+    loop:{every:40,fit:true,minGap:26,texts:[
+      '人にどう見られたいか、ひとつ思い浮かべます。',
+      'できる人。やさしい人。ちゃんとしている人。自由な人。',
+      'その顔を保つために、今日、何をしましたか。',
+      'その顔を保つために、言えなかったことは、ありますか。',
+      'その顔は、いつからつけていますか。',
+      '外したら、何が起きると思っていますか。',
+      '本当に、そうなりますか。',
+      '顔そのものは、悪いものではありません。仕事にも要ります。',
+      '問題は、外せなくなったときだけです。',
+      '今この場では、外していても、誰も困りません。',
+      '外した状態の呼吸を、覚えておきます。',
+    ]},
+    close:[{at:-30,text:'素の顔のまま、留まります。'},{at:-10,text:'ゆっくり、目を開けます。'}] },
+
+  { id:'shadowtalk', name:'影と話す', short:'追い出したものを、招く', group:'影',
+    open:[{at:0,text:'楽な姿勢をとります。'},{at:20,text:'今日は、認めたくない自分と、話します。'}],
+    /* この段だけ、問いのあとの沈黙が本体（アクティブ・イマジネーション）。
+       他の段と同じ40秒間隔だと、影が答える前にこちらが遮ってしまう。だから wait で個別に伸ばしてある。
+       20分で設計どおりの長さ（問いのあと約3分）。15分だと比例して詰まるが、それでも2分は空く。 */
+    loop:{every:44,fit:true,minGap:28,texts:[
+      {text:'自分の中で、いちばん認めたくない部分を、ひとつ思い浮かべます。',wait:50},
+      {text:'嫉妬深い。ずるい。怠け者。冷たい。どれでも、かまいません。',wait:45},
+      {text:'それを、追い出そうとしません。今日は、招きます。',wait:50},
+      {text:'それが人の姿だとしたら、どんな姿ですか。',wait:75},
+      {text:'こちらを見ていますか。それとも、そっぽを向いていますか。',wait:65},
+      {text:'責めずに、聞きます。「あなたは、何を守っていましたか」',wait:180},
+      {text:'急がせません。答えは、言葉でなくてもかまいません。',wait:110},
+      {text:'もうひとつ、聞きます。「あなたは、何がほしかったのですか」',wait:190},
+      {text:'待ちます。',wait:120},
+      {text:'追い出されていた側にも、言い分があります。',wait:55},
+      {text:'最後に、そこにいていい、と伝えます。',wait:65},
+      {text:'追い出しているあいだは、力を使い続けます。置いておけば、静かになります。',wait:50},
+    ]},
+    close:[{at:-30,text:'その存在を、内側に入れたまま、留まります。'},{at:-10,text:'ゆっくり、目を開けます。'}] },
+
+  { id:'both', name:'両方を持つ', short:'決めずに、抱えたまま待つ', group:'影',
+    open:[{at:0,text:'手のひらを、上に向けて開きます。'},{at:20,text:'今日は、決められないことを扱います。'}],
+    loop:{every:40,fit:true,minGap:26,texts:[
+      '今、二つのあいだで決められないことを、思い浮かべます。',
+      '片方を選ぶと、もう片方を失います。だから、決められません。',
+      '今日は、決めません。',
+      '両方を、同時に、持ったままにします。',
+      '右手に片方、左手にもう片方があるつもりで、両方を感じます。',
+      '早く決めたい焦りが出てきたら、それも、そのままにします。',
+      '楽になりたくて決めた答えは、たいてい、あとで壊れます。',
+      '持ちこたえているあいだに、どちらでもない三つ目が出てくることがあります。',
+      '出てこなくても、かまいません。今日は、持てただけで前進です。',
+      '決められない自分を、責めません。',
+      'これは優柔不断ではありません。答えが育つのを、待っているだけです。',
+    ]},
+    close:[{at:-30,text:'両手を開いたまま、留まります。'},{at:-10,text:'ゆっくり、目を開けます。'}] },
+
+  /* ---- 対象別：何を握っているかの棚卸し ---- */
+  { id:'grip', name:'握っているもの', short:'まず、握っていると認める', group:'対象別',
+    open:[{at:0,text:'肩の力を抜きます。'},{at:18,text:'今日は、握っている手そのものを見ます。'}],
+    loop:{every:30,fit:true,minGap:17,texts:[
+      '今、いちばん手放せずにいるものを、ひとつ思い浮かべます。',
+      'それを手放したほうがいいことは、もう分かっていますか。',
+      '分かっているのに、手は開いていません。',
+      'なぜ開かないのか、理由は考えなくていいです。今は、開いていない事実だけを見ます。',
+      'その握りは、体のどこにありますか。',
+      '胸、喉、みぞおち、肩。いちばん固いところを探します。',
+      '見つけたら、そこに意識を置いたまま、動かしません。',
+      'ゆるめようとせず、ただ、あることを許します。',
+      '許した瞬間、少しだけ変わりましたか。変わらなくてもかまいません。',
+      '心の中で聞きます。「これを、手放せますか」',
+      '「手放しますか」',
+      '「いつ」。答えられるなら、今。',
+      '手放したら、自分は何を失いますか。本当に、失いますか。',
+      'また握り直していたら、それに気づくだけで、練習になっています。',
+    ]},
+    close:[{at:-26,text:'ゆるんだ分だけを、そのままにしておきます。'},{at:-12,text:'手を開いたまま、ゆっくり、目を開けます。'}] },
+
+  { id:'emotion', name:'感情', short:'消そうとするのをやめる', group:'対象別',
+    open:[{at:0,text:'呼吸を、深くします。'},{at:18,text:'今日は、体の中にある感情を扱います。'}],
+    loop:{every:30,fit:true,minGap:17,texts:[
+      '今、体の中にある感情を、ひとつ見つけます。',
+      '名前をつけなくてかまいません。ただ、あります。',
+      'それは、体のどこにありますか。',
+      '大きさは、どれくらいですか。重さは。温度は。',
+      'それを消そうとすると、どうなりますか。',
+      '消そうとするのを、やめてみます。',
+      'そこにあっていい、と許します。',
+      '感情は、抵抗されているあいだだけ、居座ります。',
+      '見られた感情は、形を変えはじめます。',
+      '急がず、待ちます。',
+      '心の中で聞きます。「これを、手放せますか」',
+      '「手放しますか」「いつ」。',
+      '手放せなくても、責めません。明日また、ここに来ます。',
+    ]},
+    close:[{at:-26,text:'まだ残っていても、それでかまいません。'},{at:-12,text:'ゆっくり、目を開けます。'}] },
+
+  { id:'expect', name:'期待', short:'「こうなるはず」を外す', group:'対象別',
+    open:[{at:0,text:'胸のあたりを、ゆるめます。'},{at:18,text:'今日は、期待を扱います。'}],
+    loop:{every:30,fit:true,minGap:17,texts:[
+      '今、「こうなってほしい」と思っていることを、ひとつ思い浮かべます。',
+      'その形は、どれくらいはっきり決まっていますか。',
+      'その通りにならなかったら、自分はどうなりますか。',
+      '望むことと、そうでなければ困ること。この二つは、違います。',
+      '望むのは、やめなくていいです。',
+      '「そうでなければ困る」のほうだけを、置いていきます。',
+      'その決めつけを外すと、体のどこがゆるみますか。',
+      'その結果は、自分の手の中にありますか。',
+      '手の中にないものを、握ろうとしていました。',
+      '心の中で聞きます。「その形を、手放せますか」',
+      '形を手放しても、願いは残ります。なくなりません。',
+    ]},
+    close:[{at:-26,text:'決めつけの外れた感じに、留まります。'},{at:-12,text:'ゆっくり、目を開けます。'}] },
+
+  { id:'past', name:'過去', short:'語り直すのをやめる', group:'対象別',
+    open:[{at:0,text:'呼吸を、静かにします。'},{at:18,text:'今日は、まだ終わっていない過去を扱います。'}],
+    loop:{every:30,fit:true,minGap:17,texts:[
+      '何度も思い出してしまうことを、ひとつ思い浮かべます。',
+      'その出来事は、もう終わっていますか。',
+      '終わっているのに、まだ続いているのは、どこですか。',
+      '出来事そのものと、それについての話を、分けます。',
+      '出来事は、変えられません。',
+      '話のほうは、自分が毎日、語り直しています。',
+      'その話を持ち歩くことで、何を守っていますか。',
+      '守るのをやめたら、何が起きますか。',
+      '心の中で聞きます。「その話を、今日は、手放せますか」',
+      '一日だけ、下ろしてみます。必要なら、また拾えます。',
+      '下ろしている今、体はどうなっていますか。',
+    ]},
+    close:[{at:-26,text:'下ろした分だけで、かまいません。'},{at:-12,text:'ゆっくり、目を開けます。'}] },
+
+  { id:'control', name:'コントロール', short:'手の外を、手の外に置く', group:'対象別',
+    open:[{at:0,text:'手のひらを、上に向けて開きます。'},{at:18,text:'今日は、思い通りにならないことを扱います。'}],
+    loop:{every:30,fit:true,minGap:17,texts:[
+      '今、思い通りにならないことを、ひとつ思い浮かべます。',
+      'そのうち、自分にできることと、できないことを分けます。',
+      'できることは、なんですか。それは、今日やれますか。',
+      'できないことは、なんですか。',
+      '誰かが、何とかしてくれるのを待っていますか。',
+      '待っているあいだ、時間だけが過ぎていきます。',
+      '助けを求めるのは、かまいません。ただ、待つのは、やめます。',
+      '自分の手の外にあることを、手の外に、置きます。',
+      '置いても、世界は回ります。',
+      '心の中で聞きます。「握るのを、やめられますか」',
+      '力を抜いたとき、何が動きはじめますか。',
+    ]},
+    close:[{at:-26,text:'開いた手のまま、留まります。'},{at:-12,text:'ゆっくり、目を開けます。'}] },
+
+  { id:'self', name:'わたし', short:'手放そうとしている自分を見る', group:'対象別',
+    open:[{at:0,text:'姿勢はそのままで、力を抜きます。'},{at:18,text:'今日は、手放そうとしている自分を見ます。'}],
+    loop:{every:30,fit:true,minGap:17,texts:[
+      '今日まで、手放そうとしていたのは、誰ですか。',
+      '「手放したい」という思いも、ひとつの握りです。',
+      '手放そうと力むほど、握る力は強くなります。',
+      'だから、何もしません。',
+      '今、握っているものが、ただ見えています。',
+      '見ているほうは、何かを握っていますか。',
+      '「わたし」という説明を、少しだけ、ゆるめます。',
+      '名前。肩書き。これまでの話。今この瞬間には、どれも要りません。',
+      '要らないものを外していくと、何が残りますか。',
+      '残ったものは、何かを握る必要がありますか。',
+      '手放すのではなく、もともと持っていなかった、と気づくだけです。',
+    ]},
+    close:[{at:-26,text:'その静けさに、留まります。'},{at:-12,text:'ゆっくり、目を開けます。'}] },
+];
+
+const DEDICATION = {
+  open:[
+    {at:0,  text:'最後に、今日の実りを、みんなに手渡しシェアします。'},
+    {at:13, text:'この瞑想で生まれた善いものを、自分だけのものにしません。'},
+    {at:30, text:'すべての生きているものの役に立ちますように。'},
+    {at:44, text:'今日一日、この心のまま過ごせますように。'},
+  ],
+  close:[{at:-8,text:'ゆっくり、目を開けます。'}]
+};
+
+/* 夜の瞑想：感謝→自分褒め→そのまま眠りへ。他の瞑想と違い「目を開けます」で終わらない。 */
+const NIGHT = {
+  open:[
+    {at:0,  text:'横になって、楽な姿勢をとります。'},
+    {at:16, text:'今日、いちにちを、ここでいったん、終わりにします。'},
+    {at:34, text:'呼吸が、自然に深くなっていくのを、待ちます。'},
+  ],
+  loop:{ every:32, fit:true, minGap:17, texts:[
+    // 感謝（THE MAGIC式：3つ見つけて、味わって、ありがとうと言う）
+    '今日あったことを、ゆっくり思い出します。',
+    '今日、感謝できることを、一つ目、見つけます。小さなことでかまいません。',
+    '見つけたら、その気持ちを味わって、心の中で、ありがとう、と言います。',
+    '二つ目を、見つけます。助けてくれた人、支えてくれた人でも、他のことでもかまいません。',
+    '見つけたら、同じように、ありがとう、と伝えます。',
+    '三つ目を、見つけます。今日、自分の体がしてくれたことでも、他のことでもかまいません。',
+    '見つけたら、ありがとう、と言います。',
+    '感謝は、ふくらませるほど、ふくらんでいきます。',
+    // ほめ日記（行動→内面・感覚・感情→夢や希望、の順に広げる）
+    '次に、今日した、行動をほめます。',
+    'どんなに小さくても、やったことを、ほめます。うまくいかなくても、やろうとしたなら、それでよくやりました。',
+    '次に、目に見えない部分をほめます。今日感じた気持ち、大切にした感覚。',
+    'まだ叶っていない、夢や希望も、ほめます。それを持っていること自体が、すでに素晴らしいことです。',
+    '今日の自分に、よくやったね、と言います。',
+  ]},
+  close:[
+    {at:-46,text:'その満ちた気持ちを、そのまま抱えていきます。'},
+    {at:-26,text:'目を開ける必要はありません。'},
+    {at:-10,text:'そのまま、眠りに入っていってもかまいません。おやすみなさい。'},
+  ]
+};
+
+/* 朝のひとこと：短く、今日をどう迎えるかを自分で決めて終える */
+const MORNING = {
+  open:[
+    {at:0,  text:'目が覚めたところから、少しだけ時間をもらいます。'},
+    {at:14, text:'今、体に意識を向けます。呼吸を、ひとつ。'},
+  ],
+  loop:{ every:26, fit:true, minGap:14, texts:[
+    '今日、何が起きるかは、まだ分かりません。',
+    'でも、今日をどう迎えるかは、自分で決められます。',
+    '今日を、良い一日にする理由を、ひとつ思い浮かべます。',
+    '今日、会う人、会うかもしれない人を、思い浮かべます。',
+    'その人たちに、今日は良い顔で会いたい、と思います。',
+  ]},
+  close:[
+    {at:-108,text:'今日という日を、自分で定義します。'},
+    {at:-100,text:'心の中で、はっきりと言います。'},
+    {at:-94, text:'「今日は、幸福な一日である」'},
+    {at:-84, text:'心を、明るく保ちます。今日一日の、健康の土台です。'},
+    {at:-76, text:'心配も、急ぐ気持ちも、今は手放します。'},
+    {at:-68, text:'恐れも、余計な考えも、不安も、今日は連れていきません。'},
+    {at:-60, text:'今日という一日は、一つのゲームだと思って、楽しんでいきます。'},
+    {at:-52, text:'難しいことに出会ったら、それを挑戦として受け止めます。'},
+    {at:-42, text:'本気で取り組んだことの結果は、いつも同じ頃に現れます。だいたい、70日を過ぎたあたりです。'},
+    {at:-30, text:'そこまでは、まだ何も変わっていないように見えるかもしれません。それでも、続けます。'},
+    {at:-20, text:'耐えた分だけ、その先で、一気に飛躍が起こります。'},
+    {at:-12, text:'今日も、その大切な一日です。'},
+    {at:-9,  text:'今日出会う人には、やさしい気持ちで接します。'},
+    {at:-4,  text:'それが、今日を生きる、私の姿勢です。'},
+  ]
+};
+
+/* インナーガイド瞑想：本人が書いた設計（呼吸→森→洞窟→光→動物→ガイド→対話→感謝→帰還）を、
+   そのまま台本にしたもの。エドウィン・スタインブレッシャーの原著にある占星術12ハウス・タロット22アーキタイプ・
+   カバラ生命の樹・易経といった独自の体系までは再現していない（著作物の複製になるため、また実装上も過大なため）。
+   「ガイドが本物かは瞑想の中でなく、瞑想後の現実の変化で判断する」という本人の設計方針を核に据えている。
+   質問は「お手本をいくつか読み上げる→あとは沈黙の中で自分の問いを選ぶ」という形にしてある。
+   セリフの前半（洞窟の物語部分）は時間を選んでも長さを変えない。長くなった分は、後半の沈黙に使われる。 */
+function tlInnerGuide(total){
+  const fixed=[
+    {at:0,  text:'楽な姿勢で、座るか横になります。'},
+    {at:14, text:'呼吸を、吸うより吐くほうを長くしていきます。'},
+    {at:34, text:'からだのちからを、少しずつ抜いていきます。'},
+    {at:60, text:'深い森を、歩いています。'},
+    {at:78, text:'静かな森。鳥の声が聞こえます。'},
+    {at:96, text:'木漏れ日が、揺れています。'},
+    {at:118,text:'歩いていると、洞窟を見つけます。'},
+    {at:140,text:'洞窟は、安全な場所です。ゆっくり、奥へ歩いていきます。'},
+    {at:165,text:'途中、暗く感じても、怖がらなくて大丈夫です。安心して、進みます。'},
+    {at:195,text:'出口が近づき、光が見えてきます。'},
+    {at:215,text:'その光の方へ、進みます。'},
+    {at:235,text:'洞窟を、抜けます。'},
+    {at:255,text:'外に出ると、一匹の動物が現れます。'},
+    {at:275,text:'どんな動物でもかまいません。最初に現れた存在を、信頼します。'},
+    {at:295,text:'その動物は、あなたを歓迎しています。'},
+    {at:320,text:'動物が、振り返りながら、歩き始めます。'},
+    {at:340,text:'あなたは、その後ろを歩いていきます。'},
+    {at:365,text:'森でも、草原でも、湖のほとりでも、かまいません。どこへ向かうかは、任せます。'},
+    {at:395,text:'動物が、ある場所へ、あなたを案内します。'},
+    {at:415,text:'そこに、ガイドがいます。姿が見えなくても、存在だけ感じられれば、それで十分です。'},
+    {at:433,text:'試しに、ひとつだけ、簡単な問いを渡します。「空のどこに、太陽があるか、指で差してみて」'},
+    {at:455,text:'本物のガイドなら、迷わず、はっきりと指し示します。'},
+    {at:471,text:'ためらったり、話をはぐらかしたり、その場から姿を消してしまうなら——それは今はまだ、本物ではないのかもしれません。'},
+    {at:493,text:'どちらであっても、責めずに、ただ観察します。'},
+    {at:513,text:'信頼できると感じたら、まず二つ、決まった問いを渡します。関係を築くための問いです。'},
+    {at:533,text:'一つ目。「友人になり、共に歩んでいくために、私にできることはありますか。あるなら、それは何でしょうか」'},
+    {at:560,text:'急がず、応えを待ちます。'},
+    {at:580,text:'二つ目。「では、その代わりに、あなたは私に何を差し出してくれますか」'},
+    {at:602,text:'言葉でなくてもかまいません。形、色、光、感覚——浮かんでくるものを、そのまま受け取ります。'},
+    {at:628,text:'これで、今日の関係づくりは終わりです。'},
+    {at:648,text:'今日は、いつも同じ問いから始めます。'},
+    {at:668,text:'心の中で、ガイドに尋ねます。「今日、一番大切な行動はなんですか？」'},
+    {at:693,text:'急がず、浮かんでくるものを、待ちます。'},
+    {at:733,text:'ほかにも、聞きたいことがあれば、続けて尋ねます。'},
+    {at:753,text:'手放すべきもの、恐れていること、まだ気付いていない才能——なんでもかまいません。'},
+    {at:776,text:'これらは、ただの例です。自分が本当に聞きたいことを、心の中で選びます。'},
+    {at:796,text:'声には出さず、その問いを、ガイドに向けます。'},
+    {at:816,text:'急がず、答えを待ちます。答えは、言葉とは限りません。映像、感覚、色、感情、静けさそのものかもしれません。全部、メッセージです。'},
+  ];
+  const closeLines=[
+    {off:-70,text:'その存在に、ありがとう、と伝えます。'},
+    {off:-58,text:'動物も、微笑んで見送ってくれます。'},
+    {off:-46,text:'来た道を、戻っていきます。'},
+    {off:-34,text:'洞窟を通り、森を歩いていきます。'},
+    {off:-20,text:'呼吸を感じます。体を感じます。'},
+    {off:-8, text:'ゆっくり、目を開けます。'},
+  ];
+  const tl=fixed.filter(l=>l.at<total).map((l,i)=>({at:l.at,text:l.text,vid:'innerguide_'+i}));
+  const lastFixed=fixed[fixed.length-1].at;
+  closeLines.forEach((l,i)=>{
+    const at=total+l.off;
+    if(at>lastFixed) tl.push({at,text:l.text,vid:'innerguide_c'+i});
+  });
+  return tl.sort((a,b)=>a.at-b.at);
+}
+
+/* ---- 単発の瞑想 ---- */
+const MEDITATIONS = [
+  { id:'night', name:'夜の瞑想', mins:[10,15,20], script:NIGHT, softBell:true, relaxBg:true, noClosing:true,
+    desc:'今日への感謝(3つ)と、自分をほめる時間（THE MAGIC式の感謝＋ほめ日記）。始まってすぐアラティが流れ、目を開けずに、そのまま眠りへ。背景に雨音・波・ノイズを選べます。' },
+  { id:'morning', name:'朝のひとこと', mins:[3,5,7,10],
+    desc:'今日は幸福な一日だと、自分で決めて一日を始める。短い朝の儀式。', script:MORNING },
+  /* コースの最後に置いているものと同じ台本。単体でも回せるようにしてある。
+     他の瞑想のあとに続けて回向したいとき、アプリを閉じずにこれだけ流せる。
+     専用の曲（DEDICATION_MUSIC）が鳴るので、終わりの曲は重ねない。 */
+  { id:'dedication', name:'回向', mins:[1,2,3,5], dedication:true, noClosing:true,
+    desc:'今日の実りを、自分のものにしないで終える。コースの最後と同じもの。他の瞑想をやったあと、続けて手渡すときに。' },
+  { id:'innerguide', name:'インナーガイド瞑想', mins:[15,30,45], innerguide:true,
+    desc:'呼吸→森→洞窟→光→動物→ガイドとの対話、という本人設計の台本。お手本の質問を聞いたあとは沈黙の中で自分の問いを選ぶ。ガイドが本物かは瞑想後の現実の変化で判断する。' },
+  { id:'metta', name:'慈悲の瞑想', mins:[5,7,10,15,20], desc:'自分から、大切な人、無関係な人、苦手な人、すべての生き物へ。心が固くなった日に。', script:METTA },
+  { id:'mudita', name:'喜びの瞑想', mins:[3,5,7,10,15], pillar:true,
+    desc:'『よろこびの書』の八本柱、または随喜（全般）。うらやましさや嫉妬が出た日に。' },
+  { id:'letgo', name:'手放しの瞑想', mins:[15,20,30,45,60], letgo:true,
+    desc:'頭では分かっているのに手放せない、というときに。考えて答えを出すのではなく、感情を最後まで感じきって尽きるのを待つ（ホーキンス）。認めたくない自分を迎え入れる段（ユング）と、何を握っているかの棚卸し（対象別）も選べます。既定の「基本の型」を毎日繰り返すのがいちばん効きます。15分以上を推奨。' },
+  /* 日常用。ホーキンスの手放しは本来「座ってやるもの」ではなく、カチンと来た瞬間その場でやるもの。
+     15分の瞑想はその練習台なので、これは瞑想ではなく応急処置として別に置いてある。
+     終わりの曲も鳴らさず、いまの高さも聞かない（1〜3分のたびに聞かれると邪魔になるため）。 */
+  { id:'letgoquick', name:'その場で手放す', mins:[1,2,3], quick:true, noClosing:true,
+    desc:'カチンと来た直後、席を立たずに。誘導は4行だけ。座ってやる15分の手放しとは別物で、こちらは日常で使う応急処置です。',
+    script:{
+      open:[{at:0,text:'今ある気持ちを、体のどこかで見つけます。'},{at:14,text:'消そうとしません。'}],
+      loop:{every:22,fit:true,minGap:14,texts:[
+        'そこに、いるだけ。','逃げなければ、減ります。','理由は、考えません。','まだ残っていても、かまいません。']},
+      close:[{at:-12,text:'ひと呼吸して、戻ります。'}]
+    }},
+  /* 自分で読み上げるのではなく、他の人の誘導音声をそのまま流す。動画をその場で埋め込むので
+     音源ファイルは持たない＝公開しても配布にならない。そのかわりネットが要る。
+     尺は動画の長さで決まる（分の選択は出さない）。終わりの曲は重ねない。 */
+  { id:'ytsurrender', name:'手放し・明け渡し（誘導音声）', mins:[8], ytGuide:'surrender', noClosing:true, quiet:true,
+    desc:'mika霊視CHの誘導をそのまま流します。「もっと任せていい」から入って、肩を撫でながら「あなたは十分よくやってる」で終わる7分37秒。自分の声ではなく人の声で誘導されたい日に。ネット接続が必要です。' },
+  /* 記録タブの「やること／やってもらうこと」の音声版。あちらが紙、こちらが座ってやる方。
+     手放しの瞑想が「感情を感じきる」のに対して、こちらは「引き受けた状態そのものを降ろす」。
+     中身は解決しない。解決しないまま降ろせる、というのがこの練習の主張なので、
+     台本でも一度も「どうすればいいか」を考えさせない。 */
+  { id:'unload', name:'荷物を降ろす', mins:[5,7,10,15],
+    desc:'「自分がやらなきゃ」と思った瞬間に、それは背負う荷物になります。重いのは中身ではなく、背負っているという状態のほう。中身を解決せずに、状態のほうだけを降ろします。記録タブの「やること／やってもらうこと」と対になっていて、書いてから座ると効きます。',
+    script:{
+      open:[
+        {at:0,  text:'楽な姿勢で、目を閉じます。'},
+        {at:16, text:'今、背中に袋を背負っていると思ってください。'},
+        {at:36, text:'その中に、自分がやらなきゃと思っていることが、ひとつずつ入っています。'},
+        {at:60, text:'重いのは、中身そのものではありません。背負っている、という状態のほうです。'},
+      ],
+      loop:{every:46, fit:true, minGap:30, texts:[
+        '袋から、ひとつだけ取り出します。いちばん重いものでなくて、かまいません。',
+        'それを、心の中で言葉にします。',
+        '胸が重くなりましたか。喉が詰まりましたか。それが、背負っている、ということです。',
+        'まだ何も起きていないのに、重さのほうが先に来ています。',
+        'では、それを、自分の手から離します。',
+        '解決しなくていいです。降ろすだけです。',
+        'これは、自分がやることではなく、やってもらうことです。',
+        '誰に、とは決めなくていいです。渡す先は、あとから分かります。',
+        '渡した瞬間に、ほんの少しだけ軽くなったところがあります。',
+        'その一瞬だけを、見ています。',
+        'また重くなっても、かまいません。戻ってきたら、もう一度、降ろします。',
+        '次のものを、ひとつ取り出します。',
+        '全部でなくていいです。今日は、ひとつで足ります。',
+        '自分の機嫌を良くすることも、袋に入れなくていいです。それも、降ろせます。',
+      ]},
+      close:[
+        {at:-40,text:'降ろしたものを、取りに戻らなくていいです。'},
+        {at:-22,text:'背中が少し軽いかどうか、それだけ確かめます。'},
+        {at:-10,text:'ゆっくり、目を開けます。'},
+      ]
+    }},
+  /* エレベーターの呼吸の「瞑想版」。呼吸タブ（BREATHING id:'elevator'）が4秒6秒を刻む練習なのに対し、
+     こちらはイメージを言葉で誘導して、意識が頭からおなかへ降りるのを追いかける版。
+     同じ技法だが用途が違うので両方置いてある（刻みたい日は呼吸タブ、誘導されたい日はこちら）。
+     ⚠️【深さのルール】**へその下（下腹・腸のあたり＝臍下丹田）で止める。** 足・地面には絶対に触れない。
+        地面まで降ろすのは「せせらぎ」（id:'stream'）の担当。混ぜると両方効かなくなる。
+        ※本文は「おなかのなかまで」としか書いていないが、図の最下階はへその下に描かれている。
+          禅・武道の臍下丹田と同じ位置。初版は「おなかの中」と曖昧に書いていたので2026-08-29に修正。
+     出典：ネドじゅん『左脳さん、右脳さん。』。文章はこのアプリ用に書き下ろし。 */
+  { id:'elevatorimg', name:'エレベーターの呼吸（誘導）', mins:[3,5,7,10,15],
+    desc:'意識をあたまからおなかへ降ろす瞑想。鼻から吸うとエレベーターの床が下がり、口から吐くと床が上がる。繰り返すうちに思考が止まって、意識がおなかに落ちます。呼吸タブの「エレベーターの呼吸」が秒数を刻む練習なのに対し、こちらは言葉で誘導する版。考えごとが頭に張りついて離れない日に。※おなかの中で止めます。足の下まで降ろすのは「せせらぎ」のほう。ネドじゅん『左脳さん、右脳さん。』より（文章はこのアプリ用に書き下ろし）。',
+    script:{
+      open:[
+        {at:0,  text:'楽な姿勢で、目を閉じます。'},
+        {at:16, text:'いま、意識がどこにあるか探します。たぶん、頭のあたりです。'},
+        {at:36, text:'胸からおなかまでが、細長いエレベーターだと思ってください。'},
+        {at:56, text:'いまは、いちばん上の階にいます。'},
+      ],
+      loop:{every:44, fit:true, minGap:26, texts:[
+        '鼻から、ゆっくり息を吸います。エレベーターの床が、下がります。',
+        '口から、ゆっくり吐きます。床が、上がります。',
+        'もう一度。吸って、床が下がる。',
+        '吐いて、床が上がる。',
+        '上下しながら、少しずつ、全体が下へ降りていきます。',
+        '急がなくていいです。下がった分だけで、かまいません。',
+        '考えごとが出てきたら、それは上の階にあります。追いかけません。',
+        '床が、みぞおちを通り過ぎます。まだ止まりません。',
+        'そのまま、へその下まで。',
+        '下腹で、床が止まります。腸のあたりです。ここから下には降りません。',
+        '意識が、へその下にあります。頭には、あまり残っていません。',
+        'その状態で、もう何回か呼吸します。',
+        '吸って、下がる。吐いて、上がる。でも、下腹から出ません。',
+        '考えていないのに、はっきりしている。それが、いまの状態です。',
+      ]},
+      close:[
+        {at:-40,text:'へその下に、意識があるのを確かめます。'},
+        {at:-26,text:'頭が、少し静かになっているかどうかだけ見ます。'},
+        {at:-12,text:'そのまま、ゆっくり目を開けます。'},
+      ]
+    }},
+  /* 川の中に立って、時間が自分を追い越していくのを見送るイメージング。
+     元ネタ：ネドじゅん『左脳さん、右脳さん。』の「せせらぎ」のイメージング。
+     ⚠️ 台本は原文を写していない。技法（水＝時間・上流を背に立つ・立ち止まって見送る・
+     足の下の地面で「いま・ここ」に戻る）だけを借りて、文章はこのアプリ用に書き下ろした。
+     このアプリの誘導文はYouTube台本に転用する前提なので、他人の本文をそのまま置かない。
+     本の文脈では、エレベーター呼吸の前や右脳さんぽの途中に挟む短い練習として置かれている。
+     【本書の定義】いま・ここは意識の形。過去や未来へ行かず、いま・ここにある身体の形のなかで
+     身体のエネルギーと意識が溶け合うこと。意識するポイントは「足と、足の下の地面」。
+     ⚠️【深さのルール・混ぜないこと】
+        ・エレベーター呼吸 … おなかの中までで意識を止める。それより下には降りない
+        ・いま・ここのイメージング（この台本）… 足の下の地面まで降ろす
+        今後エレベーター呼吸を追加するときは、この境界を必ず守る。血が通わなくなる。
+     締めで肩や上半身に意識を散らさないこと（初版でやってしまった。焦点がぼける）。
+     手放し系との違い：あちらは感情を感じきる。こちらは何も処理せず、ただ流れていくのを見るだけ。
+     日常用のショートカットは「せせらぎ…」と数秒思い出すこと（これも本書の使い方）。 */
+  { id:'stream', name:'せせらぎ', mins:[3,5,7,10,15],
+    desc:'「いま・ここ」に戻るための道具です。いま・ここ＝いま体がいる状況のなかで、体の感覚を感じること（ネドじゅん『左脳さん、右脳さん。』）。浅い川の中に立ち、うしろから来た水が自分を追い越して前へ流れていくのを見送ります。水は時間です。立ち止まっても水は止まらない。追い越されていい。最後は足の下の地面に降りて、体の感覚で終わります。急いでいる日、置いていかれている気がする日に。何も解決しません。日常では「せせらぎ」と数秒思い出すだけでも戻れます。文章はこのアプリ用に書き下ろし。',
+    script:{
+      open:[
+        {at:0,  text:'立ったままでも、座ったままでも、かまいません。'},
+        {at:16, text:'浅い川の中に立っています。水は、ひざの下くらいです。'},
+        {at:38, text:'上流は、背中のうしろ。川下が、正面です。'},
+        {at:58, text:'水は透明で、光っています。冷たくはありません。'},
+      ],
+      loop:{every:44, fit:true, minGap:26, texts:[
+        'この水は、時間です。',
+        'うしろから来て、自分を追い越して、前へ行きます。',
+        '川下に向かって、ゆっくり歩きます。急ぎません。',
+        '歩いているあいだは、時間と同じ速さで進んでいます。',
+        'ふと、立ち止まります。',
+        '足を止めても、水は止まりません。自分を追い越していきます。',
+        '追い越されて、いいです。',
+        'もう要らない考えがあれば、そのまま水に落とします。',
+        '拾い直さずに、流れていくのを見送ります。',
+        '足の裏の下に、川底があります。',
+        '水は動いていますが、地面は動いていません。',
+        'そこが、立っている場所です。',
+        '顔を上げます。空があります。',
+        '水は流れ、地面は動かず、自分はここにいます。',
+        '流れているのは時間で、自分ではありません。',
+      ]},
+      close:[
+        {at:-56,text:'意識するのは、足と、足の下の地面です。'},
+        {at:-42,text:'それより上は探しません。足の裏と、その下の地面だけ。'},
+        {at:-28,text:'体と意識が、そこで溶けていきます。過去にも未来にも行きません。'},
+        {at:-14,text:'これが、いま・ここです。'},
+        {at:-6, text:'深呼吸をひとつして、ゆっくり目を開けます。'},
+      ]
+    }},
+  /* 苫米地英人『思うままに夢がかなう 超瞑想法』の三法界瞑想。貧乏／金持ち／仏陀の三つになる。
+     手放し系と向きが逆（降ろすのではなく、何にでもなれると知って選ぶ）ので、混ぜずに独立させてある。
+     この台本の要は「うまく想像すること」ではなく臨場感で、違和感が出た場所こそ本人を今の位置に留めている
+     ものなので、そこを飛ばさせない作りにした。前提は「非我（ナートマン）」——自我は存在しないのではなく、
+     存在するが変化し流転する、というのが本書の立場（無我ではなく非我、と本文が明示している）。
+     そこから行く先が仏教の伝統と違う（苦の滅ではなく、なりたい自分を選ぶ）ので desc に出典を明記する。 */
+  { id:'sanpokai', name:'三法界瞑想', mins:[10,15,20,30],
+    desc:'貧乏人の自分、お金持ちの自分、仏陀になった自分。三つとも本気でなってみて、自分が何にでもなれることを知り、そのうえでどれで生きるかを選ぶ。自分の中には餓鬼もいれば仏陀もいて、何を選ぶかで自分という存在が決まる、という考え方。苫米地英人『思うままに夢がかなう 超瞑想法』第2章ワーク2。うまく想像することではなく、その場にいる臨場感が本物かどうかが要です。※本書の立場は「無我」ではなく「非我」（自我は存在するが変化し流転する）。行き先は苫米地氏の解釈です。',
+    script:{
+      open:[
+        {at:0,  text:'楽な姿勢で、目を閉じます。'},
+        {at:16, text:'今日は、三つの自分になります。'},
+        {at:38, text:'大事なのは、うまく想像することではありません。その場にいる感じが、本物かどうかです。'},
+        {at:62, text:'違和感が出たら、そこで留まります。脳は、臨場感のあるほうを現実として扱います。'},
+      ],
+      loop:{every:46, fit:true, minGap:24, texts:[
+        'ひとつ目。お金のない自分になります。',
+        '通帳を開きます。数字が、足りません。',
+        'そのとき、胸はどうなりますか。何を我慢していますか。',
+        'それが今の自分に近いなら、近いと認めるだけでいいです。',
+        'ふたつ目。お金のある自分になります。',
+        '同じ通帳を開きます。数字は、じゅうぶんにあります。',
+        '何を買うかではなく、朝起きてから何をしているかを見ます。',
+        'ここで違和感が出たなら、それが、自分を今の場所に留めているものです。',
+        'みっつ目。仏陀になった自分になります。',
+        'この人は、通帳を見ません。増えても、減っても、それが何、と思うだけです。',
+        '金額と関係なく、どんな一日を過ごしたいかだけを考えて、その通りに過ごします。',
+        'いちばん難しそうに見えて、これがいちばん簡単です。数えるものが、ないからです。',
+        '自分の中には、餓鬼もいます。仏陀もいます。どちらも、もとからあります。',
+        '三つとも、同じ自分でできました。どれも本当で、どれも固定ではありません。',
+        'その可能性の中から何を選ぶかで、自分という存在が決まります。',
+        'では、どんな生活を送りたいですか。',
+        'まずは、心を決めます。お金に縛られない感覚が、そこにあります。',
+      ]},
+      close:[
+        {at:-40,text:'選んだほうの臨場感だけ、少し濃くしておきます。'},
+        {at:-22,text:'変えられないと思っていたのは、自分ではなく、思い込みのほうでした。'},
+        {at:-10,text:'ゆっくり、目を開けます。'},
+      ]
+    }},
+  /* 超瞑想法・第2章ワーク1。三法界瞑想の前段にあたる。非我を理屈でなく通しで体験させる作り。
+     生まれる前→生まれる→変わり続ける→死ぬ→そのあと、を一本で歩く。怖がらせないため、
+     「なくなった」ではなく「ずっと変わり続けていた」に着地させる。 */
+  { id:'birthdeath', name:'自分が生まれて死ぬ瞑想', mins:[10,15,20],
+    desc:'生まれる前から、死んだあとまでを一本で歩く。自我は消えるのではなく、雲のように変わり続けている（非我）ことを、理屈ではなく通しで見る。苫米地英人『超瞑想法』第2章ワーク1。三法界瞑想の前段なので、こちらを先にやると効きます。',
+    script:{
+      open:[
+        {at:0, text:'楽な姿勢で、目を閉じます。'},
+        {at:16,text:'今日は、自分が生まれて、死ぬまでを見ます。'},
+        {at:40,text:'怖がらせるためではありません。どこから来て、どこへ行くのかを、確かめるためです。'},
+      ],
+      loop:{every:44, fit:true, minGap:24, texts:[
+        'まだ、生まれていません。名前も、体も、ありません。',
+        'そこに「自分」は、ありましたか。',
+        '生まれます。体ができます。名前がつきます。',
+        'その名前は、誰かがつけたものです。自分では選んでいません。',
+        '子どものころの自分を見ます。今の自分と、同じ人ですか。',
+        '細胞は、ひとつ残らず入れ替わっています。それでも、同じ人ですか。',
+        '時間を進めます。顔が変わります。考えも変わります。',
+        'どこかで別人になりましたか。それとも、ずっと同じでしたか。',
+        '死ぬところまで進みます。息が、止まります。',
+        '体は、まだあります。名前も残っています。では、いなくなったのは何ですか。',
+        'しばらくして、体もなくなります。名前を呼ぶ人も、いなくなります。',
+        '生まれる前と、同じ場所に戻りました。',
+        'なくなったのではありません。ずっと、変わり続けていただけです。',
+        '雲のように、形はあるのに、つかめません。',
+        '今の自分も、その途中にいます。',
+      ]},
+      close:[
+        {at:-40,text:'固まっていたものが、少しほどけた感じを見ます。'},
+        {at:-22,text:'変えられないと思っていた自分は、今この瞬間も変わり続けています。'},
+        {at:-10,text:'ゆっくり、目を開けます。'},
+      ]
+    }},
+
+  /* 超瞑想法・第2章ワーク3。飲食店Aがカフェかイタリアンかは共有情報で決まる＝同じことが人にも起きる、
+     という話を「看板」に置き換えた。中身を変えずに呼び名だけ変えるのが要点なので、努力や改善の話にしない。 */
+  { id:'order', name:'オーダー変更瞑想', mins:[5,10,15],
+    desc:'同じ店でも、カフェと呼ばれるかレストランと呼ばれるかで入る人が変わる。店は変わっていない、看板が変わっただけ。同じことが自分にも起きている、として自分の看板を掛け替える。苫米地英人『超瞑想法』第2章ワーク3。',
+    script:{
+      open:[
+        {at:0, text:'楽な姿勢で、目を閉じます。'},
+        {at:14,text:'今日は、自分についている看板を、掛け替えます。'},
+        {at:36,text:'同じ店でも、カフェと呼ばれるか、レストランと呼ばれるかで、入る人が変わります。'},
+      ],
+      loop:{every:34, fit:true, minGap:16, texts:[
+        '自分についている看板を、ひとつ思い浮かべます。',
+        '内気な人。だらしない人。がんばりすぎる人。どれでもかまいません。',
+        'その看板は、誰がつけましたか。',
+        '自分でつけましたか。誰かに言われて、そのままにしていませんか。',
+        'その看板があると、人はどう扱ってきますか。',
+        '自分でも、その看板のとおりに振る舞っていませんか。',
+        '看板を、外します。',
+        '中身は、何も変えていません。外しただけです。',
+        '別の看板を、かけてみます。',
+        'そう呼ばれる人として、明日の朝を過ごしてみます。',
+        '違和感が出たら、そこで留まります。まだ古い看板が効いています。',
+        '店は、呼ばれ方で決まります。人も、同じです。',
+      ]},
+      close:[
+        {at:-30,text:'新しいほうの看板を、少しだけ濃くしておきます。'},
+        {at:-12,text:'ゆっくり、目を開けます。'},
+      ]
+    }},
+
+  /* 超瞑想法・第3章ワーク2。「自分で作った物語では瞑想できない、ただの妄想になる」という本書の指摘が要。
+     だから経文の世界をそのまま借りる。訳文は引かず、意味を平易な日本語に置き直してある。 */
+  { id:'hannya', name:'般若心経瞑想', mins:[10,15,20],
+    desc:'空を考えるのではなく、体験する。自分で作った物語では瞑想にならず妄想になるので、他人が作った抽象度の高い物語＝お経の世界を、強い臨場感で借りる。苫米地英人『超瞑想法』第3章ワーク2。',
+    script:{
+      open:[
+        {at:0, text:'背筋を伸ばして、楽に座ります。'},
+        {at:18,text:'今日は、空を、考えるのではなく、体験します。'},
+        {at:42,text:'自分で作った物語では、瞑想になりません。ただの妄想です。だから、はるかに高いところにある物語を借ります。'},
+      ],
+      loop:{every:46, fit:true, minGap:24, texts:[
+        '観自在菩薩が、深い智慧の完成を行じています。',
+        'そのとき、五つの集まりが、すべて空であると見ました。',
+        '色は、そのまま空です。空が、そのまま色です。',
+        '目の前のものが、消えてなくなるのではありません。',
+        'ぎっしり詰まっていて、しかも、ひとつも止まっていない。それが空です。',
+        '自分の体も、その中にあります。',
+        '生まれることも、なくなることもありません。',
+        '汚れることも、清らかになることもありません。',
+        '増えることも、減ることもありません。',
+        '増えも減りもしないのなら、失うものは、何ですか。',
+        '目も、耳も、鼻も、舌も、体も、心も。そこにありながら、固まっていません。',
+        '得るものも、ありません。もともと、足りないものがなかったからです。',
+        'こだわりがないので、恐れがありません。',
+        '行った、行った、向こう岸へ行った。',
+      ]},
+      close:[
+        {at:-40,text:'お経の世界に、もう少しだけ留まります。'},
+        {at:-22,text:'戻るとき、何がひとつ軽くなったか、見ます。'},
+        {at:-10,text:'ゆっくり、目を開けます。'},
+      ]
+    }},
+
+  /* 超瞑想法・第3章ワーク2の中で「華厳経が最適」「入法界品はセルフコーチングになる」とされている部分を、
+     独立した瞑想として立てたもの。善財童子の遍歴＋弥勒の楼閣（重々無尽）で、
+     「自分は菩薩や仏陀と同じ」が結論ではなく体験として立ち上がるようにしてある。 */
+  { id:'nyuhokkai', name:'入法界品（華厳）', mins:[15,20,30],
+    desc:'華厳経「入法界品」の世界に入る。善財童子として五十三人を訪ね、最後に弥勒の楼閣で、すべてがすべての中に入っている光景を見る。会う人すべてが師であるという目が残ります。苫米地英人『超瞑想法』は、これが強烈な自己アファメーションになると言います。',
+    script:{
+      open:[
+        {at:0, text:'楽な姿勢で、目を閉じます。'},
+        {at:18,text:'今日は、華厳経の、入法界品の世界に入ります。'},
+        {at:42,text:'善財童子という少年が、教えを求めて、五十三人を訪ね歩く話です。'},
+        {at:66,text:'その少年が、自分です。'},
+      ],
+      loop:{every:48, fit:true, minGap:26, texts:[
+        '旅に出ます。まだ、何も分かっていません。',
+        'はじめの人を訪ねて、聞きます。どうすれば、この道を歩けますか。',
+        'その人は、自分の知っていることだけを教えます。そして言います。私に分かるのは、ここまでです。',
+        '次の人のところへ行きなさい、と言われます。',
+        '次を訪ねます。船乗りがいます。医者がいます。子どもがいます。遊女もいます。',
+        '偉い人だけが師ではありません。会う人すべてが、何かをひとつ持っています。',
+        '誰も、全部は知りません。それでも、誰もが一つは持っています。',
+        '訪ねるたびに、見える範囲が広がっていきます。',
+        '五十三人目まで来ました。弥勒菩薩の楼閣の前に、立っています。',
+        '扉が開きます。中へ入ります。',
+        '楼閣の中に、数えきれないほどの楼閣があります。',
+        'そのひとつひとつの中にも、また数えきれないほどの楼閣があります。',
+        'どこまで行っても、全部が、全部の中に入っています。',
+        'その中に、自分もいます。そして、自分の中にも、その全部が入っています。',
+        '菩薩と自分を分けていた線は、どこにありましたか。',
+      ]},
+      close:[
+        {at:-44,text:'楼閣の中の広さを、そのまま持って帰ります。'},
+        {at:-24,text:'会う人すべてが師である、という目のまま、戻ります。'},
+        {at:-10,text:'ゆっくり、目を開けます。'},
+      ]
+    }},
+
+  /* 華厳経そのもの。入法界品が「歩いて広がる」なら、こちらは「一枚の絵で全部を見る」。
+     インドラの網（帝釈天の網）＝重々無尽。一即一切を、たとえ話ではなく光景として置いた。
+     最後を「自分が変われば全部が変わる」で閉じるのは、華厳が行の経典だから。 */
+  { id:'kegon', name:'華厳経瞑想（インドラの網）', mins:[10,15,20],
+    desc:'帝釈天の宮殿にかかる網。結び目ごとに宝珠が下がり、ひとつの珠に他の全部が映り、その映りの中にもまた全部が映っている。一が全部で、全部が一。自分の一手がどこまで届くかが変わります。',
+    script:{
+      open:[
+        {at:0, text:'楽な姿勢で、目を閉じます。'},
+        {at:16,text:'今日は、華厳経の世界を見ます。'},
+        {at:38,text:'帝釈天の宮殿に、大きな網がかかっています。'},
+      ],
+      loop:{every:46, fit:true, minGap:24, texts:[
+        '網の結び目ひとつひとつに、宝珠が下がっています。',
+        '数は、数えきれません。網に、果てもありません。',
+        'ひとつの珠を、近くで見ます。よく磨かれていて、まわりを映しています。',
+        'そこに、ほかの珠が、全部映り込んでいます。',
+        '映り込んだ珠の中にも、また全部が映っています。',
+        'その中にも、また全部が。終わりが、ありません。',
+        'ひとつの珠を動かすと、すべての珠の中の像が、いっせいに動きます。',
+        'どれが本物で、どれが映りですか。',
+        '自分は、そのうちのひとつの珠です。',
+        '自分の中にも、ほかの全部が映っています。',
+        '一が全部で、全部が一です。',
+        '誰かの一日が変われば、自分の中の像も変わります。',
+        '自分が変われば、全部の中の像が、変わります。',
+        '小さいと思っていたのは、どちらでしたか。',
+      ]},
+      close:[
+        {at:-40,text:'網の光の中に、しばらくいます。'},
+        {at:-22,text:'自分の一手が、どこまで届くのか、覚えておきます。'},
+        {at:-10,text:'ゆっくり、目を開けます。'},
+      ]
+    }},
+
+  /* 超瞑想法・第1章ワーク1〜3（歩行禅／黙って食べる／写真縁起）は、目を開けたまま行う行のため
+     このアプリには入れない（2026-08-17 本人判断）。台本は knowledge 側に残してある。 */
+
+  /* 超瞑想法・第1章ワーク4。原因をさかのぼると自分の手の外へ出る＝責めの根が消える。
+     犯人探しにしないため、冒頭で「線を見るため」と断っている。 */
+  { id:'inga', name:'因果関係瞑想', mins:[10,15,20],
+    desc:'いま起きていることの原因を、さかのぼれるところまでさかのぼる。犯人を探すためではなく、自分がどんな線の途中に立っているかを見るため。苫米地英人『超瞑想法』第1章ワーク4。',
+    script:{
+      open:[
+        {at:0, text:'楽な姿勢で、目を閉じます。'},
+        {at:16,text:'今日は、いま起きていることの原因を、さかのぼります。'},
+        {at:40,text:'犯人を探すためではありません。線を、見るためです。'},
+      ],
+      loop:{every:46, fit:true, minGap:24, texts:[
+        '今いちばん気になっている出来事を、ひとつ思い浮かべます。',
+        'それが起きた、直前の原因は何ですか。',
+        'では、その原因の原因は。',
+        'さらに、その前は。',
+        'さかのぼるほど、自分の手の届かないところへ出ていきます。',
+        '生まれた場所。生まれた年。育った家。どれも、選んでいません。',
+        'どこまで行けば、自分の責任が始まりますか。',
+        '今度は、逆に進みます。この出来事の、結果は何ですか。',
+        'その結果の、結果は。',
+        '十年後、これは何につながっていますか。',
+        '一本の線の途中に、立っています。始まりも終わりも、見えません。',
+        '自分を責めていたものは、この線のどこにありましたか。',
+      ]},
+      close:[
+        {at:-36,text:'線の上にいる、という感じだけ残します。'},
+        {at:-10,text:'ゆっくり、目を開けます。'},
+      ]
+    }},
+
+  /* 超瞑想法・第1章ワーク5。未来が原因で過去が結果、という向きで時間を見る。
+     ゴール設定そのものなので、手放し系とは別枠であることが desc から分かるようにしてある。 */
+  { id:'reverse', name:'時間を逆に見る瞑想', mins:[10,15,20],
+    desc:'未来を先に決めて、そこから今へ向かって時間をさかのぼる。未来が原因で、過去が結果である、という見方を試します。苫米地英人『超瞑想法』第1章ワーク5。',
+    script:{
+      open:[
+        {at:0, text:'楽な姿勢で、目を閉じます。'},
+        {at:16,text:'今日は、時間を、逆から見ます。'},
+        {at:38,text:'未来が原因で、過去が結果である、という見方を試します。'},
+      ],
+      loop:{every:46, fit:true, minGap:24, texts:[
+        '十年後の自分を、先に決めます。どこにいて、何をしていますか。',
+        'その人は、もう存在しています。そこから、こちらを見ています。',
+        'その人になるために、五年後には何が起きていますか。',
+        '一年後には。',
+        '来月には。',
+        '明日には。',
+        '今日、何が起きていればいいですか。',
+        '今の自分は、その未来から見ると、どういう途中ですか。',
+        'いま困っていることは、その未来から見ても、困ったことですか。',
+        '必要だったこと、に見えませんか。',
+        '過去も、同じように見ます。あれは、ここへ来るために要りましたか。',
+        '時間は、後ろから前へだけ流れているとは、かぎりません。',
+      ]},
+      close:[
+        {at:-36,text:'未来のほうを、少し濃くしておきます。'},
+        {at:-10,text:'ゆっくり、目を開けます。'},
+      ]
+    }},
+
+  /* 超瞑想法・第1章ワーク6。抽象度を上げる練習。上がりっぱなしにせず必ず降りてくる
+     （降りてこないと日常が薄くなるだけで終わるため）。 */
+  { id:'togo', name:'統合瞑想', mins:[10,15,20],
+    desc:'視点をどこまでも上げていき、また同じ道を降りてくる。悩みがなくなるのではなく、大きさが正しくなります。苫米地英人『超瞑想法』第1章ワーク6。',
+    script:{
+      open:[
+        {at:0, text:'楽な姿勢で、目を閉じます。'},
+        {at:16,text:'今日は、視点を上げていきます。'},
+        {at:38,text:'高いところに立つほど、下にあるものが、まとめて見えます。'},
+      ],
+      loop:{every:46, fit:true, minGap:24, texts:[
+        '今の自分を、真上から見ます。この部屋が、見えます。',
+        'もう少し上がります。建物が見えます。まわりの家が見えます。',
+        'もっと上がります。町が見えます。自分は、点になりました。',
+        '国が見えます。ひとつの形の中に、一億人が入っています。',
+        '地球が見えます。国境は、見えません。',
+        '太陽系が見えます。地球が、点になりました。',
+        '銀河が見えます。太陽が、点になりました。',
+        'ここまで来ると、さっきの悩みは、どこにありますか。',
+        'なくなったのではありません。大きさが、正しくなっただけです。',
+        '同じ道を、戻ります。銀河。太陽系。地球。国。町。この部屋。',
+        '戻ってきた自分は、さっきと同じ大きさですか。',
+        '高いところから見えた形を、覚えておきます。',
+      ]},
+      close:[
+        {at:-36,text:'見ていた高さのほうを、少しだけ残しておきます。'},
+        {at:-10,text:'ゆっくり、目を開けます。'},
+      ]
+    }},
+
+  /* 超瞑想法・第3章ワーク1。過去の体験は五感が揃うので臨場感が強い。
+     その強さだけを borrow して、まだ起きていない場面に移す。三法界瞑想の補助。 */
+  { id:'rinjo', name:'臨場感と五感のリンク瞑想', mins:[10,15,20],
+    desc:'はっきり思い出せる過去の場面で五感を揃え、その濃さのまま、まだ起きていない場面へ入れ替える。脳はどちらが本物かを区別せず、濃いほうを本物として扱います。三法界瞑想の臨場感を上げる補助にもなります。苫米地英人『超瞑想法』第3章ワーク1。',
+    script:{
+      open:[
+        {at:0, text:'楽な姿勢で、目を閉じます。'},
+        {at:16,text:'今日は、思い出す力を、作る力に変えます。'},
+        {at:40,text:'過去ははっきり思い出せて、まだ起きていないことはぼやけます。その差を、なくします。'},
+      ],
+      loop:{every:46, fit:true, minGap:24, texts:[
+        'はっきり覚えている、いい場面を、ひとつ選びます。',
+        'その場所に、戻ります。何が見えていますか。',
+        '音は、何が聞こえていますか。',
+        '空気の温度は。においは。',
+        '肌に触れているものは、何ですか。',
+        '体のどこが、いちばんゆるんでいますか。',
+        '五つとも揃うと、それは、いま起きていることと同じ強さになります。',
+        'そのまま、場面だけを入れ替えます。まだ起きていない場面へ。',
+        '同じように。見えるもの。聞こえる音。におい。温度。肌の感じ。',
+        'ぼやけたところがあれば、そこを埋めます。',
+        '脳は、どちらが本物かを、区別できません。',
+        '濃いほうを、本物として扱います。',
+      ]},
+      close:[
+        {at:-36,text:'濃くしたほうの場面を、もう一度だけ見ます。'},
+        {at:-10,text:'ゆっくり、目を開けます。'},
+      ]
+    }},
+
+  /* 超瞑想法・第3章ワーク3。本ではスター・ウォーズやマトリックスを例に挙げているが、
+     作品を指定すると本人が観ていない場合に成立しないので、好きな作品を選ばせる形にした。
+     最後に「現実も同じようにできている」へ折り返すのが本題。 */
+  { id:'fiction', name:'物語の世界に入る瞑想', mins:[10,15,20],
+    desc:'何度も見た映画や本の世界を借りて、臨場感を強める。自分で作った話では妄想にしかならないので、他人が作った世界を使います。最後に「現実も同じようにできている」へ折り返します。苫米地英人『超瞑想法』第3章ワーク3（本ではスター・ウォーズやマトリックスを例に挙げています）。',
+    script:{
+      open:[
+        {at:0, text:'楽な姿勢で、目を閉じます。'},
+        {at:16,text:'今日は、物語の世界を借ります。'},
+        {at:38,text:'何度も見た映画か、何度も読んだ本を、ひとつ選んでください。'},
+      ],
+      loop:{every:48, fit:true, minGap:26, texts:[
+        'その世界の、いちばん覚えている場面に立ちます。',
+        '見えるもの。聞こえる音。空気の感じ。',
+        '自分は、その世界にいる者として、そこにいます。',
+        '現実のほうを、思い出そうとしません。今は、こちらが本当です。',
+        'その世界では、何が可能ですか。ここでは不可能なことが、可能になっていますか。',
+        '可能だと感じているあいだ、体はどうなっていますか。',
+        'その物語は、誰かが作ったものです。それでも、体は本気で反応しています。',
+        '現実も、同じようにできています。誰かの作った情報を、本当だと思って生きています。',
+        'どちらも、脳にとっては、同じです。',
+        'では、どちらの決まりで生きますか。',
+      ]},
+      close:[
+        {at:-36,text:'物語のほうの、体の感じだけを持って帰ります。'},
+        {at:-10,text:'ゆっくり、目を開けます。'},
+      ]
+    }},
+
+  /* 超瞑想法・第3章ワーク4。本書でいちばん難しいとされる部分。
+     抽象度を上げると臨場感が落ちる、その両方を同時にやる。薄くなった地点が現在の限界＝そこが本体なので、
+     「薄くなって当たり前」と先に言って、失敗と感じさせないようにしてある。 */
+  { id:'chusho', name:'抽象度を上げながら臨場感を強める', mins:[15,20,30],
+    desc:'幸せの範囲を自分から外へ広げていき、そのたびに濃さを落とさないようにする。抽象度が上がるほど臨場感は薄れるので、薄くなった場所がいまの限界。そこから一歩だけ外へ出ます。苫米地英人『超瞑想法』第3章ワーク4。',
+    script:{
+      open:[
+        {at:0, text:'楽な姿勢で、目を閉じます。'},
+        {at:18,text:'今日は、いちばん難しいことをします。'},
+        {at:42,text:'高いところへ上がるほど、実感は薄くなります。その両方を、同時にやります。'},
+      ],
+      loop:{every:50, fit:true, minGap:30, texts:[
+        '自分ひとりが幸せである場面を、はっきり思い浮かべます。',
+        '見えるもの、聞こえる音、体の感じ。濃くします。',
+        '次に、家族が同じように幸せである場面へ、広げます。濃さを、落としません。',
+        '次に、友人。知っている人、ぜんぶ。',
+        '薄くなったら、そこで止まって、また濃くします。',
+        '次に、町の人ぜんぶ。会ったことのない人も、入ります。',
+        '次に、この国の人ぜんぶ。',
+        '次に、世界中の人ぜんぶ。まだ、濃いですか。',
+        '次に、人以外も入れます。生きているもの、ぜんぶ。',
+        '薄くなるのが当たり前です。薄くなった場所が、いまの限界です。',
+        'その一歩だけ、外へ出ます。',
+        '広いのに、まだ体で感じられている。そこが、いちばん高い場所です。',
+      ]},
+      close:[
+        {at:-40,text:'いちばん濃かったところまで、戻ります。'},
+        {at:-22,text:'明日は、そこから一歩だけ外へ出ます。'},
+        {at:-10,text:'ゆっくり、目を開けます。'},
+      ]
+    }},
+
+  /* 維摩経・不思議品。方丈に三万二千の獅子座が入る。部屋も座も大きさを変えていない、というのが要。
+     「大きい小さいは、どこにあったか」を体で問うため、最後に自分の手に負えない問題を持ってこさせる。 */
+  { id:'yuima_hojo', name:'維摩の部屋（方丈）', mins:[10,15,20],
+    desc:'維摩詰の十畳ほどの部屋に、部屋より大きな獅子の座が三万二千も入ってしまう。部屋は広がらず、座も小さくならない。手に負えないと思っている問題は、この部屋より大きいですか。維摩経・不思議品。',
+    script:{
+      open:[
+        {at:0, text:'楽な姿勢で、目を閉じます。'},
+        {at:16,text:'今日は、維摩詰の部屋に入ります。'},
+        {at:38,text:'十畳ほどの、何もない小さな部屋です。'},
+      ],
+      loop:{every:46, fit:true, minGap:24, texts:[
+        '見舞いの一行が入ってきます。文殊菩薩と、大勢の菩薩と、弟子たち。',
+        '座るものが、ありません。',
+        '維摩が、はるか遠い仏の国から、獅子の座を借りてきます。',
+        '巨大な座が、ひとつ運ばれてきます。部屋よりも、大きい。',
+        'それが、部屋に入ります。',
+        '二つ目が入ります。三つ目が入ります。',
+        '三万二千の座が、その部屋に、全部入ってしまいました。',
+        '部屋は、広がっていません。座も、小さくなっていません。',
+        'どちらも、そのままです。',
+        '大きい、小さいは、どこにありましたか。',
+        '手に負えないと思っている問題を、ひとつ思い浮かべます。',
+        'それは、この部屋より大きいですか。',
+      ]},
+      close:[
+        {at:-40,text:'部屋の中に、まだいます。'},
+        {at:-22,text:'大きさが決まっていない場所の感じを、持って帰ります。'},
+        {at:-10,text:'ゆっくり、目を開けます。'},
+      ]
+    }},
+
+  /* 維摩経・観衆生品。天女の花は、分別のあるところにだけくっつく。
+     払おうとするほど取れない＝手放しの構造そのものなので、最後は「払うのをやめる」に着地させる。 */
+  { id:'yuima_tennyo', name:'天女散華', mins:[10,15,20],
+    desc:'天女が花を散らすと、菩薩には触れずに落ち、弟子たちにはくっついて離れない。払おうとするほど取れない。花は分け隔てをせず、分けているのはこちら側。維摩経・観衆生品。',
+    script:{
+      open:[
+        {at:0, text:'楽な姿勢で、目を閉じます。'},
+        {at:16,text:'今日は、維摩詰の部屋にいる、天女の場面に入ります。'},
+        {at:40,text:'話を聞いている人たちの上に、天女が花を散らします。'},
+      ],
+      loop:{every:46, fit:true, minGap:24, texts:[
+        '花が、降ってきます。',
+        '菩薩たちの体に触れた花は、そのまま落ちていきます。',
+        '弟子たちの体に触れた花は、くっついて、離れません。',
+        '弟子たちは、力ずくで払い落とそうとします。取れません。',
+        '天女が聞きます。どうして、払うのですか。',
+        '花は、分け隔てをしません。分けているのは、こちらです。',
+        'これは似合わない、これはふさわしくない。そう思ったところに、くっつきます。',
+        '自分にくっついているものを、ひとつ探します。',
+        'それは、自分にふさわしくないと思っているものではありませんか。',
+        '払おうとするほど、離れません。',
+        '払うのを、やめてみます。',
+        '花は、もともと、ただ落ちていくものでした。',
+      ]},
+      close:[
+        {at:-36,text:'ついたままでも、かまいません。'},
+        {at:-10,text:'ゆっくり、目を開けます。'},
+      ]
+    }},
+
+  /* 維摩経・入不二法門品。菩薩たちが順に不二を語り、文殊が「語れないことが不二だ」と言い、
+     維摩は黙る。「維摩の一黙、雷の如し」。
+     この台本の本体は最後の沈黙なので、close の先頭を -300 に置いて、
+     終わりの5分を意図的に無音にしてある（loop は closeStart の8秒前で止まる）。
+     語り続ける他の台本とは、そこだけ作りが違う。減らさないこと。 */
+  { id:'yuima_moku', name:'維摩の一黙', mins:[15,20,30],
+    desc:'不二とは何か。菩薩たちが順に答え、文殊菩薩が「語ることも示すことも知ることもできない、それが不二だ」と答える。最後に維摩が答える番になり、維摩はただ黙る。※終わりの5分は誘導が入りません。沈黙がこの瞑想の本体です。維摩経・入不二法門品。',
+    script:{
+      open:[
+        {at:0, text:'楽な姿勢で、目を閉じます。'},
+        {at:18,text:'今日は、維摩経の、不二の法門の場面に入ります。'},
+        {at:44,text:'街に住む維摩詰という在家の人が、病に伏せています。見舞いに来た菩薩たちが、順に語っています。'},
+        {at:72,text:'問いは、ひとつ。二つに分かれていないとは、どういうことか。'},
+      ],
+      loop:{every:48, fit:true, minGap:26, texts:[
+        'ひとりが言います。生と滅を、二つに見ない。それが不二です。',
+        'ひとりが言います。我と、我がものを、二つに見ない。',
+        'ひとりが言います。汚れと、清らかさを、二つに見ない。',
+        'ひとりが言います。動くことと、動かないこと。',
+        'ひとりが言います。善と悪。罪と、福。',
+        'どれも、正しく聞こえます。そして、どれも、言葉です。',
+        '最後に、文殊菩薩が言います。',
+        'すべてについて、語ることも、示すことも、知ることもできない。問いも答えも離れている。それが、不二に入ることです。',
+        'そして文殊は、維摩に問い返します。',
+        '私たちは、めいめい語りました。あなたにとって、不二の法門とは何ですか。',
+        '維摩は、答えません。',
+        '何も、言いません。',
+        '言葉では説けない、と「言う」ことも、まだ言葉でした。',
+        'そこに、います。',
+      ]},
+      close:[
+        {at:-300,text:'ここから先は、言葉がありません。'},
+        {at:-40, text:'その沈黙が、答えでした。'},
+        {at:-12, text:'ゆっくり、目を開けます。'},
+      ]
+    }},
+
+  { id:'analytical', name:'分析的瞑想（単体）', mins:[3,5,10,15,20,25,30], desc:'テーマを選んで、問いに沿って自分の頭で考える。コースの中の分析パートだけを行う。', analytical:true },
+  { id:'ajikan', name:'阿字観', mins:[10,15,20,30], desc:'密教の観法。月輪と阿字を観る。※文言はご住職に確認のうえ書き換えてください。',
+    script:{
+      open:[
+        {at:0,text:'背筋を伸ばして、楽に座ります。'},
+        {at:16,text:'手を組み、肩の力を抜きます。目は半分だけ開き、少し先の床に落とします。'},
+        {at:36,text:'口から静かに息を吐ききります。三回、長く吐きます。'},
+        {at:64,text:'呼吸を、体にまかせます。'},
+        {at:82,text:'胸のあたりに、白く澄んだ満月を思い浮かべます。'},
+        {at:104,text:'その月は、冷たくなく、まぶしくもなく、ただ静かに光っています。'},
+        {at:128,text:'月の中に、阿の一字が浮かんでいます。'},
+        {at:150,text:'阿は、はじめの音。すべてが、もともと生じたものではないということ。'},
+        {at:176,text:'息を吐きながら、心の中で、阿。'},
+      ],
+      loop:{every:75,texts:[
+        '阿。','月輪は、少しずつ、大きくなっていきます。','月は部屋いっぱいに、やがて外へと広がります。',
+        '阿の字と、自分との境目が、うすくなっていきます。','考えが浮かんだら、それも月の光の中に置いておきます。',
+        '阿。','広がった月を、また胸のうちに、静かに収めていきます。']},
+      close:[{at:-70,text:'月を、もとの大きさに戻します。'},{at:-46,text:'月は、胸の奥に静かにしまわれます。'},
+             {at:-24,text:'呼吸を、ふだんの深さに戻します。'},{at:-10,text:'ゆっくりと、目を開けます。'}]
+    }},
+  { id:'anapana', name:'呼吸随観', mins:[10,15,20,30,45], desc:'アーナーパーナサティ。呼吸をただ見る。もっとも基本で、もっとも深い。',
+    script:{
+      open:[{at:0,text:'背筋を伸ばして座ります。'},{at:18,text:'呼吸を変えようとしません。今している呼吸を、ただ見ます。'},
+            {at:42,text:'鼻の入り口。空気が触れる、その一点に意識を置きます。'}],
+      loop:{every:60,texts:['入ってくる息。出ていく息。','長ければ、長いと知る。短ければ、短いと知る。',
+            '考えが浮かんだら、それに気づいて、また呼吸に戻ります。','何度離れてもかまいません。気づいて戻る、それが練習です。',
+            '呼吸の、はじまりと、おわり。','体ぜんぶで、呼吸をしています。','評価しません。ただ、見ています。']},
+      close:[{at:-40,text:'呼吸から、体全体へ、意識を広げます。'},{at:-20,text:'まわりの音に、耳を戻します。'},{at:-8,text:'ゆっくり、目を開けます。'}]
+    }},
+  /* オープンモニタリング。呼吸随観（対象をひとつに絞る）とは別種で、対象を決めずに
+     起きてくるものすべてを見る。本人の定義そのまま：「今この瞬間を評価判断を加えずに観察する。
+     考えない、観察するだけ」。
+     台本の作り方に注意：この瞑想では「〜しましょう」と指示を増やすほど、観察ではなく作業になる。
+     だから行数を絞り、間を長くとってある。沈黙が本体。
+     考えを追い出そうとしないのが要点——考えも、音や感覚と同じ「起きてきたもの」として並べて扱う。
+     英語の呼吸の声は入れない（noCue）。「吸って・吐いて」は呼吸を操作する指示なので、
+     何も変えずに見るというこの瞑想と噛み合わないため。 */
+  /* 5分は入れていない。誘導が一周せず、いちばん肝心な「選別に気づく」段まで届かないため。 */
+  { id:'mindful', name:'マインドフルネス瞑想', mins:[10,15,20,30], noCue:true,
+    desc:'今この瞬間を、評価も判断も加えずに観察する。考えるのではなく、ただ見る。リラックスのためではなく、ふだん無意識にやっている「何を拾い、何を捨てるか」の選別を、自分で見えるようにするための時間です。',
+    script:{
+      open:[
+        {at:0, text:'背筋を伸ばして座ります。目は閉じても、少し開けたままでもかまいません。'},
+        {at:20,text:'これから、何も変えようとしません。今ここにあるものを、見るだけです。'},
+        {at:42,text:'まず、聞こえている音に、耳を向けます。'},
+      ],
+      loop:{every:50,fit:true,minGap:30,texts:[
+        '今、音がしています。何の音か、名前をつけなくていいです。',
+        '良い音、嫌な音、と分けません。ただ、音がしています。',
+        '次に、体に移ります。触れているところ、温かいところ、固いところ。',
+        'それを直そうとしません。今そうなっている、と見るだけです。',
+        '考えが浮かびました。追いかけません。',
+        '考えも、音や感覚と同じです。浮かんで、消えていくもののひとつです。',
+        '「これでいいのかな」と考え始めたら、それにも気づきます。',
+        '気づいた時点で、もう戻っています。やり直さなくていいです。',
+        '何も起きていなくても、それが今の状態です。',
+        'うまくやろうとしていませんか。していたら、それも見ます。',
+        '評価が出てきたら、評価が出てきた、と見ます。消さなくていいです。',
+        '見ているものを、変えません。見ている自分も、変えません。',
+        // ここが本人の定義そのもの：無意識にやっている選別を、意識の側に持ってくる段。
+        // 「なぜ選んだのか」と問うと考え始めてしまうので、問わずに、実際に選び直させる形にしてある。
+        '今、いちばん強く来ているものがあります。音か、体か、考えか。',
+        'それを選んだ覚えは、ありません。勝手に選ばれています。',
+        'そのあいだ、拾われなかったものが、まわりにありました。',
+        '今度は、そちらへ移ってみます。',
+        '今、この瞬間だけが、起きています。',
+      ]},
+      close:[
+        {at:-40,text:'そのまま、留まります。'},
+        {at:-20,text:'まわりの音に、耳を戻します。'},
+        {at:-8, text:'ゆっくり、目を開けます。'},
+      ]
+    }},
+  /* マントラ瞑想。超越瞑想（TM）が土台にしている技法だが、TMそのものではない。
+     TMは認定教師から個人マントラを授かる形式で、マントラも技法も組織が管理している商標。
+     こちらが割り当てるわけにいかないので、音は本人が決める形にしてある。名前もTMとは名乗らない。
+     再現しているのは中核の仕組みのほうで、これはヴェーダから続く一般的な技法：
+       ・努力しない、集中しない（集中はこの瞑想を壊す）
+       ・マントラが薄くなる・消えるのは失敗ではなく、そうなるのが正しい
+       ・考えを追い出さない。気づいたら「そっと」戻る
+       ・終わりに2〜3分かけて戻る（急に立つと頭痛やイライラが出る、と昔から言われる）
+     音楽は付けない（quiet）。ガヤトリーは唱えられているマントラなので、
+     自分の音を心で繰り返す邪魔になる。英語の呼吸の声も入れない（noCue）。 */
+  /* 10分は入れていない。終わりの戻りに約3分使う作りなので、10分だと戻りが不釣り合いに長くなり、
+     誘導も一周しない。TM自体が1回20分の技法でもある。 */
+  { id:'mantra', name:'マントラ瞑想', mins:[15,20,30], noCue:true, quiet:true,
+    desc:'心の中で音を繰り返すだけ。努力も集中もしません。音が薄くなったり消えたりするのが正しい状態です。音は自分で決めます（決まっていなければ「ソーハム」か「オーム」。意味は考えないでください）。超越瞑想の土台になっている技法ですが、TMそのものではありません。',
+    script:{
+      open:[
+        {at:0, text:'楽に座ります。目を閉じます。'},
+        {at:22,text:'しばらく、何もしません。'},
+        {at:55,text:'では、心の中で、自分の音を、そっと繰り返します。声には出しません。'},
+        {at:85,text:'努力しません。集中も、しません。'},
+      ],
+      loop:{every:66,fit:true,minGap:40,texts:[
+        'はっきり唱えなくていいです。ぼんやりで、かまいません。',
+        '音が薄くなってきたら、薄いままにします。',
+        '消えてしまったら、消えたまま、少し待ちます。',
+        '考えが出てきました。追い出しません。それも、自然なことです。',
+        '気づいたら、そっと音に戻ります。強く戻さなくていいです。',
+        '正しくやろうとしていませんか。正しさは、要りません。',
+        '音は、だんだん細くなっていきます。',
+        '何も起きていないように感じても、それでいいです。',
+        '眠くなったら、眠ってしまってもかまいません。',
+      ]},
+      close:[
+        {at:-170,text:'ここから、ゆっくり戻ります。急がないでください。'},
+        {at:-140,text:'音を、手放します。'},
+        {at:-110,text:'そのまま、しばらく何もしないで座っています。'},
+        {at:-60, text:'体を感じ始めます。手。足。背中。'},
+        {at:-30, text:'ゆっくり、指を動かします。'},
+        {at:-12, text:'急がずに、目を開けます。すぐには立ち上がらないでください。'},
+      ]
+    }},
+  { id:'body', name:'ボディスキャン', mins:[10,15,20,30], desc:'足先から頭まで、順に意識を移していく。眠りにくい夜、体が固い日に。',
+    script:{
+      open:[{at:0,text:'仰向けか、楽な姿勢で横になります。'},{at:16,text:'一度、大きく息を吸って、口から吐きます。'},
+            {at:36,text:'体の重さを、床にあずけます。'},{at:56,text:'左の足の裏に、意識を置きます。'}],
+      loop:{every:42,texts:['左のふくらはぎ、ひざ、ふともも。','右の足の裏、ふくらはぎ、ひざ、ふともも。','おしりと、腰のあたり。',
+            'おなか。呼吸で、ふくらんで、しぼむ。','背中。床に触れているところ。','胸。心臓の動き。','両手の指先から、手のひら、腕、肩へ。',
+            '首、あご、くちびる、ほお。','目のまわり。眉のあいだ。ゆるめます。','頭のてっぺんまで。','体全体を、ひとつのまとまりとして感じます。',
+            '力が入っているところがあれば、息を吐きながら、ほどきます。']},
+      close:[{at:-44,text:'体ぜんぶを、もう一度感じます。'},{at:-24,text:'指先を少し動かします。'},{at:-10,text:'ゆっくり目を開けて、起き上がります。'}]
+    }},
+  /* セーフプレイス。心理療法の安定化技法。視覚→聴覚→触覚の順に細部を足していき、
+     最後に0〜100点で採点して、届かなければもう一周する。
+     台本を書くうえでの要点：**こちらから景色を指定しない**。「南国の砂浜を思い浮かべて」と言った瞬間、
+     本人の中からわき上がったものではなくなり、安心感が乗らない。だから問いだけ置いて、待つ。
+     wait を長めに取っているのはそのため（沈黙が本体）。 */
+  { id:'safeplace', name:'セーフプレイス', mins:[10,15,20,30], chantBg:true,
+    desc:'心理療法で使われる安定化の技法。自分にとって安心できる場所を、見る→聞く→肌で感じるの順に細かくして、いつでも戻れる場所にする。不安の強い日、眠れない夜に。※落ち着かない感じが出てきたら、目を開けて部屋の中のものを3つ数えれば戻れます。強い不安や、過去のつらい出来事が出てくる場合は専門家に相談してください。',
+    script:{
+      open:[{at:0,text:'楽な姿勢で座って、目を閉じます。'},
+            {at:18,text:'何度か、息を吐きます。吐くほうを、長めに。'},
+            {at:40,text:'これから、問いをひとつ置きます。答えを考えなくていいです。'},
+            {at:58,text:'私が、心から安心できる場所は、どんなところだろう。'}],
+      loop:{every:24, fit:true, texts:[
+        {text:'浮かんでくるのを、待ちます。', wait:45},
+        '浮かんだものが何であれ、それでかまいません。行ったことのある場所でも、映画で見た景色でも、知らない場所でも。',
+        'まず、見えているものを見ます。',
+        '形。何があって、どんな輪郭をしているか。',
+        '素材。石か、木か、土か、水か。手で触れたら、どんな硬さか。',
+        {text:'色。いちばん多いのは、何色ですか。', wait:30},
+        '次に、耳を向けます。',
+        'その場所で聞こえている音。まず、遠くの音。',
+        {text:'それから、近くの音。何も聞こえないなら、その静けさを聞きます。', wait:30},
+        '次に、肌に移ります。',
+        '足の裏。地面は硬いですか、やわらかいですか。',
+        '空気の温度。乾いていますか、湿っていますか。',
+        {text:'風は、動いていますか。触れられるものがあれば、触れます。', wait:30},
+        'ここで、点数をつけます。',
+        {text:'まったく安心できないが0点。心から安心できるが100点。いまは、何点ですか。', wait:25},
+        '80点に届かないなら、もう一度、見て、聞いて、感じます。',
+        {text:'足りないところを、理屈で足そうとしません。ひとりでに出てくるのを、待ちます。', wait:45},
+        {text:'この場所は、いつでも戻ってこられます。', wait:30},
+      ]},
+      close:[{at:-52,text:'この場所を、覚えておきます。'},
+             {at:-30,text:'目を閉じたまま、いまいる部屋の空気に戻ります。'},
+             {at:-12,text:'ゆっくり、目を開けます。'}]
+    }},
+  { id:'silent', name:'ただ座る', mins:[5,10,15,20,30,45,60], desc:'誘導なし。はじめと終わりに鐘が鳴るだけ。', silent:true },
+];
+
+/* ---- コースの構成（順番はこの配列のとおり）---- */
+const COURSE = [
+  { id:'chant', name:'チャンティング', opts:[0,1,2,3,5,10], def:5,
+    desc:'鐘のあとに、チャンティングの曲を流す。' },
+  { id:'breath', name:'呼吸法', opts:[0,3,4,5,7,10,15], def:4,
+    desc:'考える前に、体を静める。プリセットを選べます。' },
+  { id:'analytical', name:'分析的瞑想', opts:[0,3,5,8,12,15,20,25,30,40], def:12,
+    desc:'問いが読まれ、長い沈黙が来ます。その沈黙で自分の頭で考えます。' },
+  { id:'letgo', name:'手放し', opts:[0,15,20,25,30], def:0,
+    desc:'考えた直後に置く。頭で出した答えを、感じきる側で受ける。感情が尽きるには時間がいるので、入れるなら15分から。' },
+  { id:'metta', name:'慈悲の瞑想', opts:[0,3,5,7,10,15,20], def:0,
+    desc:'考えたことを、他者へひらく。四無量心の慈と悲。' },
+  { id:'mudita', name:'喜びの瞑想', opts:[0,3,5,7,10,12,15,20], def:5,
+    desc:'『よろこびの書』の八本柱を1本ずつ育てる。「今日の柱」にすると毎回自動で次へ進みます。' },
+  { id:'morningword', name:'朝のひとこと', opts:[0,1,2,3,5], def:1,
+    desc:'今日という日を、自分で定義する短い言葉。回向の前に置きます。' },
+  { id:'dedication', name:'回向', opts:[0,1,2,3,4,5], def:4,
+    desc:'生まれた善いものを、自分のものにしないで終える。' },
+];
+
+/* ---- 合計時間のプリセット（数字はぴったり合計になるようにしてあります）---- */
+const COURSE_PRESETS = {
+  20:{chant:1,breath:3,analytical:7, letgo:0,metta:3, mudita:3, morningword:1,dedication:2},
+  30:{chant:2,breath:5,analytical:11,letgo:0,metta:5, mudita:5, morningword:1,dedication:1},
+  45:{chant:3,breath:7,analytical:19,letgo:0,metta:7, mudita:7, morningword:1,dedication:1},
+  60:{chant:3,breath:10,analytical:24,letgo:0,metta:10,mudita:10,morningword:1,dedication:2},
+  90:{chant:5,breath:15,analytical:39,letgo:0,metta:15,mudita:12,morningword:1,dedication:3},
+};
+
+/* ---- 最後に流す曲。YouTubeの動画IDを差し替えれば変わります ---- */
+const CLOSING_MUSIC = {
+  id:'f2cIRYXgJbY',
+  radio:'https://www.youtube.com/watch?v=f2cIRYXgJbY&list=RDf2cIRYXgJbY&start_radio=1',
+  start:60, // 何秒目から自動で始めるか。0なら最初から。プレイヤー内で手動でも動かせる
+};
+/* ---- セッション中ずっと小さな音量で流す背景音（ガヤトリー・マントラ）。YouTube埋め込み、ネット接続が必要 ---- */
+const BACKGROUND_MUSIC = { id:'T0ln5OZ1rSE', volume:14 };
+
+/* ▲▲▲ 書き換えるのはここまで ▲▲▲ ====================================== */
+
+
+/* ---------- 保存 ---------- */
+const KEY='medapp.v2';
+const S = Object.assign({
+  voice:true, breathVoice:false, bell:true, cue:true, count:false, dim:false, drone:false, music:true, bgMusic:true,
+  rate:0.85, pitch:0.95, voiceURI:'',
+  breath:'reset46', breathMin:5, med:'metta', medMin:10,
+  cIn:4, cH1:0, cOut:6, cH2:0,
+  courseBreath:'reset46', topic:'impermanence',
+  pillar:'auto', pillarIdx:0, pillarCount:{}, nightBg:'rain',
+  letgo:'core', letgoIdx:0, letgoCount:{}, streak:true, enBreath:true, bgVol:14,
+  stage:Object.fromEntries(COURSE.map(s=>[s.id,s.def]))
+}, JSON.parse(localStorage.getItem(KEY)||'{}'));
+S.stage = Object.assign(Object.fromEntries(COURSE.map(s=>[s.id,s.def])), S.stage||{});
+const save=()=>localStorage.setItem(KEY,JSON.stringify(S));
+
+/* 感情の階段。手放しのあと、終わった時点でどこにいたかを1タップで残す。
+   握りがゆるむと「下がる」のではなく「上がる」形で出る（怒りが出てきたら悪化ではなく前進）。
+   体感だけでは絶対に気づけないので、記録して推移で見る。数値は付けない——順番だけを使う。 */
+const LADDER=[
+  {name:'無気力',short:'どうでもいい'},
+  {name:'悲しみ',short:'もう終わった'},
+  {name:'恐れ', short:'まだ起きていないことが心配'},
+  {name:'欲しさ',short:'手に入れば解決する'},
+  {name:'怒り', short:'力が戻ってきた'},
+  {name:'誇り', short:'守るものができた'},
+  {name:'勇気', short:'自分で何とかできる'},
+  {name:'受容', short:'そのままでいい'},
+];
+const LVKEY='medapp.levels';
+let LEVELS = JSON.parse(localStorage.getItem(LVKEY)||'[]');
+const saveLevels=()=>localStorage.setItem(LVKEY,JSON.stringify(LEVELS));
+
+/* 夢。ユングにとって夢は無意識への本道で、影はまず夢に姿を変えて出てくる。
+   ここは「書く場所」ではなく「読み返される仕組み」として作ってある——書くだけならメモアプリで足りる。
+   意味づけはしない。象徴の意味は本人の連想からしか出ないので、辞書もAI解釈も入れない。
+   覚えていない日は空でいい。連続日数も達成率も出さない（空白が責める材料になるため）。 */
+const DREAMKEY='medapp.dreams';
+let DREAMS = JSON.parse(localStorage.getItem(DREAMKEY)||'[]');
+const saveDreams=()=>localStorage.setItem(DREAMKEY,JSON.stringify(DREAMS));
+const latestDream=()=>DREAMS.length?DREAMS[DREAMS.length-1]:null;
+
+/* 共時性（意味のある偶然）。ユングは夢と対にして、外側で起きる符合を見ていた。
+   内側＝夢、外側＝共時性。両方あって初めて、無意識が何を言っているかが立体になる。
+   このアプリでは、それに加えて検証の道具でもある——「手放したら現実が動くのか」を、
+   いまの高さ（内側）と共時性（外側）の並びで自分の目で確かめるため。
+   ここも意味づけはしない。ただ、起きたことを書いて日付を残すだけ。 */
+const SYNCKEY='medapp.sync';
+let SYNCS = JSON.parse(localStorage.getItem(SYNCKEY)||'[]');
+const saveSyncs=()=>localStorage.setItem(SYNCKEY,JSON.stringify(SYNCS));
+/* その瞑想のあと3日以内に符合が書かれたか（手放し→現実が動く、の対応を見るため） */
+const syncAfter=(d)=>SYNCS.some(s=>{
+  const gap=(new Date(s.d)-new Date(d))/86400000; return gap>=0&&gap<=3;
+});
+
+/* やること／やってもらうこと。書き出したものを声に出して読み、重かったものを右へ渡す。
+   狙いは問題を解くことではなく、渡した瞬間に一瞬だけ軽くなること——それを繰り返すと、
+   負荷をかける癖そのものが緩む、という考え方。だから達成率も連続日数も出さない。
+   数えた時点で、この練習自体が「やること」に戻ってしまうため。 */
+const HOKEY='medapp.handover';
+let HANDOVER = JSON.parse(localStorage.getItem(HOKEY)||'[]');
+const saveHandover=()=>localStorage.setItem(HOKEY,JSON.stringify(HANDOVER));
+
+const LOGKEY='medapp.log';
+let LOG = JSON.parse(localStorage.getItem(LOGKEY)||'[]');
+const saveLog=()=>localStorage.setItem(LOGKEY,JSON.stringify(LOG));
+
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const fmt=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const mmss=s=>{s=Math.max(0,Math.round(s));return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
+/* 自分で書いた文（夢・共時性）をそのまま画面に出すので、記号はエスケープしてから入れる */
+const esc=t=>String(t).replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
+
+/* ---------- 音 ---------- */
+let ac=null, keepAlive=null, drone=null;
+function audio(){
+  if(!ac){
+    ac=new (window.AudioContext||window.webkitAudioContext)();
+    try{ if(navigator.audioSession) navigator.audioSession.type='playback'; }catch(e){}
+  }
+  if(ac.state==='suspended') ac.resume();
+  return ac;
+}
+function startKeepAlive(){ if(keepAlive)return; const c=audio(),o=c.createOscillator(),g=c.createGain();
+  g.gain.value=0.0001;o.frequency.value=60;o.connect(g);g.connect(c.destination);o.start();keepAlive={o}; }
+function stopKeepAlive(){ if(keepAlive){try{keepAlive.o.stop()}catch(e){} keepAlive=null;} }
+
+function bell(vol,base){
+  if(!S.bell)return;
+  const c=audio(),t=c.currentTime;
+  base=base||174;
+  [[1,1],[2.76,.5],[5.4,.25],[8.9,.12]].forEach(([m,a])=>{
+    const o=c.createOscillator(),g=c.createGain();
+    o.type='sine';o.frequency.value=base*m;
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime((vol||.5)*a,t+.01);
+    g.gain.exponentialRampToValueAtTime(.0001,t+7/Math.sqrt(m));
+    o.connect(g);g.connect(c.destination);o.start(t);o.stop(t+8);
+  });
+}
+function cue(kind){
+  if(!S.cue)return;
+  const c=audio(),t=c.currentTime,f=kind==='in'?660:kind==='out'?440:550;
+  const o=c.createOscillator(),g=c.createGain();
+  o.type='sine';o.frequency.value=f;
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.10,t+.03);
+  g.gain.exponentialRampToValueAtTime(.0001,t+.9);
+  o.connect(g);g.connect(c.destination);o.start(t);o.stop(t+1);
+}
+
+/* 合成ドローン：基音＋5度＋オクターブ、ゆっくり揺らす */
+function droneOn(vol){
+  if(drone) return;
+  const c=audio(), out=c.createGain(), lp=c.createBiquadFilter();
+  out.gain.setValueAtTime(0.0001,c.currentTime);
+  out.gain.exponentialRampToValueAtTime(vol||.13,c.currentTime+4);
+  lp.type='lowpass'; lp.frequency.value=900; lp.Q.value=.4;
+  const oscs=[];
+  [[110,1],[110.4,.7],[164.8,.45],[220,.3],[329.6,.12]].forEach(([f,a])=>{
+    const o=c.createOscillator(), g=c.createGain();
+    o.type='sine'; o.frequency.value=f; g.gain.value=a*.5;
+    const lfo=c.createOscillator(), lg=c.createGain();
+    lfo.frequency.value=0.06+Math.random()*0.05; lg.gain.value=a*.16;
+    lfo.connect(lg); lg.connect(g.gain); lfo.start();
+    o.connect(g); g.connect(lp); o.start(); oscs.push(o,lfo);
+  });
+  lp.connect(out); out.connect(c.destination);
+  drone={oscs,out};
+}
+/* ---------- リラックス音源（雨音・波・ピンクノイズ／ブラウンノイズ）----------
+   全部WebAudioでその場で合成する。音源ファイル不要・オフラインで確実に鳴る。 */
+let relaxNode=null;
+function makeNoiseBuffer(c,seconds){
+  const n=Math.floor(c.sampleRate*seconds), buf=c.createBuffer(1,n,c.sampleRate), d=buf.getChannelData(0);
+  for(let i=0;i<n;i++) d[i]=Math.random()*2-1;
+  return buf;
+}
+function relaxStop(){
+  if(!relaxNode) return;
+  const {nodes,gain}=relaxNode; relaxNode=null;
+  const c=audio();
+  try{ gain.gain.exponentialRampToValueAtTime(.0001,c.currentTime+1.2); }catch(e){}
+  setTimeout(()=>nodes.forEach(n=>{ try{n.stop&&n.stop();}catch(e){} try{n.disconnect&&n.disconnect();}catch(e){} }),1500);
+}
+function relaxStart(kind,vol){
+  relaxStop();
+  if(!kind) return;
+  const c=audio(), out=c.createGain();
+  out.gain.setValueAtTime(.0001,c.currentTime);
+  out.gain.exponentialRampToValueAtTime(vol||.22,c.currentTime+3);
+  out.connect(c.destination);
+  const nodes=[out];
+
+  if(kind==='rain'){
+    const src=c.createBufferSource(); src.buffer=makeNoiseBuffer(c,3); src.loop=true;
+    const hp=c.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=900;
+    const bp=c.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=3200; bp.Q.value=.6;
+    src.connect(hp); hp.connect(bp); bp.connect(out); src.start();
+    nodes.push(src,hp,bp);
+  } else if(kind==='wave'){
+    const src=c.createBufferSource(); src.buffer=makeNoiseBuffer(c,4); src.loop=true;
+    const lp=c.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=700; lp.Q.value=.5;
+    const swell=c.createGain(); swell.gain.value=.6;
+    const lfo=c.createOscillator(); lfo.frequency.value=0.11; // 寄せて返す、約9秒周期
+    const lfoGain=c.createGain(); lfoGain.gain.value=.4;
+    lfo.connect(lfoGain); lfoGain.connect(swell.gain);
+    src.connect(lp); lp.connect(swell); swell.connect(out);
+    src.start(); lfo.start();
+    nodes.push(src,lp,swell,lfo,lfoGain);
+  } else if(kind==='pink'||kind==='brown'){
+    const sp=c.createScriptProcessor(4096,1,1);
+    if(kind==='pink'){
+      let b0=0,b1=0,b2=0,b3=0,b4=0,b5=0,b6=0;
+      sp.onaudioprocess=e=>{
+        const o=e.outputBuffer.getChannelData(0);
+        for(let i=0;i<o.length;i++){
+          const w=Math.random()*2-1;
+          b0=.99886*b0+w*.0555179; b1=.99332*b1+w*.0750759; b2=.96900*b2+w*.1538520;
+          b3=.86650*b3+w*.3104856; b4=.55000*b4+w*.5329522; b5=-.7616*b5-w*.0168980;
+          o[i]=(b0+b1+b2+b3+b4+b5+b6+w*.5362)*.11;
+          b6=w*.115926;
+        }
+      };
+    } else {
+      let last=0;
+      sp.onaudioprocess=e=>{
+        const o=e.outputBuffer.getChannelData(0);
+        for(let i=0;i<o.length;i++){ const w=Math.random()*2-1; last=(last+.02*w)/1.02; o[i]=last*3.5; }
+      };
+    }
+    sp.connect(out); nodes.push(sp);
+  }
+  relaxNode={nodes,gain:out};
+}
+
+function droneOff(){
+  if(!drone)return;
+  const c=audio(), d=drone; drone=null;
+  try{ d.out.gain.exponentialRampToValueAtTime(.0001,c.currentTime+3); }catch(e){}
+  setTimeout(()=>d.oscs.forEach(o=>{try{o.stop()}catch(e){}}),3400);
+}
+/* チャンティング中に流す曲（YouTube）。ネット接続が必要。
+   読み込めない・再生できない場合は合成ドローンにフォールバックする。 */
+const CHANT_MUSIC = { id:'IZkjX_c4hm4', volume:65, start:128 };
+let chantYtPlayer=null, chantYtReady=false, chantWantVol=null;
+
+/* セッション開始と同時に、ミュート状態で動画の読み込み・再生だけ先に始めておく。
+   （チャンティングは大抵コースの最初のステージなので、ここでバッファリングを
+   先に済ませておかないと、実際にそのステージが来た時に間に合わず無音になりがち） */
+function chantPrewarm(){
+  if(chantYtPlayer || !CHANT_MUSIC.id) return;
+  loadYT().then(()=>{
+    if(chantYtPlayer) return;
+    if(!(window.YT&&window.YT.Player)){
+      // YouTube自体が読み込めない環境（通信のブロック・圏外等）→ 合成ドローンに切り替える
+      if(chantWantVol!=null){ const v=chantWantVol/100; chantWantVol=null; droneOn(v); }
+      return;
+    }
+    chantYtPlayer=new YT.Player('chantYt',{
+      height:'2',width:'2',videoId:CHANT_MUSIC.id,
+      playerVars:{autoplay:1,controls:0,disablekb:1,fs:0,modestbranding:1,rel:0,
+                  loop:1,playlist:CHANT_MUSIC.id,playsinline:1,mute:1,start:CHANT_MUSIC.start||0},
+      events:{
+        onReady:e=>{ chantYtReady=true; e.target.mute(); e.target.playVideo();
+          if(chantWantVol!=null){ e.target.unMute(); e.target.setVolume(chantWantVol); chantWantVol=null; } },
+        onStateChange:e=>{ if(e.data===YT.PlayerState.ENDED) e.target.playVideo(); },
+        onError:e=>{ // この動画がどうしても再生できない環境（埋め込み不可・削除済み等）→ 合成ドローンに切り替える
+          chantYtPlayer=null; chantYtReady=false;
+          if(chantWantVol!=null){ const v=chantWantVol/100; chantWantVol=null; droneOn(v); }
+        }
+      }
+    });
+  });
+}
+async function chantStart(vol){
+  // 端末に取り込んであればそれで鳴らす（広告なし・オフライン可）
+  if(await localStart('chant',{volume:Math.round((vol||.7)*100)})) return;
+  if(CHANT_MUSIC.id){
+    const v=Math.round((vol||.7)*100);
+    if(chantYtPlayer && chantYtReady){ chantYtPlayer.unMute(); chantYtPlayer.setVolume(v); chantYtPlayer.playVideo(); return; }
+    if(chantYtPlayer){ chantWantVol=v; } // 準備中：onReadyが来たら自動で音量を上げる
+    else { chantWantVol=v; chantPrewarm(); }
+    // 回線が遅い等でいつまでも読み込みが終わらない環境向け：一定時間待っても鳴らなければ、
+    // 諦めて合成ドローンに切り替える（無音のまま何も鳴らないよりはまし）
+    setTimeout(()=>{
+      if(chantWantVol===v && !(chantYtPlayer&&chantYtReady)){ chantWantVol=null; droneOn(vol); }
+    }, 8000);
+    return;
+  }
+  droneOn(vol);
+}
+function chantFade(vol){
+  if(localOn('chant')){ if(vol<=0) localPause('chant'); else localVol('chant',vol); return; }
+  if(vol<=0) chantWantVol=null; // ステージを離れた後に遅れて準備完了しても、鳴り出さないようにする
+  if(chantYtPlayer && chantYtReady){
+    if(vol<=0) chantYtPlayer.pauseVideo(); else chantYtPlayer.setVolume(Math.round(vol*100));
+    return;
+  }
+  if(drone){ if(vol<=0) droneOff(); else { try{ drone.out.gain.exponentialRampToValueAtTime(vol,audio().currentTime+3);}catch(e){} } }
+}
+function chantStop(){
+  localPause('chant');
+  try{ if(chantYtPlayer&&chantYtReady) chantYtPlayer.pauseVideo(); }catch(e){}
+  droneOff();
+}
+
+
+/* 外部の誘導音声（YouTube埋め込み） ------------------------------------
+   自分の台本を読み上げるのではなく、他の人の誘導をそのまま流すモード。
+   音源ファイルは一切持たない（埋め込みなので配布にならず、著作権的にきれい）。
+   そのぶんネット接続が必須で、圏内でないと成立しない＝オフラインでは選ばない。
+   足すときは YT_GUIDES に1行増やして、MEDITATIONS に ytGuide:'キー' の項目を作る。 */
+
+/* 端末に置いた音源で誘導する ---------------------------------------------
+   YouTube埋め込みは、投稿者が収益化していると広告が入る。瞑想の途中で広告が
+   流れると台無しなので、音源は「アプリに同梱する」のではなく「この端末にだけ置く」。
+   ・公開されるアプリには音源が1バイトも入らない（＝配布にならない）
+   ・端末のIndexedDBに入るので、次からはオフラインでも広告なしで鳴る
+   ・取り込んでいなければYouTube埋め込みに落ちる（広告は出るが、とりあえず鳴る） */
+const GDB='medGuideAudio';
+function gdb(){
+  return new Promise((res,rej)=>{
+    const r=indexedDB.open(GDB,1);
+    r.onupgradeneeded=()=>{ if(!r.result.objectStoreNames.contains('files')) r.result.createObjectStore('files'); };
+    r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);
+  });
+}
+async function guidePut(key,blob){
+  const db=await gdb();
+  return new Promise((res,rej)=>{
+    const t=db.transaction('files','readwrite'); t.objectStore('files').put(blob,key);
+    t.oncomplete=()=>res(true); t.onerror=()=>rej(t.error);
+  });
+}
+async function guideGet(key){
+  try{
+    const db=await gdb();
+    return await new Promise((res)=>{
+      const t=db.transaction('files','readonly'); const q=t.objectStore('files').get(key);
+      q.onsuccess=()=>res(q.result||null); q.onerror=()=>res(null);
+    });
+  }catch(e){ return null; }
+}
+async function guideDel(key){
+  try{ const db=await gdb();
+    await new Promise(res=>{ const t=db.transaction('files','readwrite'); t.objectStore('files').delete(key); t.oncomplete=res; t.onerror=res; });
+  }catch(e){}
+}
+/* 取り込み済みかどうかを画面に出すためだけの控え。実体はIndexedDBにある */
+const GHAVE='medGuideHave';
+function guideHave(key){ try{ return (JSON.parse(localStorage.getItem(GHAVE)||'{}'))[key]||null; }catch(e){ return null; } }
+function guideHaveSet(key,val){
+  let o={}; try{ o=JSON.parse(localStorage.getItem(GHAVE)||'{}'); }catch(e){}
+  if(val) o[key]=val; else delete o[key];
+  try{ localStorage.setItem(GHAVE,JSON.stringify(o)); }catch(e){}
+}
+const YT_GUIDES = {
+  surrender: { id:'_w_qhBEy85U', start:878, sec:457,
+               by:'mika霊視CH', label:'手放し・明け渡し' }
+};
+let guideYtPlayer=null, guideYtReady=false, guideYtKey=null, guideActive=false;
+/* 端末の音源が入っていればそれで鳴らす。無ければYouTubeに落ちる（広告は出る） */
+let guideEl=null, guideUrl=null;
+async function guidePlayLocal(key){
+  const blob=await guideGet(key);
+  if(!blob) return false;
+  guideStopLocal();
+  guideUrl=URL.createObjectURL(blob);
+  guideEl=new Audio(guideUrl);
+  guideEl.preload='auto';
+  try{ await guideEl.play(); }catch(e){ guideStopLocal(); return false; }
+  return true;
+}
+function guideStopLocal(){
+  if(guideEl){ try{ guideEl.pause(); }catch(e){} guideEl=null; }
+  if(guideUrl){ try{ URL.revokeObjectURL(guideUrl); }catch(e){} guideUrl=null; }
+}
+async function guideStart(key){
+  guideActive=true;
+  if(await guidePlayLocal(key)) return; // 端末に音源があればそれで鳴らす（広告なし・オフライン可）
+  const g=YT_GUIDES[key]; if(!g) return;
+  await loadYT();
+  if(!(window.YT&&window.YT.Player)) return; // 圏外・ブロック時は無音のまま座る（鐘とタイマーは動く）
+  if(guideYtPlayer && guideYtKey===key){
+    guideActive=true;
+    if(guideYtReady){ guideYtPlayer.seekTo(g.start,true); guideYtPlayer.setVolume(100); guideYtPlayer.playVideo(); }
+    return;
+  }
+  guideYtKey=key; guideYtReady=false; guideActive=true;
+  guideYtPlayer=new YT.Player('guideYt',{
+    height:'2',width:'2',videoId:g.id,
+    playerVars:{autoplay:1,controls:0,disablekb:1,fs:0,modestbranding:1,rel:0,playsinline:1,start:g.start},
+    events:{
+      // 準備が終わる前に瞑想をやめていた場合は鳴らさない（読み込みが遅い回線で置き去りにならないように）
+      onReady:e=>{ guideYtReady=true; if(!guideActive) return; e.target.setVolume(100); e.target.playVideo(); },
+      onError:()=>{ guideYtPlayer=null; guideYtReady=false; guideYtKey=null; }
+    }
+  });
+}
+function guidePause(){ if(!guideActive) return; if(guideEl){ try{guideEl.pause()}catch(e){} return; } try{ if(guideYtPlayer&&guideYtReady) guideYtPlayer.pauseVideo(); }catch(e){} }
+function guideResume(){ if(!guideActive) return; if(guideEl){ try{guideEl.play()}catch(e){} return; } try{ if(guideYtPlayer&&guideYtReady) guideYtPlayer.playVideo(); }catch(e){} }
+function guideStop(){ guideActive=false; guideStopLocal(); try{ if(guideYtPlayer&&guideYtReady) guideYtPlayer.pauseVideo(); }catch(e){} }
+/* 回向で流す曲（YouTube）。ネット接続が必要。オフラインの時は静かに諦める（回向は短いので無音でも成立する） */
+const DEDICATION_MUSIC = { id:'f2cIRYXgJbY', volume:55 };
+let dedYtPlayer=null, dedYtReady=false;
+async function dedicationStart(){
+  if(await localStart('dedication',{volume:DEDICATION_MUSIC.volume})) return;
+  if(!DEDICATION_MUSIC.id) return;
+  await loadYT();
+  if(!(window.YT&&window.YT.Player)) return;
+  if(dedYtPlayer){ if(dedYtReady){ dedYtPlayer.setVolume(DEDICATION_MUSIC.volume); dedYtPlayer.playVideo(); } return; }
+  dedYtPlayer=new YT.Player('dedYt',{
+    height:'2',width:'2',videoId:DEDICATION_MUSIC.id,
+    playerVars:{autoplay:1,controls:0,disablekb:1,fs:0,modestbranding:1,rel:0,loop:1,playlist:DEDICATION_MUSIC.id,playsinline:1},
+    events:{
+      onReady:e=>{ dedYtReady=true; e.target.setVolume(DEDICATION_MUSIC.volume); e.target.playVideo(); },
+      onStateChange:e=>{ if(e.data===YT.PlayerState.ENDED) e.target.playVideo(); }
+    }
+  });
+}
+function dedicationStop(){ localPause('dedication'); try{ if(dedYtPlayer&&dedYtReady) dedYtPlayer.pauseVideo(); }catch(e){} }
+
+/* 夜の瞑想だけ：始まってすぐ、アラティ（回向・締めの曲と同じもの）を1回だけ流す。
+   ループはさせない＝曲の長さ（約4分）で自然に終わり、そのあとは背景音（雨音等）だけが残る。 */
+function nightIntroStart(){
+  if(!DEDICATION_MUSIC.id) return;
+  loadYT().then(()=>{
+    if(!(window.YT&&window.YT.Player)) return;
+    new YT.Player('dedYt',{
+      height:'2',width:'2',videoId:DEDICATION_MUSIC.id,
+      playerVars:{autoplay:1,controls:0,disablekb:1,fs:0,modestbranding:1,rel:0,playsinline:1},
+      events:{ onReady:e=>{ e.target.setVolume(DEDICATION_MUSIC.volume); e.target.playVideo(); } }
+    });
+  });
+}
+
+/* ---------- 背景音（ガヤトリー・マントラ／YouTube） ----------
+   セッション中ずっと小さな音量で流す。ネット接続が必要。
+   声（say）や鐘は別の仕組みなので、これが止まっていても他は普通に動く。 */
+let ytApiPromise=null, bgPlayer=null, bgReady=false;
+function loadYT(){
+  if(ytApiPromise) return ytApiPromise;
+  ytApiPromise=new Promise(res=>{
+    if(window.YT&&window.YT.Player){ res(); return; }
+    const prev=window.onYouTubeIframeAPIReady;
+    window.onYouTubeIframeAPIReady=()=>{ if(prev)prev(); res(); };
+    const s=document.createElement('script'); s.src='https://www.youtube.com/iframe_api';
+    s.onerror=()=>res(); // 通信できない時は諦めて解決する（背景音なしで続行）
+    document.head.appendChild(s);
+  });
+  return ytApiPromise;
+}
+/* 背景音の音量は設定から変えられる。既定の14は「気づかないくらい薄く」の値で、
+   動きながら（ヨガ等）だとまず聞こえない。聞きたいときは上げる。 */
+
+/* 端末に置いた音源で鳴らす汎用の再生器 ------------------------------------
+   YouTubeは投稿者が収益化していると広告が入る。瞑想の途中で広告が流れると
+   台無しなので、音源は「アプリに同梱」ではなく「この端末にだけ置く」。
+   取り込んでいないスロットは、これまでどおりYouTube埋め込みに落ちる。
+   ・アプリ（公開されるindex.html）には音源が1バイトも入らない＝配布にならない
+   ・取り込めば広告なし・オフラインで鳴る */
+const LOCAL_SLOTS = [
+  { key:'bg',         name:'背景音楽',       hint:'セッション中ずっと薄く流れる曲' },
+  { key:'chant',      name:'チャンティング', hint:'チャンティングのステージと、手放しの背景' },
+  { key:'dedication', name:'アラティ',       hint:'回向と終わりの曲。夜の瞑想の冒頭にも鳴ります' },
+];
+const localPlayers={};
+async function localStart(key,opt){
+  opt=opt||{};
+  let p=localPlayers[key];
+  if(!p){
+    const blob=await guideGet(key); if(!blob) return false;
+    const url=URL.createObjectURL(blob);
+    const el=new Audio(url); el.preload='auto'; el.loop=(opt.loop!==false);
+    p={el,url}; localPlayers[key]=p;
+    if(opt.start){ try{ el.currentTime=opt.start; }catch(e){} }
+  }
+  p.el.volume=Math.max(0,Math.min(1,(opt.volume==null?100:opt.volume)/100));
+  try{ await p.el.play(); }catch(e){ return false; }
+  return true;
+}
+function localVol(key,v){ const p=localPlayers[key]; if(p) p.el.volume=Math.max(0,Math.min(1,v)); }
+function localPause(key){ const p=localPlayers[key]; if(p){ try{ p.el.pause(); }catch(e){} return true; } return false; }
+function localOn(key){ return !!localPlayers[key]; }
+const bgVol=()=>Math.max(0,Math.min(100, S.bgVol==null?BACKGROUND_MUSIC.volume:+S.bgVol));
+function bgMusicStart(){
+  if(!S.bgMusic) return;
+  // 端末に取り込んであればそれで鳴らす。無ければYouTubeに落ちる
+  localStart('bg',{volume:bgVol()}).then(ok=>{ if(!ok) bgMusicStartYT(); });
+}
+function bgMusicStartYT(){
+  if(!S.bgMusic||!BACKGROUND_MUSIC.id) return;
+  loadYT().then(()=>{
+    if(!window.YT||!window.YT.Player) return; // 読み込めなかった＝オフライン等。諦める
+    if(bgPlayer){
+      if(bgReady){ bgPlayer.setVolume(bgVol()); bgPlayer.playVideo(); }
+      return;
+    }
+    bgPlayer=new YT.Player('bgYt',{
+      height:'2',width:'2',videoId:BACKGROUND_MUSIC.id,
+      playerVars:{autoplay:1,controls:0,disablekb:1,fs:0,modestbranding:1,rel:0,
+                  loop:1,playlist:BACKGROUND_MUSIC.id,playsinline:1},
+      events:{
+        onReady:e=>{ bgReady=true; e.target.setVolume(bgVol()); if(S.bgMusic) e.target.playVideo(); },
+        onStateChange:e=>{ if(e.data===YT.PlayerState.ENDED) e.target.playVideo(); }
+      }
+    });
+  });
+}
+function bgMusicStop(){ localPause('bg'); try{ if(bgPlayer&&bgReady) bgPlayer.pauseVideo(); }catch(e){} }
+function bgMusicResume(){ if(!S.bgMusic) return; if(localOn('bg')){ localStart('bg',{volume:bgVol()}); return; } try{ if(bgPlayer&&bgReady) bgPlayer.playVideo(); }catch(e){} }
+
+/* ---------- 声 ----------
+   音声合成APIが無い環境（アプリ内ブラウザ等）でも、ここで例外が起きて
+   アプリ全体が止まってしまわないよう、必ず try/catch と存在チェックを通す。 */
+let voices=[], enVoice=null;
+const hasSpeech = ('speechSynthesis' in window);
+function loadVoices(){
+  if(!hasSpeech) return;
+  try{
+    const all=speechSynthesis.getVoices();
+    // 呼吸の声は英語で出す（ヨガと合わせるとき、英語のほうが体が反応する）。無ければ日本語の声で読まれる
+    enVoice = all.find(v=>/^en[-_]US/i.test(v.lang)) || all.find(v=>/^en/i.test(v.lang)) || null;
+    voices=all.filter(v=>/^ja/i.test(v.lang)); if(!voices.length) voices=all;
+    const sel=$('#voiceSel'); if(!sel) return;
+    sel.innerHTML=voices.map(v=>`<option value="${v.voiceURI}">${v.name}</option>`).join('')||'<option>（声が見つかりません）</option>';
+    if(S.voiceURI&&voices.some(v=>v.voiceURI===S.voiceURI)) sel.value=S.voiceURI;
+    else if(voices[0]){ S.voiceURI=voices[0].voiceURI; sel.value=S.voiceURI; }
+  }catch(e){}
+}
+if(hasSpeech){
+  try{ speechSynthesis.onvoiceschanged=loadVoices; }catch(e){}
+  loadVoices(); setTimeout(loadVoices,400);
+} else if($('#voiceSel')){
+  $('#voiceSel').innerHTML='<option>（この環境では音声合成が使えません）</option>';
+}
+
+function speakSynth(text,force){
+  if(!text||(!S.voice&&!force))return;
+  try{
+    if(speechSynthesis.paused) speechSynthesis.resume();
+    // 前のセリフがまだ喋り終わっていなくても、次のフェーズが来たら即座に切り替える。
+    // cancel()を呼ばずにspeak()だけ重ねると発話がキューに積み上がり、
+    // 短い呼吸フェーズが連続すると「早口で、フェーズとズレた内容」になる。
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    const v=voices.find(v=>v.voiceURI===S.voiceURI); if(v)u.voice=v;
+    u.lang='ja-JP';u.rate=+S.rate;u.pitch=+S.pitch;u.volume=1;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+
+/* voice/<vid>.mp3 が置いてあれば自分の声を再生し、無ければ合成音声にフォールバックする。
+   録っていない行は自動的に合成音声のまま——全部揃うまで待つ必要はない。 */
+const voiceElCache={};
+let activeVoiceEl=null;
+function voiceEl(vid){
+  if(!voiceElCache[vid]){ const a=new Audio('voice/'+vid+'.mp3'); a.preload='none'; voiceElCache[vid]=a; }
+  return voiceElCache[vid];
+}
+function stopVoiceEl(){ if(activeVoiceEl){ try{activeVoiceEl.pause(); activeVoiceEl.currentTime=0;}catch(e){} activeVoiceEl=null; } }
+function say(text,vid,force){
+  if(!text||(!S.voice&&!force))return;
+  if(!vid){ speakSynth(text,force); return; }
+  const a=voiceEl(vid);
+  let done=false;
+  const fallback=()=>{ if(done)return; done=true; speakSynth(text,force); };
+  a.currentTime=0;
+  a.onerror=fallback;
+  a.onended=()=>{ if(activeVoiceEl===a) activeVoiceEl=null; };
+  const p=a.play();
+  if(p&&p.catch) p.then(()=>{done=true; activeVoiceEl=a;}).catch(fallback);
+  else done=true; // play()がPromiseを返さない古い実装向け
+}
+/* 英語の呼吸の声。誘導の合間にだけ鳴らす短い一言なので、専用に持っている */
+function speakEn(text){
+  if(!S.voice||!hasSpeech) return;
+  try{
+    if(speechSynthesis.paused) speechSynthesis.resume();
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    if(enVoice) u.voice=enVoice;
+    u.lang='en-US'; u.rate=Math.min(.95,+S.rate); u.pitch=+S.pitch; u.volume=1;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+
+function unlockSpeech(){ try{const u=new SpeechSynthesisUtterance(' ');u.volume=0;speechSynthesis.speak(u);}catch(e){} }
+/* iOS の <audio> は最初にユーザー操作の中で一度再生しないと、後から鳴らないことがある */
+function unlockAudioEl(){
+  try{
+    const a=new Audio(); a.volume=0;
+    a.src='data:audio/mp3;base64,//uQxAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAACcQCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgID/+xDEAAPAAAGkAAAAIAAANIAAAARMQU1FMy45OS41VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVU=';
+    a.play().catch(()=>{});
+  }catch(e){}
+}
+
+/* ---------- 画面ロック防止 ---------- */
+let wl=null;
+async function keepAwake(){ try{ if('wakeLock' in navigator) wl=await navigator.wakeLock.request('screen'); }catch(e){} }
+function releaseAwake(){ try{wl&&wl.release()}catch(e){} wl=null; }
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible'){
+    if(sess) keepAwake();
+    if(ac&&ac.state==='suspended') ac.resume();
+    try{ speechSynthesis.resume(); }catch(e){}
+  }
+});
+
+/* ---------- 画面 ---------- */
+const MINS=[1,3,5,10,15,20,30,45,60];
+function renderCourse(){
+  $('#stageList').innerHTML = COURSE.map(s=>{
+    const v=S.stage[s.id];
+    let extra='';
+    if(s.id==='breath') extra=`<select data-sel="courseBreath">${BREATHING.filter(b=>!b.custom).map(b=>
+        `<option value="${b.id}" ${S.courseBreath===b.id?'selected':''}>${b.name}</option>`).join('')}</select>`;
+    if(s.id==='analytical') extra=`<select data-sel="topic">${ANALYTICAL.map(a=>
+        `<option value="${a.id}" ${S.topic===a.id?'selected':''}>${a.name} — ${a.short}</option>`).join('')}</select>`;
+    if(s.id==='mudita') extra=`<select data-sel="pillar">${pillarOptions()}</select>`;
+    if(s.id==='letgo') extra=`<select data-sel="letgo">${letgoOptions()}</select>`;
+    return `<div class="stage ${v?'':'off'}">
+      <div class="sh"><span class="sn">${s.name}</span><span class="n" style="font-size:11px;color:var(--faint)">${v?v+'分':'なし'}</span></div>
+      <div class="sd">${s.desc}</div>
+      <div class="mins">${s.opts.map(o=>`<button class="mini" data-s="${s.id}" data-v="${o}" aria-selected="${v===o}">${o===0?'なし':o+'分'}</button>`).join('')}</div>
+      ${v?extra:''}
+    </div>`;
+  }).join('');
+  $$('#stageList .mini').forEach(el=>el.onclick=()=>{ S.stage[el.dataset.s]=+el.dataset.v; save(); renderCourse(); });
+  $$('#stageList select').forEach(el=>el.onchange=()=>{ S[el.dataset.sel]=el.value; save(); renderCourse(); });
+  const tot=COURSE.reduce((a,s)=>a+S.stage[s.id],0);
+  $('#coursePresets').innerHTML=Object.keys(COURSE_PRESETS).map(k=>
+    `<button class="chip" data-p="${k}" aria-selected="${tot===+k}">${k}分</button>`).join('');
+  $$('#coursePresets .chip').forEach(el=>el.onclick=()=>{
+    S.stage=Object.assign({},COURSE_PRESETS[el.dataset.p]); save(); renderCourse(); });
+  $('#courseTotal').textContent = tot? `ぜんぶで ${tot} 分` : 'ステージがすべて「なし」です';
+  $('#startCourse').disabled = tot===0;
+}
+function renderBreath(){
+  $('#breathList').innerHTML=BREATHING.map(b=>`
+    <button class="card" data-b="${b.id}" aria-selected="${S.breath===b.id}">
+      <div class="t">${b.name}</div><div class="d">${b.desc}</div>
+      <div class="n">${b.custom?'':b.blocks?'選んだ時間に合わせて自動配分':b.phases.map(p=>p.sec).join(' - ')+' 秒'}</div></button>`).join('');
+  $$('#breathList .card').forEach(el=>el.onclick=()=>{S.breath=el.dataset.b;save();renderBreath()});
+  $('#customBox').classList.toggle('hidden',S.breath!=='custom');
+  $('#breathMin').innerHTML=MINS.map(m=>`<button class="chip" data-m="${m}" aria-selected="${S.breathMin===m}">${m}分</button>`).join('');
+  $$('#breathMin .chip').forEach(el=>el.onclick=()=>{S.breathMin=+el.dataset.m;save();renderBreath()});
+}
+/* 単発瞑想が増えて平坦な一覧では探せなくなったので、出典ごとにまとめる。
+   MEDITATIONS 側は触らず、ここで並べ替えるだけにしてある（配列の順＝既存の並びを壊さないため）。
+   パックに入っていないものは、これまでどおり見出しなしで先頭に出る。
+   パック内は本の章立て順（第1章→第2章→第3章）。ここを本の順にしておくと、
+   上から順にやるだけで本を一周できる。 */
+const MED_PACKS = [
+  { name:'超瞑想（苫米地英人）', ids:[
+      'inga','reverse','togo',                    // 第1章 正しく見る
+      'birthdeath','sanpokai','order',            // 第2章 自由自在に見る
+      'rinjo','hannya','fiction','chusho'] },     // 第3章 臨場感を維持する
+  { name:'華厳', ids:['nyuhokkai','kegon'] },
+  /* 維摩経は「方丈→天女→一黙」の順。だんだん言葉が減っていって、最後に無音で終わる並びにしてある */
+  { name:'維摩経', ids:['yuima_hojo','yuima_tennyo','yuima_moku'] },
+];
+function medGroups(){
+  const packed=new Set(MED_PACKS.flatMap(p=>p.ids));
+  const groups=[{name:null, items:MEDITATIONS.filter(m=>!packed.has(m.id))}];
+  MED_PACKS.forEach(p=>{
+    const items=p.ids.map(id=>MEDITATIONS.find(m=>m.id===id)).filter(Boolean);
+    if(items.length) groups.push({name:p.name, items});
+  });
+  return groups.filter(g=>g.items.length);
+}
+function renderMed(){
+  $('#medList').innerHTML=medGroups().map(g=>
+    (g.name?`<div class="label">${g.name}</div>`:'')
+    + g.items.map(m=>`
+    <button class="card" data-m="${m.id}" aria-selected="${S.med===m.id}">
+      <div class="t">${m.name}</div><div class="d">${m.desc}</div></button>`).join('')).join('')
+    + (S.med==='analytical'?`<select id="soloTopic" style="max-width:none;width:100%;margin-top:4px">${
+        ANALYTICAL.map(a=>`<option value="${a.id}" ${S.topic===a.id?'selected':''}>${a.name} — ${a.short}</option>`).join('')}</select>`:'')
+    + (S.med==='mudita'?`<select id="soloPillar" style="max-width:none;width:100%;margin-top:4px">${pillarOptions()}</select>`:'')
+    + (S.med==='letgo'?`<select id="soloLetgo" style="max-width:none;width:100%;margin-top:4px">${letgoOptions()}</select>`:'')
+    + (S.med==='letgo'&&S.letgo==='shadowtalk'
+        ? (latestDream()
+            ? `<div class="note" style="margin-top:8px">この夢を持って入ります（${latestDream().d.slice(5).replace('-','/')}）。<br><span style="color:var(--dim)">${latestDream().t.replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]))}</span></div>`
+            : `<div class="note" style="margin-top:8px">記録タブに夢を残しておくと、この段の冒頭に出ます。無くても始められます。</div>`)
+        : '')
+    + (S.med==='night'?`<select id="soloNightBg" style="max-width:none;width:100%;margin-top:4px">
+        <option value="rain" ${S.nightBg==='rain'?'selected':''}>雨音</option>
+        <option value="wave" ${S.nightBg==='wave'?'selected':''}>波の音</option>
+        <option value="pink" ${S.nightBg==='pink'?'selected':''}>ピンクノイズ</option>
+        <option value="brown" ${S.nightBg==='brown'?'selected':''}>ブラウンノイズ</option>
+        <option value="" ${!S.nightBg?'selected':''}>なし</option>
+      </select>`:'')
+    /* 誘導音声の瞑想だけ、音源を端末に取り込むための欄を出す。
+       アプリ側は音源を持たない（＝公開しても配布にならない）。取り込むとIndexedDBに入り、
+       次からは広告なし・オフラインで鳴る。未取り込みならYouTube埋め込みに落ちる。 */
+    + (()=>{ const m=MEDITATIONS.find(x=>x.id===S.med);
+        if(!m||!m.ytGuide) return '';
+        const h=guideHave(m.ytGuide);
+        return `<div class="note" style="margin-top:8px">
+          <b>音源</b>：${h?`この端末に取り込み済み（${h}）— 広告なしで鳴ります`:'未取り込み — YouTubeから再生します（<b>広告が入ります</b>）'}
+          <div style="margin-top:6px">
+            <button class="chip" id="guidePick">${h?'別の音源に入れ替える':'端末から音源を取り込む'}</button>
+            ${h?`<button class="chip" id="guideClear">取り消す</button>`:''}
+          </div>
+          <div style="color:var(--dim);font-size:11px;margin-top:6px">
+            取り込んだ音源はこの端末の中だけに保存されます。アプリには含まれないので、公開しても配られません。
+          </div>
+          <input type="file" id="guideFile" style="display:none">
+        </div>`; })();
+  $$('#medList .card').forEach(el=>el.onclick=()=>{
+    S.med=el.dataset.m;
+    const mm=MEDITATIONS.find(x=>x.id===S.med);
+    if(!mm.mins.includes(S.medMin)) S.medMin=mm.mins[Math.min(1,mm.mins.length-1)];
+    save();renderMed();
+  });
+  const st=$('#soloTopic'); if(st) st.onchange=()=>{S.topic=st.value;save()};
+  const sp=$('#soloPillar'); if(sp) sp.onchange=()=>{S.pillar=sp.value;save();renderMed()};
+  const sl=$('#soloLetgo'); if(sl) sl.onchange=()=>{S.letgo=sl.value;save();renderMed()};
+  const nb=$('#soloNightBg'); if(nb) nb.onchange=()=>{S.nightBg=nb.value;save();const sel=$('#nightBgSel');if(sel)sel.value=S.nightBg;};
+  /* 音源の取り込み。ファイルはIndexedDBへ、名前だけlocalStorageへ（画面表示用） */
+  const gp=$('#guidePick'), gf=$('#guideFile'), gc=$('#guideClear');
+  if(gp&&gf){
+    gp.onclick=()=>gf.click();
+    gf.onchange=async()=>{
+      const m=MEDITATIONS.find(x=>x.id===S.med); const f=gf.files&&gf.files[0];
+      if(!m||!m.ytGuide||!f) return;
+      gp.textContent='取り込み中…';
+      try{
+        await guidePut(m.ytGuide,f);
+        guideHaveSet(m.ytGuide,f.name);
+      }catch(e){ alert('取り込めませんでした：'+(e&&e.message||e)+'\n\nファイル：'+f.name+'（'+Math.round(f.size/1048576)+'MB）'); }
+      renderMed();
+    };
+  }
+  if(gc){
+    gc.onclick=async()=>{
+      const m=MEDITATIONS.find(x=>x.id===S.med); if(!m||!m.ytGuide) return;
+      await guideDel(m.ytGuide); guideHaveSet(m.ytGuide,null); renderMed();
+    };
+  }
+  const mm=MEDITATIONS.find(x=>x.id===S.med)||MEDITATIONS[0];
+  // 選べる時間が変わった瞑想（手放しは15分から）で、前に選んだ分数が残っているとどれも選択されずに見えるので、
+  // ここで近い方に寄せておく
+  if(!mm.mins.includes(S.medMin)){ S.medMin=mm.mins.reduce((a,b)=>Math.abs(b-S.medMin)<Math.abs(a-S.medMin)?b:a); save(); }
+  $('#medMin').innerHTML=mm.mins.map(m=>`<button class="chip" data-m="${m}" aria-selected="${S.medMin===m}">${m}分</button>`).join('');
+  $$('#medMin .chip').forEach(el=>el.onclick=()=>{S.medMin=+el.dataset.m;save();renderMed()});
+}
+function renderLog(){
+  const days=[...new Set(LOG.map(l=>l.d))];
+  let streak=0; const dd=new Date();
+  if(!days.includes(fmt(dd))) dd.setDate(dd.getDate()-1);
+  while(days.includes(fmt(dd))){ streak++; dd.setDate(dd.getDate()-1); }
+  const wk=new Date(); wk.setDate(wk.getDate()-6); const wks=fmt(wk);
+  // 連続日は達成の数字なので、切れると自分を責める材料になる。手放しとは逆方向に働くため、切れるようにしてある
+  $('#stStreak').textContent = S.streak===false ? '—' : streak;
+  $('#stWeek').textContent=LOG.filter(l=>l.d>=wks).reduce((a,b)=>a+b.m,0);
+  $('#stTotal').textContent=LOG.reduce((a,b)=>a+b.m,0);
+  renderHandover();
+  renderDreams();
+  renderSyncs();
+  renderLevels();
+  renderPillars();
+  $('#logList').innerHTML=LOG.slice(-40).reverse().map(l=>
+    `<div class="log"><span>${l.d.slice(5).replace('-','/')}　${l.n}</span><span>${l.m}分</span></div>`).join('')
+    ||'<div class="log"><span style="color:var(--faint)">まだ記録はありません</span></div>';
+}
+
+function renderDreams(){
+  const el=$('#dreamList'); if(!el) return;
+  el.innerHTML = DREAMS.slice(-10).reverse().map(d=>
+    `<div class="dream"><span class="dd">${d.d.slice(5).replace('-','/')}</span>`
+    + `<span class="dt">${esc(d.t)}</span>`
+    + `<button class="dx" data-del="${d.id}" aria-label="消す">×</button></div>`).join('')
+    || '<div class="note" style="margin-top:2px">起きてすぐ、覚えている断片を入れておくと、「影と話す」を始めるときに出てきます。意味は考えなくていいです。覚えていない日は、空のままで。</div>';
+  $$('#dreamList .dx').forEach(b=>b.onclick=()=>{
+    DREAMS=DREAMS.filter(x=>String(x.id)!==b.dataset.del); saveDreams(); renderDreams();
+  });
+}
+
+function renderSyncs(){
+  const el=$('#syncList'); if(!el) return;
+  el.innerHTML = SYNCS.slice(-10).reverse().map(s=>
+    `<div class="dream"><span class="dd">${s.d.slice(5).replace('-','/')}</span>`
+    + `<span class="dt">${esc(s.t)}</span>`
+    + `<button class="dx" data-del="${s.id}" aria-label="消す">×</button></div>`).join('')
+    || '<div class="note" style="margin-top:2px">夢が内側、こちらが外側です。手放したあとに現実が動いたなら、ここに残ります。'
+      + '意味は考えなくていいです。日付だけあれば、あとで下の高さと並べて見られます。</div>';
+  $$('#syncList .dx').forEach(b=>b.onclick=()=>{
+    SYNCS=SYNCS.filter(x=>String(x.id)!==b.dataset.del); saveSyncs(); renderLog();
+  });
+}
+
+/* 二列を描く。押した項目は左右どちらへ動くかだけが違うので、描画は共通にしてある */
+function renderHandover(){
+  const todo=$('#hoTodo'), over=$('#hoOver'); if(!todo||!over) return;
+  const draw=(el,list,empty)=>{
+    el.innerHTML = list.map(x=>
+      `<div class="hoItem" data-id="${x.id}">`
+      + `<span class="ht">${esc(x.t)}</span>`
+      + `<span class="hm">${x.over?'←':'→'}</span>`
+      + `<button class="hx" data-del="${x.id}" aria-label="消す">×</button></div>`).join('')
+      || `<div class="hoEmpty">${empty}</div>`;
+  };
+  draw(todo,HANDOVER.filter(x=>!x.over),'上に書くと、ここに並びます。');
+  draw(over,HANDOVER.filter(x=>x.over),'まだ何も渡していません。');
+  $$('.hoItem .hx').forEach(b=>b.onclick=e=>{
+    e.stopPropagation();
+    HANDOVER=HANDOVER.filter(x=>String(x.id)!==b.dataset.del); saveHandover(); renderHandover();
+  });
+  $$('.hoItem').forEach(el=>el.onclick=e=>{
+    if(e.target.closest('.hx')) return;
+    const it=HANDOVER.find(x=>String(x.id)===el.dataset.id); if(!it) return;
+    el.classList.add(it.over?'movingL':'movingR');
+    /* 先に動きを見せてから入れ替える。渡した感じが出るのはこの0.26秒なので、ここは削らない */
+    setTimeout(()=>{ it.over=!it.over; it.d=fmt(new Date()); saveHandover(); renderHandover(); },260);
+  });
+}
+
+function renderLevels(){
+  const el=$('#lvChart'); if(!el) return;
+  const last=LEVELS.slice(-24);
+  if(!last.length){
+    el.innerHTML='<div class="note" style="margin-top:2px">手放しの瞑想が終わると、いまの高さを聞かれます。ここに推移が出ます。</div>';
+    return;
+  }
+  const now=last[last.length-1];
+  const marked=last.filter(x=>syncAfter(x.d)).length;
+  el.innerHTML='<div class="lvChart">'+last.map((x,i)=>
+      `<i class="${i===last.length-1?'last':''} ${syncAfter(x.d)?'sync':''}" style="height:${Math.round((x.lv+1)/LADDER.length*100)}%"></i>`).join('')+'</div>'
+    + `<div class="note" style="margin-top:2px">直近 ${last.length} 回。いちばん新しいのは「${LADDER[now.lv].name}」（${now.d.slice(5).replace('-','/')}）。`
+    + `上げようとしなくていいです。動いたかどうかだけを見ます。`
+    + (marked?`<br>棒の上の点は、その3日以内に共時性が書かれた日です（${marked}/${last.length}）。`
+             :`<br>上に共時性を書くと、その3日以内にやった回の棒に点がつきます。`)
+    + `</div>`;
+}
+
+function renderPillars(){
+  const counts=JOY_PILLARS.map(p=>S.pillarCount[p.id]||0);
+  const max=Math.max(3,...counts);
+  const next=JOY_PILLARS[S.pillarIdx%JOY_PILLARS.length];
+  $('#pillarGrid').innerHTML=JOY_PILLARS.map((p,i)=>`
+    <div class="pil ${S.pillar==='auto'&&p.id===next.id?'next':''}">
+      <span class="pg">${p.group}</span>
+      <span class="pn">${p.name}</span>
+      <span class="pb"><i style="width:${Math.round(counts[i]/max*100)}%"></i></span>
+      <span class="pc">${counts[i]}回</span>
+    </div>`).join('')
+    + `<div class="note">${S.pillar==='auto'
+        ? '次は「'+next.name+'」です。最後まで流れきった柱だけを数えています。'
+        : '今は柱を手動で選んでいます。コースの「喜びの瞑想」を〈今日の柱（自動で回す）〉にすると、1本ずつ順に回ります。'}</div>`;
+}
+
+/* タブ */
+function showTab(t){
+  $$('.tabs button').forEach(x=>x.setAttribute('aria-selected',x.dataset.tab===t));
+  ['course','breath','med','log','set'].forEach(k=>$('#tab-'+k).classList.toggle('hidden',k!==t));
+  if(t==='log') renderLog();
+  if(t==='set') updateOfflineStatus();
+}
+$$('.tabs button').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
+$('#gear').onclick=()=>{ $$('.tabs button').forEach(x=>x.setAttribute('aria-selected',false));
+  ['course','breath','med','log','set'].forEach(k=>$('#tab-'+k).classList.toggle('hidden',k!=='set')); };
+
+/* 設定UI */
+function bindSwitch(id,key){const el=$(id);el.setAttribute('aria-checked',!!S[key]);
+  el.onclick=()=>{S[key]=!S[key];el.setAttribute('aria-checked',S[key]);save()};}
+['#swVoice:voice','#swBreathVoice:breathVoice','#swBell:bell','#swCue:cue','#swCount:count','#swDim:dim','#swDrone:drone','#swMusic:music','#swBgMusic:bgMusic']
+  .forEach(p=>{const[a,b]=p.split(':');bindSwitch(a,b)});
+bindSwitch('#swStreak','streak'); $('#swStreak').addEventListener('click',()=>renderLog());
+bindSwitch('#swEnBreath','enBreath');
+/* 音量は動かした瞬間に反映する（瞑想中に調整して、ちょうどいいところで止められるように） */
+$('#bgVol').value=bgVol(); $('#bgVolNum').textContent=bgVol();
+$('#bgVol').oninput=e=>{
+  S.bgVol=+e.target.value; save(); $('#bgVolNum').textContent=S.bgVol;
+  try{ if(bgPlayer&&bgReady) bgPlayer.setVolume(S.bgVol); }catch(err){}
+};
+$('#rate').value=S.rate; $('#rate').oninput=e=>{S.rate=+e.target.value;save()};
+$('#pitch').value=S.pitch; $('#pitch').oninput=e=>{S.pitch=+e.target.value;save()};
+$('#voiceSel').onchange=e=>{S.voiceURI=e.target.value;save()};
+$('#nightBgSel').value=S.nightBg;
+$('#nightBgSel').onchange=e=>{S.nightBg=e.target.value;save()};
+$('#testVoice').onclick=()=>{unlockSpeech();unlockAudioEl();audio();setTimeout(()=>say('ゆっくり、息を吐きます。',null,true),120)};
+$('#resetStage').onclick=()=>{
+  if(!confirm('コースの各ステージの時間を、初期値に戻します。よろしいですか？')) return;
+  S.stage=Object.fromEntries(COURSE.map(s=>[s.id,s.def])); save(); renderCourse();
+};
+['cIn','cH1','cOut','cH2'].forEach(k=>{const el=$('#'+k);el.value=S[k];el.oninput=()=>{S[k]=Math.max(0,+el.value||0);save()}});
+$('#clearLog').onclick=()=>{ if(confirm('履歴と、八本柱の回数をすべて消しますか？（夢と、手放しの高さは残ります）')){
+  LOG=[];saveLog(); S.pillarCount={}; S.pillarIdx=0; save(); renderLog(); renderCourse(); } };
+
+/* 書いた時点では、まだ自分の荷物。渡すのは押したときだけにしてある */
+$('#hoSave').onclick=()=>{
+  const el=$('#hoIn'), t=el.value.trim();
+  if(!t) return;
+  HANDOVER.push({id:Date.now(), t, d:fmt(new Date()), over:false});
+  saveHandover(); el.value=''; renderHandover();
+};
+
+/* 夢は一行でも残す。日付は自動。意味づけも整形もしない */
+$('#dreamSave').onclick=()=>{
+  const el=$('#dreamIn'), t=el.value.trim();
+  if(!t) return;
+  DREAMS.push({id:Date.now(),d:fmt(new Date()),t}); saveDreams();
+  el.value=''; renderDreams(); renderMed();
+};
+
+/* 共時性も同じ。書いたら、いまの高さのグラフに点がつく */
+$('#syncSave').onclick=()=>{
+  const el=$('#syncIn'), t=el.value.trim();
+  if(!t) return;
+  SYNCS.push({id:Date.now(),d:fmt(new Date()),t}); saveSyncs();
+  el.value=''; renderLog();
+};
+
+/* ---------- タイムライン生成 ----------
+   各行に vid（声ファイルID）を振る。ファイル名は voice/<vid>.mp3。
+   loop部分は「元の台本内での行番号」をvidにするので、同じ文が2回読まれる時は同じ録音を使い回す。 */
+/* 複数段階の呼吸法（例：ため息5回→4-6→自然呼吸）を、選んだ時間に合わせて配分する。
+   reps指定のブロックは固定の長さ、frac指定のブロックは残り時間をfracの比率で分け合う。 */
+function resolveBreathBlocks(blocks,totalSec){
+  const fixed=blocks.filter(b=>b.reps).reduce((a,b)=>{
+    const cyc=b.phases.reduce((s,p)=>s+p.sec,0); return a+cyc*b.reps;
+  },0);
+  const remain=Math.max(0,totalSec-fixed);
+  const fracSum=blocks.filter(b=>b.frac).reduce((a,b)=>a+b.frac,0)||1;
+  let t=0;
+  return blocks.map(b=>{
+    const cycleLen=b.phases?b.phases.reduce((s,p)=>s+p.sec,0):0;
+    const dur=b.reps?cycleLen*b.reps:remain*(b.frac/fracSum);
+    const start=t,end=t+dur; t=end;
+    return Object.assign({},b,{cycleLen,start,end});
+  });
+}
+
+function tlFromScript(sc,total,sid){
+  const tl=[];
+  (sc.open||[]).forEach((l,i)=>tl.push({at:l.at,text:l.text,vid:sid+'_o'+i,mute:l.mute}));
+  (sc.close||[]).forEach((l,i)=>tl.push({at:total+l.at,text:l.text,vid:sid+'_c'+i,mute:l.mute}));
+  const openEnd=(sc.open&&sc.open.length)?sc.open[sc.open.length-1].at:16;
+  const closeStart=total+((sc.close&&sc.close.length)?sc.close[0].at:-20);
+  if(sc.loop&&sc.loop.texts.length){
+    // texts は文字列でよいが、{text,wait} と書くとその行のあとの間だけ長さを変えられる。
+    // アクティブ・イマジネーション（影と話す）のように、問いのあと数分の沈黙が本体になる台本のため。
+    const L=sc.loop.texts.map(x=>typeof x==='string'?{text:x}:x);
+    const minGap=sc.loop.minGap||16;
+    let every=sc.loop.every;
+    const first=openEnd+Math.min(every,20), end=closeStart-8;
+    const hasWait=L.some(x=>x.wait);
+    // fit:true の台本は、短い時間でも全文が一周するよう間隔を詰める
+    if(sc.loop.fit&&!hasWait) every=Math.max(minGap, Math.min(every,(end-first)/L.length));
+    let scale=1;
+    if(hasWait&&sc.loop.fit){
+      const cycle=L.reduce((a,x)=>a+(x.wait||every),0);
+      if(cycle>end-first) scale=(end-first)/cycle; // 入りきらないときだけ、沈黙も含めて比例で詰める
+    }
+    let i=0,at=first;
+    while(at<end){
+      const li=i%L.length;
+      tl.push({at:Math.round(at),text:L[li].text,vid:sid+'_l'+li});
+      at+=Math.max(minGap,(L[li].wait||every)*scale); i++;
+    }
+  }
+  return tl.filter(x=>x.at>=0&&x.at<total).sort((a,b)=>a.at-b.at);
+}
+/* 分析的瞑想：問い → 長い沈黙。最後の1/4は「留まる」 */
+function tlAnalytical(topic,total){
+  const a=ANALYTICAL.find(x=>x.id===topic)||ANALYTICAL[0];
+  const settleAt=Math.max(60,Math.round(total*0.75));
+  const sid='analytical_'+topic;
+  const tl=[{at:0,text:a.intro,hold:true,vid:sid+'_intro'}];
+  const room=settleAt-22;
+  const n=Math.max(2,Math.min(a.qs.length,Math.floor(room/70)));
+  const gap=room/n;
+  for(let i=0;i<n;i++) tl.push({at:Math.round(22+gap*i),text:a.qs[i],hold:true,vid:sid+'_q'+i});
+  tl.push({at:settleAt,text:a.settle,hold:true,vid:sid+'_settle'});
+  return tl.filter(x=>x.at<total);
+}
+
+/* ---------- 喜びの八本柱 ---------- */
+function resolvePillar(){
+  if(S.pillar==='mudita') return {id:'mudita',name:'喜びの瞑想（随喜）',script:MUDITA};
+  const p = (S.pillar==='auto')
+    ? JOY_PILLARS[((S.pillarIdx%JOY_PILLARS.length)+JOY_PILLARS.length)%JOY_PILLARS.length]
+    : (JOY_PILLARS.find(x=>x.id===S.pillar)||JOY_PILLARS[0]);
+  return {id:p.id,name:'喜びの八本柱 — '+p.name,script:p};
+}
+function pillarOptions(){
+  return `<option value="auto" ${S.pillar==='auto'?'selected':''}>今日の柱（自動で回す）— 次は「${JOY_PILLARS[S.pillarIdx%JOY_PILLARS.length].name}」</option>`
+    + `<option value="mudita" ${S.pillar==='mudita'?'selected':''}>随喜（八本柱を使わない）</option>`
+    + JOY_PILLARS.map(p=>`<option value="${p.id}" ${S.pillar===p.id?'selected':''}>${p.group}の柱・${p.name} — ${p.short}</option>`).join('');
+}
+
+/* ---------- 手放しの六段 ---------- */
+const LETGO_GROUPS = [
+  ['手放す（ホーキンス）','感じきって、尽きるまで待つ'],
+  ['影（ユング）','認めたくない自分を、迎え入れる'],
+  ['対象別','何を握っているかの棚卸し'],
+];
+function resolveLetgo(){
+  if(S.letgo==='core'||!S.letgo) return {id:'core',name:'手放し — 基本の型',script:LETGO_CORE};
+  const p = (S.letgo==='auto')
+    ? LETGO_STEPS[((S.letgoIdx%LETGO_STEPS.length)+LETGO_STEPS.length)%LETGO_STEPS.length]
+    : (LETGO_STEPS.find(x=>x.id===S.letgo)||LETGO_CORE_FALLBACK());
+  return {id:p.id,name:'手放し — '+p.name,script:p.id==='shadowtalk'?withDream(p):p};
+}
+function LETGO_CORE_FALLBACK(){ return Object.assign({id:'core',name:'基本の型'},LETGO_CORE); }
+/* 「影と話す」だけは、直近の夢があれば冒頭に置く（読み上げず、画面に50秒ほど出す）。
+   影は夢に出てくるので、扱う材料を自分で申告しなくて済む——頭で考えると「手放すべき正解」を選んでしまうため。
+   夢が無ければ、台本はそのまま。 */
+function withDream(sc){
+  const d=latestDream(); if(!d) return sc;
+  const OFF=56;
+  const open=[sc.open[0],
+    {at:14,text:'この前に書いた夢を、思い出します。'},
+    {at:26,text:d.t,mute:true}]
+    .concat(sc.open.slice(1).map(l=>Object.assign({},l,{at:l.at+OFF})));
+  return Object.assign({},sc,{open});
+}
+function letgoOptions(){
+  let h = `<option value="core" ${(S.letgo==='core'||!S.letgo)?'selected':''}>基本の型（毎日これでいい）— 抵抗をやめて、感じきる</option>`
+    + `<option value="auto" ${S.letgo==='auto'?'selected':''}>日替わりで回す — 次は「${LETGO_STEPS[S.letgoIdx%LETGO_STEPS.length].name}」</option>`;
+  LETGO_GROUPS.forEach(([g,note])=>{
+    const items=LETGO_STEPS.filter(p=>p.group===g.replace(/（.*/,''));
+    if(!items.length) return;
+    h += `<optgroup label="${g}｜${note}">`
+      + items.map(p=>`<option value="${p.id}" ${S.letgo===p.id?'selected':''}>${p.name} — ${p.short}</option>`).join('')
+      + `</optgroup>`;
+  });
+  return h;
+}
+
+/* ---------- ステージ組み立て ---------- */
+function buildCourse(){
+  const st=[];
+  // 手放しの背景はチャンティング。コースは最初のチャンティングの曲がそのまま流れ続けるので、
+  // 普通は何も指定しなくていい（bgSound なし＝鳴っているものが続く）。
+  // ただし「チャンティング＝なし」のコースだと無音になるので、その場合だけ手放しから鳴らし始め、
+  // そのあとの慈悲・喜びにも引き継ぐ（朝のひとことでガヤトリーに切り替わる）。
+  let after;
+  COURSE.forEach(s=>{
+    const min=S.stage[s.id]; if(!min) return;
+    const sec=min*60;
+    if(s.id==='chant') st.push({type:'chant',name:'チャンティング',sec});
+    if(s.id==='breath'){
+      const b=BREATHING.find(x=>x.id===S.courseBreath)||BREATHING[0];
+      // 呼吸法・分析的瞑想・慈悲の瞑想・喜びの瞑想は、チャンティングの曲をそのまま流し続ける（bgSoundを付けない）。
+      // 朝のひとことからガヤトリーに切り替わる。
+      if(b.blocks) st.push({type:'breath',name:b.name,sec,blocks:resolveBreathBlocks(b.blocks,sec)});
+      else st.push({type:'breath',name:b.name,sec,phases:b.phases});
+    }
+    if(s.id==='analytical'){
+      const a=ANALYTICAL.find(x=>x.id===S.topic)||ANALYTICAL[0];
+      st.push({type:'script',name:'分析的瞑想 — '+a.name,sec,tl:tlAnalytical(S.topic,sec),big:true});
+    }
+    if(s.id==='letgo'){ const g=resolveLetgo();
+      if(!S.stage.chant) after='chant';
+      st.push({type:'script',name:g.name,sec,tl:tlFromScript(g.script,sec,g.id),letgo:g.id,bgSound:after}); }
+    if(s.id==='metta') st.push({type:'script',name:'慈悲の瞑想',sec,tl:tlFromScript(METTA,sec,'metta'),bgSound:after});
+    if(s.id==='mudita'){ const p=resolvePillar(); st.push({type:'script',name:p.name,sec,tl:tlFromScript(p.script,sec,p.id),pillar:p.id,bgSound:after}); }
+    if(s.id==='morningword') st.push({type:'script',name:'朝のひとこと',sec,tl:tlFromScript(MORNING,sec,'morningword'),bgSound:'gayatri'});
+    if(s.id==='dedication') st.push({type:'script',name:'回向',sec,tl:tlFromScript(DEDICATION,sec),dedTrack:true});
+  });
+  return {name:'コース',stages:st};
+}
+
+/* 誘導の合間に、英語の呼吸の声を挟む（ヨガと合わせるとき用）。
+   誘導文から12秒以上離れた場所にしか置かないので、日本語の声と潰し合わない。
+   画面の文字は変えない——目を閉じていても、動いていても、声だけで呼吸に戻れるようにするため。 */
+const CUE_EVERY=150, CUE_PAIR=5, CUE_MARGIN=12;
+function addBreathCues(tl,total){
+  const out=tl.slice();
+  let at=Math.max(60,(tl[0]?tl[0].at:0)+60);
+  while(at<total-30){
+    const busy=tl.some(l=>Math.abs(l.at-at)<CUE_MARGIN||Math.abs(l.at-(at+CUE_PAIR))<CUE_MARGIN);
+    if(busy){ at+=6; continue; }
+    out.push({at,text:'Breathe in.',en:true});
+    out.push({at:at+CUE_PAIR,text:'Breathe out.',en:true});
+    at+=CUE_EVERY;
+  }
+  return out.sort((a,b)=>a.at-b.at);
+}
+
+/* ---------- セッション ---------- */
+let sess=null,timer=null,raf=null,paused=false;
+
+function startSession(plan){
+  unlockSpeech(); unlockAudioEl(); audio(); startKeepAlive(); keepAwake();
+  loadYT(); // チャンティング等が最初のYouTube利用で足止めされないよう、先に読み込みだけ始めておく
+  if(plan.stages && plan.stages.some(s=>s.type==='chant'||s.bgSound==='chant')) chantPrewarm();
+  // 呼吸の声は、5分以上の誘導つき瞑想にだけ入れる。
+  // 分析的瞑想・インナーガイド（big）は考えている最中なので入れない。夜の瞑想（relaxBg）も眠りを妨げるので入れない。
+  if(S.enBreath && !plan.relaxBg){
+    plan.stages.forEach(st=>{
+      if(st.type==='script' && st.sec>=300 && !st.big && !st.noCue && st.tl && st.tl.length) st.tl=addBreathCues(st.tl,st.sec);
+    });
+  }
+  sess={name:plan.name,stages:plan.stages,i:-1,pillarsDone:new Set(),letgoDone:new Set(),
+        noClosing:!!plan.noClosing, softBell:!!plan.softBell, freq720:!!plan.freq720, relaxBg:!!plan.relaxBg,
+        total:plan.stages.reduce((a,s)=>a+s.sec,0),startedAt:performance.now()};
+  if(sess.relaxBg){ if(S.nightBg) relaxStart(S.nightBg); nightIntroStart(); }
+  // それ以外の背景音（ガヤトリー／雨音等）は nextStage() がステージごとに切り替えて鳴らす
+  paused=false; $('#btnPause').textContent='一時停止';
+  $('#btnSkip').style.display = plan.stages.length>1?'':'none';
+  $('#btnBg').setAttribute('aria-pressed', !!S.bgMusic);
+  $('#ytBox').innerHTML=''; $('#endMusic').classList.add('hidden'); $('#levelAsk').classList.add('hidden'); $('#runMain').classList.remove('hidden');
+  $('#run').classList.add('on');
+  $('#run').classList.toggle('dim',!!S.dim);
+  $('#guideText').textContent=''; $('#guideText').classList.remove('show');
+  nextStage();
+  timer=setInterval(tick,200);
+  raf=requestAnimationFrame(draw);
+}
+
+function nextStage(){
+  if(!sess) return;
+  // 最後まで流れきった柱だけを「育った」とみなす（途中でやめた分は数えない）
+  if(sess.st && sess.st.pillar) sess.pillarsDone.add(sess.st.pillar);
+  if(sess.st && sess.st.letgo) sess.letgoDone.add(sess.st.letgo);
+  const prevSt=sess.st; // 背景音の切り替え判定に使う、直前のステージ
+  sess.i++;
+  if(sess.i>=sess.stages.length){ finish(true); return; }
+  const st=sess.stages[sess.i];
+  sess.st=st; sess.stStart=performance.now(); sess.fired=new Set(); sess.lastPhase=-1; sess.lastCount=-1; sess.lastBlock=-1;
+  guideBtns(); // 誘導音声のステージのときだけ早送りボタンを出す
+  if(st.phases) st.cycle=st.phases.reduce((a,p)=>a+p.sec,0);
+
+  $('#stageName').textContent=st.name;
+  $('#btnBg').textContent = st.type==='chant' ? '🎵 音を出す（タップ）' : '🎵 ガヤトリー';
+  $('#orbWrap').classList.toggle('hide', st.type==='script');
+  $('#phaseBox').classList.toggle('hide', st.type!=='breath');
+  $('#guideText').classList.toggle('big', !!st.big);
+  if(st.type!=='breath'){ $('#orb').style.transform='scale(.82)'; }
+  $('#guideText').classList.remove('show'); // 前のステージの文をいったん消す
+
+  { const f=sess.freq720?720:undefined; if(sess.i>0) bell(.45,f); else bell(.55,f); }
+
+  // 背景音（ガヤトリー／雨音等）は、ステージが変わるたびに必要なら切り替える。
+  // 夜の瞑想（relaxBg）・チャンティング・回向は、それぞれ専用の仕組みで鳴らすのでここでは扱わない。
+  if(!sess.relaxBg){
+    const prevBg = prevSt ? prevSt.bgSound : undefined;
+    const newBg = st.bgSound;
+    if(newBg!==prevBg){
+      if(prevBg==='gayatri') bgMusicStop(); else if(prevBg==='chant') chantStop(); else if(prevBg) relaxStop();
+      if(newBg==='gayatri'){ if(S.bgMusic) bgMusicStart(); }
+      else if(newBg==='chant'){ if(S.bgMusic) chantStart(bgVol()/100); } // 手放し単体：チャンティングを薄く流す
+      else if(newBg) relaxStart(newBg,.22);
+    }
+  }
+
+  if(st.type==='chant'){
+    // 鐘が鳴り終わってから曲を始める（鐘と同時に鳴り出すと鐘の音がかき消されるため）
+    setTimeout(()=>{ if(sess && sess.st===st) chantStart(.7); }, 2600);
+  }
+  else if((st.bgSound && st.bgSound!=='chant') || st.dedTrack){
+    // 他の音（ガヤトリー等）や回向の曲に切り替わるタイミングで、鳴り続けているチャンティングを止める。
+    // bgSound==='chant' のステージ（手放し単体）は、そのチャンティング自体が背景音なので下げない。
+    // bgSoundが無いステージ（呼吸法・分析的瞑想・慈悲の瞑想）ではチャンティングをそのまま流し続ける。
+    chantFade(S.drone?.05:0);
+  }
+
+  if(st.dedTrack) dedicationStart();
+  else if(prevSt && prevSt.dedTrack) dedicationStop();
+}
+
+function tick(){
+  if(!sess||paused) return;
+  const now=performance.now();
+  const el=(now-sess.stStart)/1000, all=(now-sess.startedAt)/1000;
+  if(el>=sess.st.sec){ nextStage(); return; }
+
+  $('#remain').textContent=mmss(sess.total-all);
+  $('#barFill').style.width=(Math.min(1,all/sess.total)*100)+'%';
+
+  const st=sess.st;
+  if(st.type==='breath' && st.blocks){
+    let bi=st.blocks.length-1;
+    for(let i=0;i<st.blocks.length;i++){ if(el<st.blocks[i].end){bi=i;break;} }
+    const blk=st.blocks[bi];
+    if(bi!==sess.lastBlock){ sess.lastBlock=bi; sess.lastPhase=-1; sess.lastCount=-1;
+      if(blk.kind==='free'){ $('#phaseName').textContent=blk.label||'自然に'; $('#phaseCount').textContent=''; if(S.breathVoice) say(blk.sayStart,blk.vid); }
+    }
+    if(blk.kind==='cycle'){
+      const inBlk=el-blk.start, c=inBlk%blk.cycleLen; let acc=0,idx=0;
+      for(let i=0;i<blk.phases.length;i++){ if(c<acc+blk.phases[i].sec){idx=i;break;} acc+=blk.phases[i].sec; }
+      const p=blk.phases[idx],left=Math.ceil(p.sec-(c-acc));
+      if(idx!==sess.lastPhase){ sess.lastPhase=idx; sess.lastCount=-1;
+        $('#phaseName').textContent=p.label; cue(p.k); if(S.breathVoice) say(p.say,p.vid); }
+      $('#phaseCount').textContent=left;
+      if(S.count&&S.breathVoice&&left!==sess.lastCount&&left<p.sec){ sess.lastCount=left; say(String(left)); }
+    }
+  } else if(st.type==='breath'){
+    const c=el%st.cycle; let acc=0,idx=0;
+    for(let i=0;i<st.phases.length;i++){ if(c<acc+st.phases[i].sec){idx=i;break;} acc+=st.phases[i].sec; }
+    const p=st.phases[idx],left=Math.ceil(p.sec-(c-acc));
+    if(idx!==sess.lastPhase){ sess.lastPhase=idx; sess.lastCount=-1;
+      $('#phaseName').textContent=p.label; cue(p.k); if(S.breathVoice) say(p.say,p.vid); }
+    $('#phaseCount').textContent=left;
+    if(S.count&&S.breathVoice&&left!==sess.lastCount&&left<p.sec){ sess.lastCount=left; say(String(left)); }
+  } else if(st.type==='script'){
+    // 同じ秒に2行が重なっても取りこぼさないよう、時刻ではなく行番号で管理する
+    for(let i=0;i<st.tl.length;i++){
+      const l=st.tl[i];
+      // mute:true の行は画面に出すだけで読み上げない（夢の本文など、自分の言葉をそのまま置く行）。
+      // en:true は英語の呼吸の声。画面は前の誘導文のままにして、声だけを重ねる。
+      if(el>=l.at&&!sess.fired.has(i)){
+        sess.fired.add(i);
+        if(l.en){ speakEn(l.text); continue; }
+        showLine(l.text); if(!l.mute) say(l.text,l.vid);
+      }
+    }
+  } else if(st.type==='chant'){
+    if(el<1&&!sess.fired.has('c')){ sess.fired.add('c'); }
+  }
+}
+
+function showLine(t){
+  const g=$('#guideText');
+  g.classList.remove('show');
+  setTimeout(()=>{ g.textContent=t; g.classList.add('show'); },320);
+}
+
+function draw(){
+  if(sess&&!paused){
+    const el=(performance.now()-sess.stStart)/1000, st=sess.st;
+    if(st&&st.type==='breath'&&st.blocks){
+      let bi=st.blocks.length-1;
+      for(let i=0;i<st.blocks.length;i++){ if(el<st.blocks[i].end){bi=i;break;} }
+      const blk=st.blocks[bi];
+      if(blk.kind==='free'){
+        $('#orb').style.transform=`scale(${.72+.08*Math.sin(el*0.45)})`;
+      } else {
+        const inBlk=el-blk.start, c=inBlk%blk.cycleLen; let acc=0,idx=0;
+        for(let i=0;i<blk.phases.length;i++){ if(c<acc+blk.phases[i].sec){idx=i;break;} acc+=blk.phases[i].sec; }
+        const p=blk.phases[idx],r=(c-acc)/p.sec,ease=x=>x<.5?2*x*x:1-Math.pow(-2*x+2,2)/2;
+        let s;
+        if(p.k==='in') s=.55+.45*ease(r);
+        else if(p.k==='out') s=1-.45*ease(r);
+        else s=(blk.phases[(idx-1+blk.phases.length)%blk.phases.length].k==='in')?1:.55;
+        $('#orb').style.transform=`scale(${s})`;
+      }
+    } else if(st&&st.type==='breath'){
+      const c=el%st.cycle; let acc=0,idx=0;
+      for(let i=0;i<st.phases.length;i++){ if(c<acc+st.phases[i].sec){idx=i;break;} acc+=st.phases[i].sec; }
+      const p=st.phases[idx],r=(c-acc)/p.sec,ease=x=>x<.5?2*x*x:1-Math.pow(-2*x+2,2)/2;
+      let s;
+      if(p.k==='in') s=.55+.45*ease(r);
+      else if(p.k==='out') s=1-.45*ease(r);
+      else s=(st.phases[(idx-1+st.phases.length)%st.phases.length].k==='in')?1:.55;
+      $('#orb').style.transform=`scale(${s})`;
+    } else if(st&&st.type==='chant'){
+      $('#orb').style.transform=`scale(${.78+.06*Math.sin(el*0.5)})`;
+    }
+  }
+  raf=requestAnimationFrame(draw);
+}
+
+function finish(complete){
+  { const b=$("#btnBack15"),f=$("#btnFwd15"); if(b)b.classList.add("hidden"); if(f)f.classList.add("hidden"); }
+  clearInterval(timer); cancelAnimationFrame(raf);
+  try{ speechSynthesis.cancel(); }catch(e){}
+  stopVoiceEl();
+  chantStop();
+  guideStop();
+  dedicationStop();
+  bgMusicStop();
+  relaxStop();
+  if(sess){
+    if(sess.pillarsDone && sess.pillarsDone.size){
+      sess.pillarsDone.forEach(id=>{
+        if(id==='mudita') return;
+        S.pillarCount[id]=(S.pillarCount[id]||0)+1;
+        if(S.pillar==='auto'){
+          const i=JOY_PILLARS.findIndex(p=>p.id===id);
+          if(i>=0) S.pillarIdx=(i+1)%JOY_PILLARS.length; // 次回は次の柱へ
+        }
+      });
+      save();
+    }
+    // 手放しも同じ扱い。最後まで流れきった対象だけを数え、自動なら次の対象へ送る
+    if(sess.letgoDone && sess.letgoDone.size){
+      sess.letgoDone.forEach(id=>{
+        if(id==='core') return;
+        S.letgoCount[id]=(S.letgoCount[id]||0)+1;
+        if(S.letgo==='auto'){
+          const i=LETGO_STEPS.findIndex(p=>p.id===id);
+          if(i>=0) S.letgoIdx=(i+1)%LETGO_STEPS.length;
+        }
+      });
+      save();
+    }
+    const done=Math.round((complete?sess.total:(performance.now()-sess.startedAt)/1000)/60);
+    if(done>=1){ LOG.push({d:fmt(new Date()),n:sess.name,m:done}); saveLog(); }
+  }
+  const noClose = !!(sess && sess.noClosing);
+  const soft = !!(sess && sess.softBell);
+  const f720 = !!(sess && sess.freq720);
+  if(complete) setTimeout(()=>bell(soft?.35:.6, f720?720:undefined),400);
+  const withMusic = complete && S.music && CLOSING_MUSIC.id && !noClose;
+  // 手放しを最後まで流しきったときだけ、いまの高さを聞く。途中でやめた日は聞かない（責める装置にしない）
+  const askLv = complete && !!(sess && sess.letgoDone && sess.letgoDone.size);
+  setTimeout(()=>{
+    sess=null; renderLog(); renderCourse();
+    // 曲を流す間は画面ロックさせない（ロックされるとiframeの再生が途中で止まるため）。
+    // 曲を流さないときだけ、ここで解放する。曲を流す場合はcloseRun()で解放する。
+    if(askLv){ showLevelAsk(withMusic); return; } // 選んだあとに曲／終了へ進む
+    if(withMusic) openMusic(); else { stopKeepAlive(); releaseAwake(); closeRun(); }
+  }, complete?(noClose?1800:3800):250);
+}
+
+/* いまの高さ。上から受容、下へ無気力。並びは階段そのままにしてある。 */
+function showLevelAsk(withMusic){
+  $('#runMain').classList.add('hidden');
+  $('#lvGrid').innerHTML=LADDER.map((l,i)=>({l,i})).reverse().map(({l,i})=>
+    `<button data-lv="${i}"><span>${l.name}</span><span class="lvS">${l.short}</span></button>`).join('');
+  $$('#lvGrid button').forEach(b=>b.onclick=()=>{
+    LEVELS.push({d:fmt(new Date()),lv:+b.dataset.lv}); saveLevels(); renderLog();
+    doneLevelAsk(withMusic);
+  });
+  $('#lvSkip').onclick=()=>doneLevelAsk(withMusic);
+  $('#levelAsk').classList.remove('hidden');
+}
+function doneLevelAsk(withMusic){
+  $('#levelAsk').classList.add('hidden');
+  if(withMusic) openMusic(); else { stopKeepAlive(); releaseAwake(); closeRun(); }
+}
+
+/* 締めの曲。ミックス（ラジオ）は埋め込みできないので、動画だけを埋め込み、
+   続きはYouTubeアプリで開けるようにしている。iOSは自動再生が止められることがあり、
+   その場合はプレイヤーの再生ボタンを1回タップすれば鳴る。 */
+function openMusic(){
+  $('#runMain').classList.add('hidden');
+  $('#endMusic').classList.remove('hidden');
+  $('#ytRadio').href=CLOSING_MUSIC.radio;
+  $('#ytBox').innerHTML='<iframe height="215" allow="autoplay; encrypted-media; picture-in-picture" '
+    +'allowfullscreen src="https://www.youtube-nocookie.com/embed/'+CLOSING_MUSIC.id
+    +'?autoplay=1&playsinline=1&rel=0&start='+(CLOSING_MUSIC.start||0)+'"></iframe>';
+}
+function closeRun(){
+  stopKeepAlive(); releaseAwake();
+  $('#ytBox').innerHTML='';            // 再生を止めるためiframeごと捨てる
+  $('#endMusic').classList.add('hidden');
+  $('#levelAsk').classList.add('hidden');
+  $('#runMain').classList.remove('hidden');
+  $('#run').classList.remove('on');
+}
+$('#btnClose').onclick=closeRun;
+
+$('#btnSkip').onclick=()=>{ if(sess){ try{speechSynthesis.cancel()}catch(e){} stopVoiceEl(); nextStage(); } };
+$('#btnPause').onclick=()=>{
+  if(!sess)return;
+  paused=!paused; $('#btnPause').textContent=paused?'つづける':'一時停止';
+  if(paused){ sess.pAt=performance.now(); try{speechSynthesis.cancel()}catch(e){} stopVoiceEl();
+    if(chantYtPlayer&&chantYtReady) chantYtPlayer.pauseVideo(); guidePause();
+    if(sess.relaxBg) relaxStop(); else bgMusicStop(); }
+  else{ const d=performance.now()-sess.pAt; sess.stStart+=d; sess.startedAt+=d;
+        if(sess.st.type==='chant'&&chantYtPlayer&&chantYtReady) chantYtPlayer.playVideo(); guideResume();
+        if(sess.relaxBg){ if(S.nightBg) relaxStart(S.nightBg); } else bgMusicResume(); }
+};
+
+/* 誘導音声のときだけ出る早送り／巻き戻し。
+   タイマーも同じだけ動かすので、音と残り時間がずれない。
+   ⚠️ YouTube再生時は「動画の中」を動くだけで、広告そのものは飛ばせない
+   （埋め込みAPIに広告の制御が無いため）。端末に音源を取り込めば広告自体が無くなる。 */
+function guideCanSeek(){ return !!(sess && sess.st && sess.st.ytGuide); }
+function guideSeek(delta){
+  if(!sess||!sess.st) return;
+  // 音を動かす
+  if(guideEl){ try{ guideEl.currentTime=Math.max(0,guideEl.currentTime+delta); }catch(e){} }
+  else if(guideYtPlayer&&guideYtReady){
+    try{ guideYtPlayer.seekTo(Math.max(0,guideYtPlayer.getCurrentTime()+delta),true); }catch(e){}
+  }
+  // タイマーも同じだけ動かす（進めたぶんだけ残り時間を減らす）
+  const el=(performance.now()-sess.stStart)/1000;
+  const next=Math.max(0,Math.min(sess.st.sec-1, el+delta));
+  const d=(next-el)*1000;
+  sess.stStart-=d; sess.startedAt-=d;
+}
+function guideBtns(){
+  const on=guideCanSeek();
+  const b=$('#btnBack15'), f=$('#btnFwd15');
+  if(b) b.classList.toggle('hidden',!on);
+  if(f) f.classList.toggle('hidden',!on);
+}
+$('#btnStop').onclick=()=>finish(false);
+$('#btnBack15').onclick=()=>guideSeek(-15);
+$('#btnFwd15').onclick=()=>guideSeek(15);
+$('#btnBg').onclick=()=>{
+  if(sess && sess.st && sess.st.type==='chant'){
+    // これは本物のユーザータップなので、ミュート解除がブロックされずに確実に音が出る
+    const v=CHANT_MUSIC.volume;
+    if(chantYtPlayer && chantYtReady){ chantYtPlayer.unMute(); chantYtPlayer.setVolume(v); chantYtPlayer.playVideo(); }
+    else{
+      chantWantVol=v; if(!chantYtPlayer) chantPrewarm();
+      // タップしても読み込みが終わらない環境向け：数秒待って鳴らなければドローンに切り替える
+      setTimeout(()=>{ if(chantWantVol===v && !(chantYtPlayer&&chantYtReady)){ chantWantVol=null; droneOn(.7); } },5000);
+    }
+    return;
+  }
+  S.bgMusic=!S.bgMusic; save();
+  $('#btnBg').setAttribute('aria-pressed',S.bgMusic);
+  if(S.bgMusic){ if(bgPlayer) bgMusicResume(); else bgMusicStart(); } else bgMusicStop();
+};
+
+$('#startCourse').onclick=()=>startSession(buildCourse());
+$('#startBreath').onclick=()=>{
+  const b=BREATHING.find(x=>x.id===S.breath), sec=S.breathMin*60;
+  if(b.blocks){
+    startSession({name:b.name,stages:[{type:'breath',name:b.name,sec,blocks:resolveBreathBlocks(b.blocks,sec)}]});
+    return;
+  }
+  let phases;
+  if(b.custom){
+    phases=[{k:'in',say:'吸って',label:'吸う',sec:S.cIn||4}];
+    if(S.cH1>0) phases.push({k:'hold',say:'止めて',label:'止める',sec:S.cH1});
+    phases.push({k:'out',say:'ゆっくり吐いて',label:'吐く',sec:S.cOut||6});
+    if(S.cH2>0) phases.push({k:'hold',say:'止めて',label:'止める',sec:S.cH2});
+  } else phases=b.phases;
+  startSession({name:b.name,stages:[{type:'breath',name:b.name,sec,phases}]});
+};
+$('#startMed').onclick=()=>{
+  const m=MEDITATIONS.find(x=>x.id===S.med), sec=S.medMin*60;
+  let stage;
+  if(m.silent) stage={type:'script',name:m.name,sec,tl:[]};
+  else if(m.analytical){
+    const a=ANALYTICAL.find(x=>x.id===S.topic)||ANALYTICAL[0];
+    stage={type:'script',name:m.name+' — '+a.name,sec,tl:tlAnalytical(S.topic,sec),big:true,bgSound:'brown'};
+  } else if(m.innerguide){
+    stage={type:'script',name:m.name,sec,tl:tlInnerGuide(sec),big:true,bgSound:'gayatri'};
+  } else if(m.pillar){
+    const p=resolvePillar();
+    stage={type:'script',name:p.name,sec,tl:tlFromScript(p.script,sec,p.id),pillar:p.id,bgSound:'gayatri'};
+  } else if(m.letgo){
+    const g=resolveLetgo();
+    stage={type:'script',name:g.name,sec,tl:tlFromScript(g.script,sec,g.id),letgo:g.id,bgSound:'chant'};
+  } else if(m.dedication){
+    stage={type:'script',name:m.name,sec,tl:tlFromScript(DEDICATION,sec,'dedication'),dedTrack:true,noCue:true};
+  } else if(m.ytGuide){
+    // 誘導は動画側が全部やるので、こちらは読み上げも背景音も鳴らさず、鐘とタイマーだけ回す。
+    // 尺は分の選択ではなく動画の実尺に合わせる（途中で切れたり無音が残ったりしないように）。
+    const g=YT_GUIDES[m.ytGuide];
+    stage={type:'script',name:m.name,sec:(g?g.sec:sec),tl:[],noCue:true,ytGuide:m.ytGuide};
+    guideStart(m.ytGuide);
+  } else if(m.quick){
+    // 応急処置なので、背景音の読み込みを待たせない
+    stage={type:'script',name:m.name,sec,tl:tlFromScript(m.script,sec,m.id)};
+  } else stage={type:'script',name:m.name,sec,tl:tlFromScript(m.script,sec,m.id),
+      bgSound:(m.relaxBg||m.quiet)?undefined:(m.chantBg?'chant':'gayatri'),noCue:m.noCue};
+  startSession({name:m.name,stages:[stage],noClosing:m.noClosing,softBell:m.softBell,freq720:m.freq720,relaxBg:m.relaxBg});
+};
+
+
+/* 設定画面：曲を端末に取り込む欄。誘導音声（YT_GUIDES）も同じ仕組みなので一緒に並べる */
+let slotPicking=null;
+function renderSlots(){
+  const box=$('#localSlots'); if(!box) return;
+  const rows=LOCAL_SLOTS.concat(
+    Object.keys(YT_GUIDES).map(k=>({key:k,name:(YT_GUIDES[k].label||k)+'（誘導）',hint:YT_GUIDES[k].by||''})));
+  box.innerHTML=rows.map(s=>{
+    const h=guideHave(s.key);
+    return `<div style="padding:8px 0;border-top:1px solid var(--line)">
+      <div style="display:flex;gap:8px;align-items:center;justify-content:space-between">
+        <div style="min-width:0">
+          <div style="font-size:13px">${s.name}</div>
+          <div style="font-size:11px;color:var(--faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+            ${h?('端末にあり：'+h):(s.hint||'未取り込み')}</div>
+        </div>
+        <div style="flex:none;display:flex;gap:6px">
+          <button class="chip" data-slot="${s.key}">${h?'入れ替え':'取り込む'}</button>
+          ${h?`<button class="chip" data-del="${s.key}">消す</button>`:''}
+        </div>
+      </div></div>`;
+  }).join('');
+  const f=$('#slotFile');
+  $$('#localSlots [data-slot]').forEach(b=>b.onclick=()=>{ slotPicking=b.dataset.slot; f.value=''; f.click(); });
+  $$('#localSlots [data-del]').forEach(b=>b.onclick=async()=>{
+    const k=b.dataset.del;
+    await guideDel(k); guideHaveSet(k,null);
+    // 鳴っている途中なら止めて、次からはYouTube側に戻す
+    localPause(k); delete localPlayers[k];
+    renderSlots(); renderMed();
+  });
+  if(f) f.onchange=async()=>{
+    const file=f.files&&f.files[0]; if(!file||!slotPicking) return;
+    const k=slotPicking; slotPicking=null;
+    try{
+      await guidePut(k,file); guideHaveSet(k,file.name);
+      localPause(k); delete localPlayers[k]; // 入れ替えたら古い方を捨てる
+    }catch(e){ alert('取り込めませんでした：'+(e&&e.message||e)+'\n\nファイル：'+file.name+'（'+Math.round(file.size/1048576)+'MB）\n端末の空き容量か、ブラウザの保存制限に当たっている可能性があります。'); }
+    renderSlots(); renderMed();
+  };
+}
+renderCourse(); renderBreath(); renderMed(); renderLog(); renderSlots();
+// アプリを開いた時点でYouTube APIの読み込みだけ先に始めておく（チャンティングはコースの最初のステージで
+// 待ち時間がないため、実際に「はじめる」を押すまで待つと最も重い初回読み込みに間に合わないことがある）
+loadYT();
+
+// オープニング：見た目はCSSアニメーションだけで完結している（JSが動かなくても画面はふさがれない）。
+// ここではDOMの掃除だけを、可能なら行う（うまくいかなくてもアプリの動作には影響しない）。
+try{
+  const sp=document.getElementById('splash');
+  if(sp) sp.addEventListener('animationend',()=>{ try{ sp.remove(); }catch(e){} });
+}catch(e){}
+
+// オフライン対応：https で開いたときだけ効く（file:// や http では登録されない/意味がない）
+let offlinePoll=null;
+async function updateOfflineStatus(){
+  const el=$('#offlineStatus'); if(!el) return;
+  if(location.protocol==='file:'){ el.textContent='この開き方（file://）では非対応。https（またはlocalhost）で開いてください'; return; }
+  if(!('caches' in window)){ el.textContent='このブラウザでは非対応'; return; }
+  try{
+    // どこで止まっているかが分かるよう、段階ごとに理由を出す
+    if(!('serviceWorker' in navigator)){ el.textContent='Service Worker非対応のブラウザ'; return; }
+    const reg = await navigator.serviceWorker.getRegistration();
+    if(!reg){ el.textContent='未登録（読み込みに失敗？ 再読み込みしてみてください）'; return; }
+    if(reg.installing){ el.textContent='インストール中…'; return; }
+    if(reg.waiting && !reg.active){ el.textContent='待機中…（一度タブを閉じて開き直してください）'; return; }
+    if(!reg.active){ el.textContent='登録はされたが起動していません'; return; }
+
+    // キャッシュ名にはバージョンが入るので、名前を決め打ちしない。
+    // ⚠️ caches.open は「無い名前だと空のキャッシュを新規作成する」ので、
+    //    決め打ちすると sw.js のバージョンを上げた瞬間に必ず「保存されていない」と誤表示される。
+    const names = (await caches.keys()).filter(n=>n.startsWith('meditation-app'));
+    let hasHtml=false, hasIcon=false;
+    for(const n of names){
+      const c = await caches.open(n);
+      if(!hasHtml) hasHtml = !!(await c.match('./index.html'));
+      if(!hasIcon) hasIcon = !!(await c.match('./icon.png'));
+    }
+    if(hasHtml && hasIcon){
+      el.textContent='完了（電波が無くても開けます）'; el.style.color='var(--gold-soft)';
+      if(offlinePoll){ clearInterval(offlinePoll); offlinePoll=null; }
+    } else {
+      el.textContent='保存中…（欠け: '+(hasHtml?'':'index.html ')+(hasIcon?'':'icon.png')+'）';
+    }
+  }catch(e){ el.textContent='確認できません（'+e.message+'）'; }
+}
+if('serviceWorker' in navigator && location.protocol!=='file:'){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(err=>console.warn('[sw] 登録失敗:',err));
+    updateOfflineStatus();
+    offlinePoll=setInterval(updateOfflineStatus,2000);
+  });
+} else {
+  updateOfflineStatus();
+}
+
+/* ===================================================================
+   夜の瞑想だけの版（`アプリ/瞑想/` の完全な複製に、この一節だけを足したもの）
+
+   なぜ切り出さず複製したか：
+     夜の瞑想は台本（NIGHT）だけで動いているわけではなく、読み上げ・鐘・タイマー・
+     雨音（relaxStart）・アラティ（nightIntroStart）・設定が本体と絡み合っている。
+     必要な部分だけ抜き出すと壊れる箇所が多いので、丸ごと写して他を隠す方式にした。
+
+   ⚠️ 本体（アプリ/瞑想/）を直しても、こちらには反映されない。
+     夜の瞑想の台本や共通のエンジンを直したら、両方に入れること。
+=================================================================== */
+(function nightOnly(){
+  document.title='夜の瞑想';
+
+  // 合言葉ゲートを外す（2026-08-30 本人指示）。
+  // 本体（アプリ/瞑想/）は人に見せる可能性があるので残してあるが、
+  // こちらは寝る前に暗い中で使うものなので、入力させない。
+  const gate=document.getElementById('gate');
+  if(gate) gate.remove();
+
+  // 単発タブの「夜の瞑想」に固定する。
+  // ⚠️ save() は呼ばない。本体（mei）と同じドメインなので localStorage を共有していて、
+  //    ここで保存すると本体の「単発」の選択まで夜の瞑想に変わってしまう。
+  //    設定と記録（連続日数）は共有したいので、キー自体は分けていない。
+  S.med='night';
+
+  // タブバーごと隠す（コース・呼吸法・記録には行かせない）
+  const tabs=document.querySelector('.tabs');
+  if(tabs) tabs.style.display='none';
+
+  // 一覧から、夜の瞑想のカードと背景音セレクト以外を全部隠す。
+  // カードだけを対象にすると、パックの見出し（「超瞑想」「華厳」「維摩経」等）が
+  // 中身のないまま残ってしまうので、#medList の子要素を総当たりで判定する。
+  // renderMed() は背景音を変えるたびに描き直されるので、包んで毎回隠し直す。
+  function hideOthers(){
+    const list=document.getElementById('medList');
+    if(!list) return;
+    [...list.children].forEach(el=>{
+      const keep = (el.dataset && el.dataset.m==='night')
+                || el.id==='soloNightBg'
+                || !!(el.querySelector && el.querySelector('#soloNightBg'));
+      el.style.display = keep ? '' : 'none';
+    });
+  }
+  const _renderMed=renderMed;
+  renderMed=function(){ S.med='night'; _renderMed.apply(this,arguments); hideOthers(); };
+
+  showTab('med');
+  renderMed();
+})();
+</script>
+</body>
+</html>

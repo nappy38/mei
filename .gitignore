@@ -1,5 +1,5 @@
-# GitHub Pages に公開するのは、アプリが動くのに必要な5つだけ。
-# 録音リスト・zip・写真・作業用ファイルは、うっかり公開されないようにここで止める。
+# GitHub Pages に公開するのは、アプリが動くのに必要なファイルだけ。
+# 録音リスト・zip・写真・作業用ファイル・音源は、うっかり公開されないようにここで止める。
 # 新しく公開したいファイルが増えたら、下に「!ファイル名」の行を足すこと。
 *
 !.gitignore
@@ -8,3 +8,11 @@
 !manifest.json
 !icon.png
 !decor_leaves.png
+
+# 夜の瞑想だけの版（/mei/yoru/ で開く）。本体の複製に固定処理を足したもの。
+!yoru/
+!yoru/index.html
+!yoru/sw.js
+!yoru/manifest.json
+!yoru/icon.png
+!yoru/decor_leaves.png

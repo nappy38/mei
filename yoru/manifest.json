@@ -1,0 +1,16 @@
+{
+  "name": "夜の瞑想",
+  "short_name": "夜",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0b0f18",
+  "theme_color": "#0b0f18",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
