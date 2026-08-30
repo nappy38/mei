@@ -13,11 +13,13 @@
 <link rel="manifest" href="manifest.json">
 <title>夜の瞑想</title>
 <style>
+/* 夜の瞑想だけの版の配色。本体は生成りの明るい紙色だが、こちらは寝る前に使うので
+   夜空（紺紫）＋淡いピンクにしてある。画面が明るいと入眠を妨げるという実務上の理由もある。 */
 :root{
-  --bg:#F7F1E3; --bg2:#ECE2C8;
-  --ink:#3A3226; --dim:#8B8270; --faint:#B3A990;
-  --gold:#7C8F63; --gold-soft:#94A879;
-  --line:rgba(58,50,38,.14);
+  --bg:#221D3A; --bg2:#17142F;
+  --ink:#F3EAF6; --dim:#BEAEDC; --faint:#8A7CB0;
+  --gold:#F0A6C8; --gold-soft:#F7C2DC;
+  --line:rgba(243,234,246,.16);
   /* Android には Hiragino / Yu Mincho が無いので、Noto Serif CJK 系を先に試す */
   --serif:"Hiragino Mincho ProN","Yu Mincho",YuMincho,"Noto Serif JP","Noto Serif CJK JP","Source Han Serif JP",serif;
   --sans:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP","Noto Sans CJK JP",sans-serif;
@@ -25,7 +27,7 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{height:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
-  background-image:radial-gradient(120% 80% at 50% -10%, #FBF6E9 0%, var(--bg2) 45%, var(--bg) 100%);
+  background-image:radial-gradient(120% 80% at 50% -10%, #3A2F5E 0%, var(--bg) 45%, var(--bg2) 100%);
   background-attachment:fixed;-webkit-font-smoothing:antialiased;overscroll-behavior:none}
 button{font-family:inherit;color:inherit;background:none;border:none;padding:0;cursor:pointer}
 .wrap{max-width:520px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 16px) 18px calc(env(safe-area-inset-bottom) + 30px)}
@@ -3648,6 +3650,71 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
   }
   const _renderMed=renderMed;
   renderMed=function(){ S.med='night'; _renderMed.apply(this,arguments); hideOthers(); };
+
+  // 葉っぱの飾りは本体の生成り配色に合わせたものなので、夜空の配色には合わない。隠す。
+  const deco=document.querySelector('.deco');
+  if(deco) deco.style.display='none';
+
+  /* ---- 背景画像（端末に置く方式）----
+     画像はこの端末のIndexedDBにだけ入る。公開されるファイルには1バイトも含まれない。
+     他人のキャラクターの絵などを公開リポジトリに置かないための仕組みで、
+     Bloomの音源・本体の誘導音声と同じ考え方。 */
+  const BGKEY='nightBgPhoto';
+
+  const layer=document.createElement('div');
+  layer.id='bgphoto';
+  layer.style.cssText='position:fixed;inset:0;z-index:-1;background-size:cover;background-position:center;display:none';
+  document.body.appendChild(layer);
+
+  // 画像の上に文字が乗るので、暗い膜をかけて読めるようにする
+  const veil=document.createElement('div');
+  veil.style.cssText='position:fixed;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(23,20,47,.55),rgba(23,20,47,.78));display:none';
+  document.body.appendChild(veil);
+
+  let bgUrl=null;
+  async function applyBg(){
+    const blob=await guideGet(BGKEY);
+    if(bgUrl) URL.revokeObjectURL(bgUrl);
+    if(!blob){ layer.style.display='none'; veil.style.display='none'; return; }
+    bgUrl=URL.createObjectURL(blob);
+    layer.style.backgroundImage=`url(${bgUrl})`;
+    layer.style.display='block'; veil.style.display='block';
+  }
+
+  // 「はじめる」の下に、目立たない形で置く
+  const picker=document.createElement('div');
+  picker.style.cssText='margin-top:18px;text-align:center';
+  picker.innerHTML='<button id="bgPick" style="font-size:12px;color:var(--faint);border-bottom:1px solid var(--line);padding:2px 0">背景画像を端末から選ぶ</button>'
+    +'<button id="bgClear" style="font-size:12px;color:var(--faint);margin-left:14px;display:none">背景を消す</button>'
+    +'<input type="file" id="bgFile" accept="image/*" style="display:none">';
+  document.getElementById('tab-med').appendChild(picker);
+
+  const bgFile=picker.querySelector('#bgFile');
+  picker.querySelector('#bgPick').onclick=()=>{ bgFile.value=''; bgFile.click(); };
+  bgFile.onchange=async()=>{
+    const f=bgFile.files&&bgFile.files[0];
+    if(!f) return;
+    await guidePut(BGKEY,f);
+    await applyBg();
+    picker.querySelector('#bgClear').style.display='';
+  };
+  picker.querySelector('#bgClear').onclick=async()=>{
+    try{
+      const db=await gdb();
+      await new Promise(res=>{
+        const t=db.transaction('files','readwrite');
+        t.objectStore('files').delete(BGKEY);
+        t.oncomplete=res; t.onerror=res;
+      });
+    }catch(e){ console.warn('背景画像の削除に失敗:',e); }
+    if(bgUrl){ URL.revokeObjectURL(bgUrl); bgUrl=null; }
+    layer.style.display='none'; veil.style.display='none';
+    picker.querySelector('#bgClear').style.display='none';
+  };
+
+  applyBg().then(()=>{
+    guideGet(BGKEY).then(b=>{ if(b) picker.querySelector('#bgClear').style.display=''; });
+  });
 
   showTab('med');
   renderMed();
