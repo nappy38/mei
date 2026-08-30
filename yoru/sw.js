@@ -5,7 +5,7 @@
 // 以前はネット優先だったが、電波が「弱い／繋がっているのに外へ出られない」状態だと
 // fetchが失敗せずぶら下がり、画面が真っ白のまま開かなくなる。まず必ずキャッシュを返し、
 // 更新は裏で取ってくる（＝次に開いた時に最新になる）。魅力アップ音楽アプリと同じ方式。
-const CACHE = 'night-app-v2';
+const CACHE = 'night-app-v3';
 const SHELL = './index.html';                                  // これだけは必須
 const EXTRA = ['./', './icon.png', './manifest.json', './decor_leaves.png']; // 失敗しても致命的でない
 
