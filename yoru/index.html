@@ -3660,6 +3660,20 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
      他人のキャラクターの絵などを公開リポジトリに置かないための仕組みで、
      Bloomの音源・本体の誘導音声と同じ考え方。 */
   const BGKEY='nightBgPhoto';
+  // 起動画像のキーもここで宣言する。下の選択UIのほうが先に動くので、
+  // 起動画像の節で宣言すると「宣言前に使った」で落ちる。
+  const SPKEY='nightSplash', SPINV='nightSplashInvert';
+
+
+  /* 起動直後は IndexedDB の準備とぶつかって guideGet が空を返すことがある
+     （後から手で呼ぶと取れるのに、読み込み時だけ取れない、という形で出た）。
+     原因を追い切るより、取れなかったら少し待って一度だけ引き直すほうが確実なのでそうする。 */
+  async function getStored(key){
+    const first=await guideGet(key);
+    if(first) return first;
+    await new Promise(r=>setTimeout(r,150));
+    return await guideGet(key);
+  }
 
   const layer=document.createElement('div');
   layer.id='bgphoto';
@@ -3673,7 +3687,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
 
   let bgUrl=null;
   async function applyBg(){
-    const blob=await guideGet(BGKEY);
+    const blob=await getStored(BGKEY);
     if(bgUrl) URL.revokeObjectURL(bgUrl);
     if(!blob){ layer.style.display='none'; veil.style.display='none'; return; }
     bgUrl=URL.createObjectURL(blob);
@@ -3686,7 +3700,14 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
   picker.style.cssText='margin-top:18px;text-align:center';
   picker.innerHTML='<button id="bgPick" style="font-size:12px;color:var(--faint);border-bottom:1px solid var(--line);padding:2px 0">背景画像を端末から選ぶ</button>'
     +'<button id="bgClear" style="font-size:12px;color:var(--faint);margin-left:14px;display:none">背景を消す</button>'
-    +'<input type="file" id="bgFile" accept="image/*" style="display:none">';
+    +'<input type="file" id="bgFile" accept="image/*" style="display:none">'
+    +'<div style="margin-top:10px">'
+    +'<button id="spPick" style="font-size:12px;color:var(--faint);border-bottom:1px solid var(--line);padding:2px 0">起動画像を端末から選ぶ</button>'
+    +'<button id="spClear" style="font-size:12px;color:var(--faint);margin-left:14px;display:none">起動画像を消す</button>'
+    +'<input type="file" id="spFile" accept="image/*" style="display:none">'
+    +'<label id="spInvWrap" style="display:none;font-size:11px;color:var(--faint);margin-left:14px">'
+    +'<input type="checkbox" id="spInv" style="vertical-align:-1px"> 白黒を反転</label>'
+    +'</div>';
   document.getElementById('tab-med').appendChild(picker);
 
   const bgFile=picker.querySelector('#bgFile');
@@ -3713,8 +3734,71 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
   };
 
   applyBg().then(()=>{
-    guideGet(BGKEY).then(b=>{ if(b) picker.querySelector('#bgClear').style.display=''; });
+    getStored(BGKEY).then(b=>{ if(b) picker.querySelector('#bgClear').style.display=''; });
   });
+
+  // 起動画像の選択・削除・反転
+  const spFile=picker.querySelector('#spFile');
+  const spClearBtn=picker.querySelector('#spClear');
+  const spInvWrap=picker.querySelector('#spInvWrap');
+  const spInv=picker.querySelector('#spInv');
+
+  function showSplashControls(on){
+    spClearBtn.style.display = on ? '' : 'none';
+    spInvWrap.style.display  = on ? '' : 'none';
+  }
+  spInv.checked = localStorage.getItem(SPINV)==='1';
+  spInv.onchange=()=>localStorage.setItem(SPINV, spInv.checked?'1':'0');
+
+  picker.querySelector('#spPick').onclick=()=>{ spFile.value=''; spFile.click(); };
+  spFile.onchange=async()=>{
+    const f=spFile.files&&spFile.files[0];
+    if(!f) return;
+    await guidePut(SPKEY,f);
+    showSplashControls(true);
+  };
+  spClearBtn.onclick=async()=>{
+    try{
+      const db=await gdb();
+      await new Promise(res=>{
+        const t=db.transaction('files','readwrite');
+        t.objectStore('files').delete(SPKEY);
+        t.oncomplete=res; t.onerror=res;
+      });
+    }catch(e){ console.warn('起動画像の削除に失敗:',e); }
+    showSplashControls(false);
+  };
+  getStored(SPKEY).then(b=>showSplashControls(!!b));
+
+  /* ---- 起動画像（アプリ内スプラッシュ）----
+     Androidのスプラッシュはマニフェストのアイコンと背景色から自動生成されるもので、
+     別画像を指定する項目が無い。そこで起動直後に自前で1枚出して、すぐ消す。
+     画像は背景と同じくこの端末のIndexedDBにだけ入る（公開ファイルには含まれない）。 */
+
+
+  const splash=document.createElement('div');
+  splash.style.cssText='position:fixed;inset:0;z-index:9999;background:var(--bg2);'
+    +'display:flex;align-items:center;justify-content:center;transition:opacity .45s ease';
+  const spImg=document.createElement('img');
+  spImg.style.cssText='max-width:86%;max-height:86%;object-fit:contain';
+  splash.appendChild(spImg);
+  document.body.appendChild(splash);
+
+  function closeSplash(){
+    splash.style.opacity='0';
+    setTimeout(()=>splash.remove(),480);
+  }
+
+  getStored(SPKEY).then(blob=>{
+    if(!blob){ closeSplash(); return; }               // 未設定なら暗幕だけ出してすぐ消す
+    const u=URL.createObjectURL(blob);
+    if(localStorage.getItem(SPINV)==='1') spImg.style.filter='invert(1)';
+    spImg.onload=()=>setTimeout(closeSplash,1100);
+    spImg.onerror=closeSplash;
+    spImg.src=u;
+  }).catch(closeSplash);
+
+  setTimeout(closeSplash,2600);                        // 何かあっても必ず閉じる保険
 
   showTab('med');
   renderMed();
