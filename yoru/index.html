@@ -3629,6 +3629,12 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
   //    設定と記録（連続日数）は共有したいので、キー自体は分けていない。
   S.med='night';
 
+  // 開くたび10分から始める（2026-08-30 本人指示）。
+  // 毎晩続けるのが目的なので、迷わず押せる長さを初期値にする。
+  // 研究上も、1回の長さより頻度のほうが効くとされている（脳波の変化は7〜10分でピーク）。
+  // その場で15分・20分に変えるのは今まで通りできる。ここでも save() は呼ばない。
+  S.medMin=10;
+
   // タブバーごと隠す（コース・呼吸法・記録には行かせない）
   const tabs=document.querySelector('.tabs');
   if(tabs) tabs.style.display='none';
