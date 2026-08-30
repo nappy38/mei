@@ -20,3 +20,5 @@
 # 日報ワンタップ入口（/mei/nippou/ で開く）。自分宛メール作成ボタンだけの1枚。
 !nippou/
 !nippou/index.html
+!nippou/manifest.json
+!nippou/icon.png
