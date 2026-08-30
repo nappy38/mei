@@ -16,3 +16,7 @@
 !yoru/manifest.json
 !yoru/icon.png
 !yoru/decor_leaves.png
+
+# 日報ワンタップ入口（/mei/nippou/ で開く）。自分宛メール作成ボタンだけの1枚。
+!nippou/
+!nippou/index.html
