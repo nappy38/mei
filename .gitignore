@@ -22,3 +22,10 @@
 !nippou/index.html
 !nippou/manifest.json
 !nippou/icon.png
+
+# 今日の一歩（/mei/step/ で開く）。朝の督促タスクがtoday.jsonを毎朝書き換える。
+!step/
+!step/index.html
+!step/manifest.json
+!step/icon.png
+!step/today.json
