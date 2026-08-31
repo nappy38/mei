@@ -3229,6 +3229,16 @@ function nextStage(){
   else if(prevSt && prevSt.dedTrack) dedicationStop();
 }
 
+/* 案内文とカウントは同じフェーズの枠を取り合う。
+   say() は speechSynthesis.cancel() を呼ぶので、案内文を読んでいる最中にカウントを
+   言うと案内文が途中で切れる（「鼻から吸って。エレベータ…3、2、1」になっていた）。
+   4秒の枠に4秒かかる文と4カウントの両方は入らないので、周ごとに役割を分ける。
+     ・案内周（最初の1周と SAY_EVERY 周ごと）… 案内文だけ。カウントは黙る
+     ・それ以外の周              … カウントだけ。p.sec から読むので「4・3・2・1」と4つ揃う
+   フェーズの切り替わりは cue() の音と画面の数字でわかるので、案内文が無い周でも迷わない。 */
+const SAY_EVERY=5;
+const isGuideCycle=n=>(n%SAY_EVERY===0);
+
 function tick(){
   if(!sess||paused) return;
   const now=performance.now();
@@ -3250,19 +3260,21 @@ function tick(){
       const inBlk=el-blk.start, c=inBlk%blk.cycleLen; let acc=0,idx=0;
       for(let i=0;i<blk.phases.length;i++){ if(c<acc+blk.phases[i].sec){idx=i;break;} acc+=blk.phases[i].sec; }
       const p=blk.phases[idx],left=Math.ceil(p.sec-(c-acc));
+      const guide=isGuideCycle(Math.floor(inBlk/blk.cycleLen));
       if(idx!==sess.lastPhase){ sess.lastPhase=idx; sess.lastCount=-1;
-        $('#phaseName').textContent=p.label; cue(p.k); if(S.breathVoice) say(p.say,p.vid); }
+        $('#phaseName').textContent=p.label; cue(p.k); if(S.breathVoice&&guide) say(p.say,p.vid); }
       $('#phaseCount').textContent=left;
-      if(S.count&&S.breathVoice&&left!==sess.lastCount&&left<p.sec){ sess.lastCount=left; say(String(left)); }
+      if(S.count&&S.breathVoice&&!guide&&left!==sess.lastCount){ sess.lastCount=left; say(String(left)); }
     }
   } else if(st.type==='breath'){
     const c=el%st.cycle; let acc=0,idx=0;
     for(let i=0;i<st.phases.length;i++){ if(c<acc+st.phases[i].sec){idx=i;break;} acc+=st.phases[i].sec; }
     const p=st.phases[idx],left=Math.ceil(p.sec-(c-acc));
+    const guide=isGuideCycle(Math.floor(el/st.cycle));
     if(idx!==sess.lastPhase){ sess.lastPhase=idx; sess.lastCount=-1;
-      $('#phaseName').textContent=p.label; cue(p.k); if(S.breathVoice) say(p.say,p.vid); }
+      $('#phaseName').textContent=p.label; cue(p.k); if(S.breathVoice&&guide) say(p.say,p.vid); }
     $('#phaseCount').textContent=left;
-    if(S.count&&S.breathVoice&&left!==sess.lastCount&&left<p.sec){ sess.lastCount=left; say(String(left)); }
+    if(S.count&&S.breathVoice&&!guide&&left!==sess.lastCount){ sess.lastCount=left; say(String(left)); }
   } else if(st.type==='script'){
     // 同じ秒に2行が重なっても取りこぼさないよう、時刻ではなく行番号で管理する
     for(let i=0;i<st.tl.length;i++){

@@ -101,6 +101,14 @@
     word-break: break-all;
   }
 
+  video {
+    width: 100%;
+    border-radius: 20px;
+    border: 3px solid var(--surface);
+    box-shadow: 0 10px 24px -10px rgba(74, 56, 47, 0.35);
+    background: #000;
+  }
+
   .note {
     margin: 0;
     color: var(--pink-deep);
@@ -133,6 +141,7 @@
   <div class="mark">🔔</div>
   <div class="eyebrow">今日の一歩</div>
   <h1 id="headline" class="skeleton">読み込み中…</h1>
+  <video id="video" controls playsinline preload="metadata" style="display:none;"></video>
   <div class="detail" id="detail" style="display:none;"></div>
   <p class="note" id="note" style="display:none;"></p>
   <p class="updated" id="updated"></p>
@@ -146,6 +155,12 @@
         var h = document.getElementById('headline');
         h.textContent = data.headline || '今日の一歩は準備中';
         h.classList.remove('skeleton');
+
+        if (data.video) {
+          var v = document.getElementById('video');
+          v.src = data.video;
+          v.style.display = 'block';
+        }
 
         if (data.detail) {
           var d = document.getElementById('detail');
