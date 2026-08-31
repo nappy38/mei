@@ -8,22 +8,24 @@
 <link rel="icon" href="icon.png" type="image/png">
 <link rel="apple-touch-icon" href="icon.png">
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#10121b">
+<meta name="theme-color" content="#eaf7ff">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,400&family=Sora:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
 
 <style>
   :root {
-    --bg: #10121b;
-    --bg-glow: #191c2c;
-    --surface: #1c2032;
-    --surface-border: #2c3149;
-    --text-primary: #eef0f7;
-    --text-muted: #8d92ab;
-    --accent: #d9a15b;
-    --accent-soft: #f0c88a;
-    --accent-dim: rgba(217, 161, 91, 0.16);
+    --bg: #eaf7ff;
+    --bg-glow: #ffffff;
+    --surface: #ffffff;
+    --surface-border: #bfe6fb;
+    --text-primary: #1c3d52;
+    --text-muted: #5c8296;
+    --blue: #0ea5e9;
+    --blue-deep: #0284c7;
+    --yellow: #ffd400;
+    --red: #ff4d4d;
+    --accent-dim: rgba(14, 165, 233, 0.14);
   }
 
   * { box-sizing: border-box; }
@@ -36,10 +38,11 @@
 
   body {
     background:
-      radial-gradient(ellipse 60% 45% at 50% 8%, var(--bg-glow) 0%, transparent 70%),
+      radial-gradient(ellipse 70% 50% at 50% 0%, #d6f0ff 0%, transparent 65%),
+      radial-gradient(ellipse 50% 40% at 90% 90%, #fff3c4 0%, transparent 60%),
       var(--bg);
     color: var(--text-primary);
-    font-family: "Sora", "Hiragino Sans", "Yu Gothic", sans-serif;
+    font-family: "Zen Maru Gothic", "Hiragino Sans", "Yu Gothic", sans-serif;
     min-height: 100vh;
     display: flex;
     align-items: center;
@@ -54,30 +57,32 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 22px;
+    gap: 20px;
     text-align: center;
   }
 
   .mark {
-    font-size: 26px;
+    font-size: 40px;
     line-height: 1;
-    opacity: 0.9;
-    filter: drop-shadow(0 0 12px var(--accent-dim));
+    filter: drop-shadow(0 6px 14px var(--accent-dim));
   }
 
   .eyebrow {
-    font-size: 12.5px;
-    letter-spacing: 0.14em;
-    color: var(--text-muted);
-    text-transform: uppercase;
+    font-family: "Mochiy Pop One", "Zen Maru Gothic", sans-serif;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    color: #fff;
+    background: var(--blue);
+    padding: 6px 16px;
+    border-radius: 999px;
+    box-shadow: 0 4px 0 var(--blue-deep);
   }
 
   h1 {
-    font-family: "Fraunces", Georgia, serif;
-    font-weight: 500;
-    font-style: italic;
-    font-size: clamp(24px, 7.5vw, 30px);
-    line-height: 1.4;
+    font-family: "Mochiy Pop One", "Zen Maru Gothic", sans-serif;
+    font-weight: 400;
+    font-size: clamp(22px, 7vw, 27px);
+    line-height: 1.55;
     margin: 0;
     text-wrap: balance;
     color: var(--text-primary);
@@ -87,17 +92,19 @@
     width: 100%;
     padding: 16px 18px;
     background: var(--surface);
-    border: 1px solid var(--surface-border);
-    border-radius: 16px;
+    border: 2px dashed var(--surface-border);
+    border-radius: 20px;
     font-size: 13.5px;
+    font-weight: 700;
     line-height: 1.6;
-    color: var(--text-muted);
+    color: var(--blue-deep);
     word-break: break-all;
   }
 
   .note {
     margin: 0;
-    color: var(--text-muted);
+    color: var(--red);
+    font-weight: 700;
     font-size: 13px;
     line-height: 1.7;
     max-width: 30ch;
@@ -105,8 +112,9 @@
 
   .updated {
     font-size: 11.5px;
+    font-weight: 500;
     color: var(--text-muted);
-    opacity: 0.6;
+    opacity: 0.8;
   }
 
   .skeleton {
@@ -122,7 +130,7 @@
 <body>
 
 <main>
-  <div class="mark">☀︎</div>
+  <div class="mark">🔔</div>
   <div class="eyebrow">今日の一歩</div>
   <h1 id="headline" class="skeleton">読み込み中…</h1>
   <div class="detail" id="detail" style="display:none;"></div>
