@@ -1253,6 +1253,123 @@ function tlInnerGuide(total){
   return tl.sort((a,b)=>a.at-b.at);
 }
 
+
+/* ゴール設定の七段。苫米地式コーチングの全体像（新庄の解説動画）に沿って組んである。
+   ⚠️【この七本の順番には意味がある】**1→2→3 の順でなければ効かない。**
+      「自分をどう変えるか」ではなく「どんな世界を作りたいか」から入る。自分は
+      〈世界 － 自分以外〉なので、まわりのピースが決まって初めて自分の形が決まる。
+      自分に直接手を入れるのは、完成したパズルの真ん中の一枚だけをハサミで切るのと同じ。
+   ⚠️ 4と5を混ぜないこと。Z地点（ゴールの世界）は映像を細かく描かず互感と感情で満たす。
+      細かく描くのは B地点（次の足場）のほう。ここを逆にすると、どちらも効かなくなる。
+   ※ コンフォートゾーンは Z へ一気に飛ばさない。A→B→C と足場をずらす（5がその担当）。
+   ※ 用語（スコトーマ・エフィカシー・ドリームキラー等）は本文に一切出さない。 */
+const GOAL_STEPS = [
+  { id:'world', name:'ワールド', short:'自分ではなく、世界を描く',
+    open:[{at:0,text:'せすじを伸ばして、肩を落とします。'},{at:16,text:'今日は、自分ではなく、世界のほうを見ます。'}],
+    loop:{every:30,fit:true,minGap:16,texts:[
+      '変えたい自分を、ひとつ思い浮かべます。',
+      'その自分を、いったん脇に置きます。',
+      '自分は、世界から自分以外を引いたものです。まわりが変われば、形も変わります。',
+      'では、どんな世界にいたいですか。',
+      'そこには、誰がいますか。',
+      'その人たちと、どんな関わり方をしていますか。',
+      'その世界では、何が当たり前になっていますか。',
+      'その世界にぴったりはまる自分は、どんな形ですか。',
+      '自分を直そうとしなくても、形は決まります。',
+    ]},
+    close:[{at:-22,text:'その世界のほうを、胸に残しておきます。'}] },
+
+  { id:'wheel', name:'八つの方面', short:'ひとつだけのゴールでは、脳は本気を出さない',
+    open:[{at:0,text:'楽な姿勢で、目を閉じます。'},{at:16,text:'今日は、人生のぜんぶの方面に、置いていきます。'}],
+    loop:{every:30,fit:true,minGap:16,texts:[
+      'ひとつだけの成功では、脳は本気を出しません。',
+      '仕事。理想は、どうなっていますか。',
+      '趣味。夢中になっているものは、何ですか。',
+      '家族。どんな関係になっていますか。',
+      '交わる人たち。誰と、どんな時間を過ごしていますか。',
+      '学び。何を学び続けていますか。',
+      '社会。誰の役に立っていますか。',
+      '体。どんな状態ですか。お金は、どうなっていますか。',
+      '空いている方面が、ひとつあります。そこを、埋めます。',
+    ]},
+    close:[{at:-22,text:'八つが揃った世界を、ひとまとまりで見ます。'}] },
+
+  { id:'outside', name:'現状の外', short:'手段が分からない場所へ',
+    open:[{at:0,text:'せすじを伸ばして、肩を落とします。'},{at:16,text:'今日は、できるかどうかを、一度も考えません。'}],
+    loop:{every:30,fit:true,minGap:16,texts:[
+      'いま持っているゴールを、ひとつ思い浮かべます。',
+      'それは、どうやったら届くか、分かっていますか。',
+      '分かっているなら、それは過去の自分が作ったものです。',
+      '誰の声で、それを望みましたか。親。学校。会社。SNS。',
+      'その声を、いったん外します。',
+      '手段が、まったく想像もつかない世界を、ひとつ描きます。',
+      '無理だろう、と自分が思いましたか。位置は合っています。',
+      '手段は、今は要りません。行き先だけで足ります。',
+      '見つからなくても、探していること自体が、もう動きです。',
+    ]},
+    close:[{at:-22,text:'その、手の届かない場所を、そのままにしておきます。'}] },
+
+  { id:'zpoint', name:'Z地点', short:'細かく描かない',
+    open:[{at:0,text:'楽な姿勢で、目を閉じます。'},{at:16,text:'今日は、ゴールの世界に、体ごと入ります。'}],
+    loop:{every:30,fit:true,minGap:16,texts:[
+      '描いた世界の、どこかに立っています。',
+      '景色を、細かく描こうとしません。ぼやけていて、かまいません。',
+      'そこの空気は、温かいですか。冷たいですか。',
+      '光は、どんな色をしていますか。',
+      '音は、静かですか。にぎやかですか。',
+      '胸のあたりに、何が湧いていますか。',
+      '嬉しさですか。誇らしさですか。すがすがしさですか。',
+      'その感じを、濃くします。景色ではなく、感じのほうを。',
+      'いま、そこにいます。行くのではなく、います。',
+    ]},
+    close:[{at:-22,text:'その感じだけを、持って帰ります。'}] },
+
+  { id:'bpoint', name:'B地点', short:'次の足場',
+    open:[{at:0,text:'せすじを伸ばして座ります。'},{at:16,text:'今日は、遠くではなく、すぐ次の一段を見ます。'}],
+    loop:{every:30,fit:true,minGap:16,texts:[
+      'ゴールの世界に、一気に引っ越すことはできません。',
+      '途中が居場所でなくなると、脳は元の場所へ戻します。',
+      'なので、今のすぐ隣を、見ます。',
+      'ゴールへ向かう途中で、通っておきたい場所は、どこですか。',
+      'そこにいる自分は、朝、何をしていますか。',
+      '昼は。夜は。',
+      '誰と、何を話していますか。',
+      'その景色は、はっきり見えますか。近いので、見えるはずです。',
+      'そこが当たり前になった感じを、体で作ります。',
+    ]},
+    close:[{at:-22,text:'そこは、もう自分の場所です。'}] },
+
+  { id:'past', name:'過去を切る', short:'自分への見積もりを上げる',
+    open:[{at:0,text:'胸に手を当ててもかまいません。'},{at:16,text:'今日は、自分への見積もりを、上げます。'}],
+    loop:{every:30,fit:true,minGap:16,texts:[
+      '「できない」と思う理由を、ひとつ挙げます。',
+      'それは、過去の話ではありませんか。',
+      '実績がない。経験がない。前に失敗した。ぜんぶ、過去です。',
+      '過去は、データです。これから起きることの証拠ではありません。',
+      '見る場所を、変えます。ゴール側の自分から、今の自分を見ます。',
+      'その人は、今の自分を、どう見積もっていますか。',
+      '根拠は、要りません。根拠は、あとから来ます。',
+      '自分なら、あれを達成できる。そう言ってみます。',
+      '言ったとき、胸がざわつきましたか。それは、動いている印です。',
+    ]},
+    close:[{at:-22,text:'その見積もりのまま、目を開けます。'}] },
+
+  { id:'iam', name:'私は、である', short:'言葉を、第四段階まで上げる',
+    open:[{at:0,text:'楽な姿勢で、目を閉じます。'},{at:16,text:'今日は、言葉をひとつ、選びます。'}],
+    loop:{every:30,fit:true,minGap:16,texts:[
+      '独り言は、自分を今の形に留めておくための、留め具です。',
+      '「自分はこういう人間だから」と、何度言ってきましたか。',
+      '留め具を、外します。',
+      '「できない」でも、「できたらいいな」でもありません。',
+      '「絶対に変わる」でも、まだ足りません。それは、まだ今の自分の言葉です。',
+      '「私は、〜である」。そう言い切れる言葉を、ひとつ作ります。',
+      'なりたい、ではなく、である。',
+      '声に出さなくてかまいません。心の中で、もう一度。',
+      '言ったあとの体を、見ています。',
+    ]},
+    close:[{at:-22,text:'その言葉を、今日一日、持って歩きます。'}] },
+];
+
 /* ---- 単発の瞑想 ---- */
 const MEDITATIONS = [
   { id:'night', name:'夜の瞑想', mins:[10,15,20], script:NIGHT, softBell:true, relaxBg:true, noClosing:true,
@@ -1521,7 +1638,7 @@ const MEDITATIONS = [
     desc:'空を考えるのではなく、体験する。自分で作った物語では瞑想にならず妄想になるので、他人が作った抽象度の高い物語＝お経の世界を、強い臨場感で借りる。苫米地英人『超瞑想法』第3章ワーク2。',
     script:{
       open:[
-        {at:0, text:'背筋を伸ばして、楽に座ります。'},
+        {at:0, text:'せすじを伸ばして、楽に座ります。'},
         {at:18,text:'今日は、空を、考えるのではなく、体験します。'},
         {at:42,text:'自分で作った物語では、瞑想になりません。ただの妄想です。だから、はるかに高いところにある物語を借ります。'},
       ],
@@ -1802,40 +1919,11 @@ const MEDITATIONS = [
       ]
     }},
 
-  /* 超瞑想法（瞑想の本）ではなく、コーチング側から。超瞑想の10本は「臨場感の作り方」を鍛えるが、
-     何に臨場感を持たせるかは決めていない。その空白をここで埋める。
-     ⚠️【この誘導のルール】**「できるかどうか」を一度も判断させない。** 判断させた瞬間に、
-        現状の内側へ引き戻される。だから open で先に「最後まで考えません」と約束させてある。
-     ※用語（スコトーマ・エフィカシー等）は本文に出さない。外に出すときの安全のためでもある。 */
-  { id:'goal', name:'現状の外にゴールを置く', mins:[10,15,20],
-    desc:'「やらなければ」を外して、やりたいことだけでゴールを置く。今の生活の延長線上にあるものはゴールではないので、できる気がしなくなる場所まで外に出します。臨場感の作り方は超瞑想法のワークと同じで、こちらは「何に臨場感を持たせるか」を決める側。座る前に答えを用意しないでください。苫米地英人のコーチング（ゴール設定）。',
-    script:{
-      open:[
-        {at:0, text:'背筋を伸ばして、肩を落とします。'},
-        {at:18,text:'今日は、ゴールを、ひとつ置きます。'},
-        {at:42,text:'できるかどうかは、最後まで考えません。それだけ守ってください。'},
-      ],
-      loop:{every:46, fit:true, minGap:26, texts:[
-        'いま「やらなければ」と思っていることを、ひとつ思い浮かべます。',
-        'それは、自分で選んだことですか。誰かに言われたことですか。',
-        '言われたことなら、いったん、脇に置きます。',
-        'お金も、時間も、誰の許可も、いらないとします。',
-        '明日、何をしていますか。',
-        '浮かばなければ、待ちます。浮かばないのは、長いあいだ誰にも聞かれなかったからです。',
-        '浮かんだそれは、今の生活の、延長線上にありますか。',
-        '延長線上にあるなら、まだゴールではありません。もう一段、外へ。',
-        '外に出すと、できる気がしなくなります。それが、正しい位置です。',
-        'そこにいる自分を、見ます。何を着て、どこにいて、誰といますか。',
-        'その人は、今日のことで、悩んでいますか。',
-        'そのゴールは、人に言わなくていいです。今のまわりの人は、止めにきます。',
-        '外に置いたそれを、否定せずに、そのまま見ています。',
-      ]},
-      close:[
-        {at:-40,text:'今いる場所が、少し狭く感じたら、それで足りています。'},
-        {at:-22,text:'ゴールは、明日変えてもかまいません。空白にしないことだけが要です。'},
-        {at:-10,text:'ゆっくり、目を開けます。'},
-      ]
-    }},
+  /* 超瞑想法（瞑想の本）ではなく、コーチング側から。超瞑想の10本は「臨場感の作り方」を
+     鍛えるが、何に臨場感を持たせるかは決めていない。その空白を GOAL_STEPS が埋める。
+     喜びの八本柱とまったく同じ回し方（今日のゴール＝自動で次へ）にしてある。 */
+  { id:'goal', name:'ゴール設定', mins:[3,5,7,10,15,20], goalSet:true,
+    desc:'現状の外にゴールを置く七段。「自分をどう変えるか」ではなく「どんな世界を作りたいか」から入り、八つの方面に置き、Z地点は感じで、次の足場は具体的に描く。「今日のゴール」にすると毎回自動で次の段へ進みます。3分から成立します。苫米地式コーチング。' },
 
   /* 維摩経・不思議品。方丈に三万二千の獅子座が入る。部屋も座も大きさを変えていない、というのが要。
      「大きい小さいは、どこにあったか」を体で問うため、最後に自分の手に負えない問題を持ってこさせる。 */
@@ -1939,7 +2027,7 @@ const MEDITATIONS = [
   { id:'ajikan', name:'阿字観', mins:[10,15,20,30], desc:'密教の観法。月輪と阿字を観る。※文言はご住職に確認のうえ書き換えてください。',
     script:{
       open:[
-        {at:0,text:'背筋を伸ばして、楽に座ります。'},
+        {at:0,text:'せすじを伸ばして、楽に座ります。'},
         {at:16,text:'手を組み、肩の力を抜きます。目は半分だけ開き、少し先の床に落とします。'},
         {at:36,text:'口から静かに息を吐ききります。三回、長く吐きます。'},
         {at:64,text:'呼吸を、体にまかせます。'},
@@ -1958,7 +2046,7 @@ const MEDITATIONS = [
     }},
   { id:'anapana', name:'呼吸随観', mins:[10,15,20,30,45], desc:'アーナーパーナサティ。呼吸をただ見る。もっとも基本で、もっとも深い。',
     script:{
-      open:[{at:0,text:'背筋を伸ばして座ります。'},{at:18,text:'呼吸を変えようとしません。今している呼吸を、ただ見ます。'},
+      open:[{at:0,text:'せすじを伸ばして座ります。'},{at:18,text:'呼吸を変えようとしません。今している呼吸を、ただ見ます。'},
             {at:42,text:'鼻の入り口。空気が触れる、その一点に意識を置きます。'}],
       loop:{every:60,texts:['入ってくる息。出ていく息。','長ければ、長いと知る。短ければ、短いと知る。',
             '考えが浮かんだら、それに気づいて、また呼吸に戻ります。','何度離れてもかまいません。気づいて戻る、それが練習です。',
@@ -1978,7 +2066,7 @@ const MEDITATIONS = [
     desc:'今この瞬間を、評価も判断も加えずに観察する。考えるのではなく、ただ見る。リラックスのためではなく、ふだん無意識にやっている「何を拾い、何を捨てるか」の選別を、自分で見えるようにするための時間です。',
     script:{
       open:[
-        {at:0, text:'背筋を伸ばして座ります。目は閉じても、少し開けたままでもかまいません。'},
+        {at:0, text:'せすじを伸ばして座ります。目は閉じても、少し開けたままでもかまいません。'},
         {at:20,text:'これから、何も変えようとしません。今ここにあるものを、見るだけです。'},
         {at:42,text:'まず、聞こえている音に、耳を向けます。'},
       ],
@@ -2113,6 +2201,8 @@ const COURSE = [
     desc:'考えたことを、他者へひらく。四無量心の慈と悲。' },
   { id:'mudita', name:'喜びの瞑想', opts:[0,3,5,7,10,12,15,20], def:5,
     desc:'『よろこびの書』の八本柱を1本ずつ育てる。「今日の柱」にすると毎回自動で次へ進みます。' },
+  { id:'goal', name:'ゴール設定', opts:[0,3,5,7,10,15], def:5,
+    desc:'現状の外にゴールを置く七段。「今日のゴール」にすると毎回自動で次の段へ進みます。分析的瞑想の直後ではなく、慈悲・喜びのあとに置いてある（他者へひらいたあとのほうが、ゴールが自分だけのものにならないため）。' },
   { id:'morningword', name:'朝のひとこと', opts:[0,1,2,3,5], def:1,
     desc:'今日という日を、自分で定義する短い言葉。回向の前に置きます。' },
   { id:'dedication', name:'回向', opts:[0,1,2,3,4,5], def:4,
@@ -2121,11 +2211,11 @@ const COURSE = [
 
 /* ---- 合計時間のプリセット（数字はぴったり合計になるようにしてあります）---- */
 const COURSE_PRESETS = {
-  20:{chant:1,breath:3,analytical:7, letgo:0,metta:3, mudita:3, morningword:1,dedication:2},
-  30:{chant:2,breath:5,analytical:11,letgo:0,metta:5, mudita:5, morningword:1,dedication:1},
-  45:{chant:3,breath:7,analytical:19,letgo:0,metta:7, mudita:7, morningword:1,dedication:1},
-  60:{chant:3,breath:10,analytical:24,letgo:0,metta:10,mudita:10,morningword:1,dedication:2},
-  90:{chant:5,breath:15,analytical:39,letgo:0,metta:15,mudita:12,morningword:1,dedication:3},
+  20:{chant:1,breath:3,analytical:5, letgo:0,metta:2, mudita:3, goal:3, morningword:1,dedication:2},
+  30:{chant:2,breath:5,analytical:8, letgo:0,metta:3, mudita:5, goal:5, morningword:1,dedication:1},
+  45:{chant:3,breath:7,analytical:14,letgo:0,metta:5, mudita:7, goal:7, morningword:1,dedication:1},
+  60:{chant:3,breath:10,analytical:18,letgo:0,metta:8, mudita:10,goal:8, morningword:1,dedication:2},
+  90:{chant:5,breath:15,analytical:31,letgo:0,metta:11,mudita:12,goal:12,morningword:1,dedication:3},
 };
 
 /* ---- 最後に流す曲。YouTubeの動画IDを差し替えれば変わります ---- */
@@ -2149,6 +2239,7 @@ const S = Object.assign({
   cIn:4, cH1:0, cOut:6, cH2:0,
   courseBreath:'reset46', topic:'impermanence',
   pillar:'auto', pillarIdx:0, pillarCount:{}, nightBg:'rain',
+  goal:'auto', goalIdx:0, goalCount:{},
   letgo:'core', letgoIdx:0, letgoCount:{}, streak:true, enBreath:true, bgVol:14,
   stage:Object.fromEntries(COURSE.map(s=>[s.id,s.def]))
 }, JSON.parse(localStorage.getItem(KEY)||'{}'));
@@ -2718,6 +2809,7 @@ function renderCourse(){
     if(s.id==='analytical') extra=`<select data-sel="topic">${ANALYTICAL.map(a=>
         `<option value="${a.id}" ${S.topic===a.id?'selected':''}>${a.name} — ${a.short}</option>`).join('')}</select>`;
     if(s.id==='mudita') extra=`<select data-sel="pillar">${pillarOptions()}</select>`;
+    if(s.id==='goal') extra=`<select data-sel="goal">${goalOptions()}</select>`;
     if(s.id==='letgo') extra=`<select data-sel="letgo">${letgoOptions()}</select>`;
     return `<div class="stage ${v?'':'off'}">
       <div class="sh"><span class="sn">${s.name}</span><span class="n" style="font-size:11px;color:var(--faint)">${v?v+'分':'なし'}</span></div>
@@ -2757,8 +2849,7 @@ const MED_PACKS = [
       'birthdeath','sanpokai','order',            // 第2章 自由自在に見る
       'rinjo','hannya','fiction','chusho'] },     // 第3章 臨場感を維持する
   /* 超瞑想法とは別の本（コーチング側）なので、パックを分けてある。
-     まずは1本だけ。効いたら「見えていない場所／八つの部屋／自分への見積もり／
-     居心地を移す／一段上から／もう、そうである」の6本を足す。 */
+     中身は GOAL_STEPS の七段で、喜びの八本柱と同じく日替わりで回る。 */
   { name:'コーチング（苫米地英人）', ids:['goal'], top:true },
   { name:'華厳', ids:['nyuhokkai','kegon'] },
   /* 維摩経は「方丈→天女→一黙」の順。だんだん言葉が減っていって、最後に無音で終わる並びにしてある */
@@ -2786,6 +2877,7 @@ function renderMed(){
     + (S.med==='analytical'?`<select id="soloTopic" style="max-width:none;width:100%;margin-top:4px">${
         ANALYTICAL.map(a=>`<option value="${a.id}" ${S.topic===a.id?'selected':''}>${a.name} — ${a.short}</option>`).join('')}</select>`:'')
     + (S.med==='mudita'?`<select id="soloPillar" style="max-width:none;width:100%;margin-top:4px">${pillarOptions()}</select>`:'')
+    + (S.med==='goal'?`<select id="soloGoal" style="max-width:none;width:100%;margin-top:4px">${goalOptions()}</select>`:'')
     + (S.med==='letgo'?`<select id="soloLetgo" style="max-width:none;width:100%;margin-top:4px">${letgoOptions()}</select>`:'')
     + (S.med==='letgo'&&S.letgo==='shadowtalk'
         ? (latestDream()
@@ -2824,6 +2916,7 @@ function renderMed(){
   });
   const st=$('#soloTopic'); if(st) st.onchange=()=>{S.topic=st.value;save()};
   const sp=$('#soloPillar'); if(sp) sp.onchange=()=>{S.pillar=sp.value;save();renderMed()};
+  const sg=$('#soloGoal'); if(sg) sg.onchange=()=>{S.goal=sg.value;save();renderMed()};
   const sl=$('#soloLetgo'); if(sl) sl.onchange=()=>{S.letgo=sl.value;save();renderMed()};
   const nb=$('#soloNightBg'); if(nb) nb.onchange=()=>{S.nightBg=nb.value;save();const sel=$('#nightBgSel');if(sel)sel.value=S.nightBg;};
   /* 音源の取り込み。ファイルはIndexedDBへ、名前だけlocalStorageへ（画面表示用） */
@@ -3099,6 +3192,18 @@ function pillarOptions(){
     + JOY_PILLARS.map(p=>`<option value="${p.id}" ${S.pillar===p.id?'selected':''}>${p.group}の柱・${p.name} — ${p.short}</option>`).join('');
 }
 
+/* ---------- ゴール設定の七段 ---------- */
+function resolveGoal(){
+  const g = (S.goal==='auto')
+    ? GOAL_STEPS[((S.goalIdx%GOAL_STEPS.length)+GOAL_STEPS.length)%GOAL_STEPS.length]
+    : (GOAL_STEPS.find(x=>x.id===S.goal)||GOAL_STEPS[0]);
+  return {id:g.id,name:'ゴール設定 — '+g.name,script:g};
+}
+function goalOptions(){
+  return `<option value="auto" ${S.goal==='auto'?'selected':''}>今日のゴール（自動で回す）— 次は「${GOAL_STEPS[S.goalIdx%GOAL_STEPS.length].name}」</option>`
+    + GOAL_STEPS.map((g,i)=>`<option value="${g.id}" ${S.goal===g.id?'selected':''}>${i+1}. ${g.name} — ${g.short}</option>`).join('');
+}
+
 /* ---------- 手放しの六段 ---------- */
 const LETGO_GROUPS = [
   ['手放す（ホーキンス）','感じきって、尽きるまで待つ'],
@@ -3166,6 +3271,7 @@ function buildCourse(){
       st.push({type:'script',name:g.name,sec,tl:tlFromScript(g.script,sec,g.id),letgo:g.id,bgSound:after}); }
     if(s.id==='metta') st.push({type:'script',name:'慈悲の瞑想',sec,tl:tlFromScript(METTA,sec,'metta'),bgSound:after});
     if(s.id==='mudita'){ const p=resolvePillar(); st.push({type:'script',name:p.name,sec,tl:tlFromScript(p.script,sec,p.id),pillar:p.id,bgSound:after}); }
+    if(s.id==='goal'){ const g=resolveGoal(); st.push({type:'script',name:g.name,sec,tl:tlFromScript(g.script,sec,g.id),goalStep:g.id,bgSound:after}); }
     if(s.id==='morningword') st.push({type:'script',name:'朝のひとこと',sec,tl:tlFromScript(MORNING,sec,'morningword'),bgSound:'gayatri'});
     if(s.id==='dedication') st.push({type:'script',name:'回向',sec,tl:tlFromScript(DEDICATION,sec),dedTrack:true});
   });
@@ -3203,7 +3309,7 @@ function startSession(plan){
       if(st.type==='script' && st.sec>=300 && !st.big && !st.noCue && st.tl && st.tl.length) st.tl=addBreathCues(st.tl,st.sec);
     });
   }
-  sess={name:plan.name,stages:plan.stages,i:-1,pillarsDone:new Set(),letgoDone:new Set(),
+  sess={name:plan.name,stages:plan.stages,i:-1,pillarsDone:new Set(),letgoDone:new Set(),goalDone:new Set(),
         noClosing:!!plan.noClosing, softBell:!!plan.softBell, freq720:!!plan.freq720, relaxBg:!!plan.relaxBg,
         total:plan.stages.reduce((a,s)=>a+s.sec,0),startedAt:performance.now()};
   if(sess.relaxBg){ if(S.nightBg) relaxStart(S.nightBg); nightIntroStart(); }
@@ -3225,6 +3331,7 @@ function nextStage(){
   // 最後まで流れきった柱だけを「育った」とみなす（途中でやめた分は数えない）
   if(sess.st && sess.st.pillar) sess.pillarsDone.add(sess.st.pillar);
   if(sess.st && sess.st.letgo) sess.letgoDone.add(sess.st.letgo);
+  if(sess.st && sess.st.goalStep) sess.goalDone.add(sess.st.goalStep);
   const prevSt=sess.st; // 背景音の切り替え判定に使う、直前のステージ
   sess.i++;
   if(sess.i>=sess.stages.length){ finish(true); return; }
@@ -3409,6 +3516,17 @@ function finish(complete){
       });
       save();
     }
+    // ゴール設定も柱・手放しと同じ扱い。流れきった段だけ数え、自動なら次の段へ送る
+    if(sess.goalDone && sess.goalDone.size){
+      sess.goalDone.forEach(id=>{
+        S.goalCount[id]=(S.goalCount[id]||0)+1;
+        if(S.goal==='auto'){
+          const i=GOAL_STEPS.findIndex(g=>g.id===id);
+          if(i>=0) S.goalIdx=(i+1)%GOAL_STEPS.length;
+        }
+      });
+      save();
+    }
     const done=Math.round((complete?sess.total:(performance.now()-sess.startedAt)/1000)/60);
     if(done>=1){ LOG.push({d:fmt(new Date()),n:sess.name,m:done}); saveLog(); }
   }
@@ -3550,6 +3668,9 @@ $('#startMed').onclick=()=>{
   } else if(m.pillar){
     const p=resolvePillar();
     stage={type:'script',name:p.name,sec,tl:tlFromScript(p.script,sec,p.id),pillar:p.id,bgSound:'gayatri'};
+  } else if(m.goalSet){
+    const g=resolveGoal();
+    stage={type:'script',name:g.name,sec,tl:tlFromScript(g.script,sec,g.id),goalStep:g.id,bgSound:'gayatri'};
   } else if(m.letgo){
     const g=resolveLetgo();
     stage={type:'script',name:g.name,sec,tl:tlFromScript(g.script,sec,g.id),letgo:g.id,bgSound:'chant'};
