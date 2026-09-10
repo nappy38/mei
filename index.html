@@ -3261,12 +3261,14 @@ function buildCourse(){
       const b=BREATHING.find(x=>x.id===S.courseBreath)||BREATHING[0];
       // 呼吸法・分析的瞑想・慈悲の瞑想・喜びの瞑想は、チャンティングの曲をそのまま流し続ける（bgSoundを付けない）。
       // 朝のひとことからガヤトリーに切り替わる。
-      if(b.blocks) st.push({type:'breath',name:b.name,sec,blocks:resolveBreathBlocks(b.blocks,sec)});
-      else st.push({type:'breath',name:b.name,sec,phases:b.phases});
+      // 2026-09-11：チャンティングのステージが0分のときは無音になっていたので、呼吸法から鳴らし始める（after='chant'）。
+      if(!S.stage.chant) after='chant';
+      if(b.blocks) st.push({type:'breath',name:b.name,sec,blocks:resolveBreathBlocks(b.blocks,sec),bgSound:after});
+      else st.push({type:'breath',name:b.name,sec,phases:b.phases,bgSound:after});
     }
     if(s.id==='analytical'){
       const a=ANALYTICAL.find(x=>x.id===S.topic)||ANALYTICAL[0];
-      st.push({type:'script',name:'分析的瞑想 — '+a.name,sec,tl:tlAnalytical(S.topic,sec),big:true});
+      st.push({type:'script',name:'分析的瞑想 — '+a.name,sec,tl:tlAnalytical(S.topic,sec),big:true,bgSound:after});
     }
     if(s.id==='letgo'){ const g=resolveLetgo();
       if(!S.stage.chant) after='chant';
@@ -3646,7 +3648,7 @@ $('#startCourse').onclick=()=>startSession(buildCourse());
 $('#startBreath').onclick=()=>{
   const b=BREATHING.find(x=>x.id===S.breath), sec=S.breathMin*60;
   if(b.blocks){
-    startSession({name:b.name,stages:[{type:'breath',name:b.name,sec,blocks:resolveBreathBlocks(b.blocks,sec)}]});
+    startSession({name:b.name,stages:[{type:'breath',name:b.name,sec,blocks:resolveBreathBlocks(b.blocks,sec),bgSound:'chant'}]}); // 2026-09-11 呼吸法単体でもチャンティングを薄く流す
     return;
   }
   let phases;
@@ -3656,7 +3658,7 @@ $('#startBreath').onclick=()=>{
     phases.push({k:'out',say:'ゆっくり吐いて',label:'吐く',sec:S.cOut||6});
     if(S.cH2>0) phases.push({k:'hold',say:'止めて',label:'止める',sec:S.cH2});
   } else phases=b.phases;
-  startSession({name:b.name,stages:[{type:'breath',name:b.name,sec,phases}]});
+  startSession({name:b.name,stages:[{type:'breath',name:b.name,sec,phases,bgSound:'chant'}]}); // 2026-09-11 同上
 };
 $('#startMed').onclick=()=>{
   const m=MEDITATIONS.find(x=>x.id===S.med), sec=S.medMin*60;
