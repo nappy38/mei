@@ -2946,6 +2946,11 @@ function renderMed(){
   // 選べる時間が変わった瞑想（手放しは15分から）で、前に選んだ分数が残っているとどれも選択されずに見えるので、
   // ここで近い方に寄せておく
   if(!mm.mins.includes(S.medMin)){ S.medMin=mm.mins.reduce((a,b)=>Math.abs(b-S.medMin)<Math.abs(a-S.medMin)?b:a); save(); }
+  // ゴール設定の「七段通し」は尺が固定（4分20秒×7）なので、分の選択肢の代わりに合計を出す
+  if(mm.goalSet && S.goal==='all'){
+    $('#medMin').innerHTML=`<span class="note">通し：1段 4分20秒 × 7段 ＝ 30分20秒</span>`;
+    return;
+  }
   $('#medMin').innerHTML=mm.mins.map(m=>`<button class="chip" data-m="${m}" aria-selected="${S.medMin===m}">${m}分</button>`).join('');
   $$('#medMin .chip').forEach(el=>el.onclick=()=>{S.medMin=+el.dataset.m;save();renderMed()});
 }
@@ -3151,14 +3156,17 @@ function tlFromScript(sc,total,sid){
     const first=openEnd+Math.min(every,20), end=closeStart-8;
     const hasWait=L.some(x=>x.wait);
     // fit:true の台本は、短い時間でも全文が一周するよう間隔を詰める
-    if(sc.loop.fit&&!hasWait) every=Math.max(minGap, Math.min(every,(end-first)/L.length));
+    // 2026-09-11：ぴったり一周に詰めたとき、小数の誤差で締めの直前に1行目がもう一度出ることがあった
+    // （260秒で 229.6<230 が通る）。詰めた場合は一周で止める。詰めていない長尺は従来どおり回り続ける。
+    let once=false;
+    if(sc.loop.fit&&!hasWait){ const fitEvery=(end-first)/L.length; if(fitEvery<every){ once=true; } every=Math.max(minGap, Math.min(every,fitEvery)); }
     let scale=1;
     if(hasWait&&sc.loop.fit){
       const cycle=L.reduce((a,x)=>a+(x.wait||every),0);
       if(cycle>end-first) scale=(end-first)/cycle; // 入りきらないときだけ、沈黙も含めて比例で詰める
     }
     let i=0,at=first;
-    while(at<end){
+    while(at<end && !(once&&i>=L.length)){
       const li=i%L.length;
       tl.push({at:Math.round(at),text:L[li].text,vid:sid+'_l'+li});
       at+=Math.max(minGap,(L[li].wait||every)*scale); i++;
@@ -3195,14 +3203,19 @@ function pillarOptions(){
 }
 
 /* ---------- ゴール設定の七段 ---------- */
+/* 七段を1回で通す設定（S.goal==='all'）。1段 260秒＝4分20秒。
+   9行が約21.6秒おきで入り、「一拍おいて次」になる最短がここ。7段で30分20秒。
+   段の切り替わりは通常どおり鐘が鳴り、ガヤトリーは止めずに流し続ける。 */
+const GOAL_ALL_SEC=260;
 function resolveGoal(){
-  const g = (S.goal==='auto')
+  const g = (S.goal==='auto'||S.goal==='all')
     ? GOAL_STEPS[((S.goalIdx%GOAL_STEPS.length)+GOAL_STEPS.length)%GOAL_STEPS.length]
     : (GOAL_STEPS.find(x=>x.id===S.goal)||GOAL_STEPS[0]);
   return {id:g.id,name:'ゴール設定 — '+g.name,script:g};
 }
 function goalOptions(){
   return `<option value="auto" ${S.goal==='auto'?'selected':''}>今日のゴール（自動で回す）— 次は「${GOAL_STEPS[S.goalIdx%GOAL_STEPS.length].name}」</option>`
+    + `<option value="all" ${S.goal==='all'?'selected':''}>七段を通しでやる — 4分20秒×7＝30分20秒</option>`
     + GOAL_STEPS.map((g,i)=>`<option value="${g.id}" ${S.goal===g.id?'selected':''}>${i+1}. ${g.name} — ${g.short}</option>`).join('');
 }
 
@@ -3672,6 +3685,13 @@ $('#startMed').onclick=()=>{
   } else if(m.pillar){
     const p=resolvePillar();
     stage={type:'script',name:p.name,sec,tl:tlFromScript(p.script,sec,p.id),pillar:p.id,bgSound:'gayatri'};
+  } else if(m.goalSet && S.goal==='all'){
+    // 七段通し。1→7の順そのまま（順番に意味がある。GOAL_STEPS の注記参照）。
+    // ガヤトリーは全段同じ bgSound にしておくと nextStage() が切り替えずに流し続ける。
+    const stages=GOAL_STEPS.map(g=>({type:'script',name:'ゴール設定 — '+g.name,sec:GOAL_ALL_SEC,
+      tl:tlFromScript(g,GOAL_ALL_SEC,g.id),goalStep:g.id,bgSound:'gayatri'}));
+    startSession({name:'ゴール設定 七段通し',stages});
+    return;
   } else if(m.goalSet){
     const g=resolveGoal();
     stage={type:'script',name:g.name,sec,tl:tlFromScript(g.script,sec,g.id),goalStep:g.id,bgSound:'gayatri'};
