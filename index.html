@@ -1256,7 +1256,8 @@ function tlInnerGuide(total){
 }
 
 
-/* ゴール設定の七段。苫米地式コーチングの全体像（新庄の解説動画）に沿って組んである。
+/* ゴール設定の七段。苫米地式コーチングの全体像（新庄の解説動画 https://youtu.be/gKJEaf0MbZg ／
+   要約は 00_master/knowledge/youtube/2026-09-11_【徹底解剖】44分で学ぶ苫米地式コーチング… ）に沿って組んである。
    ⚠️【この七本の順番には意味がある】**1→2→3 の順でなければ効かない。**
       「自分をどう変えるか」ではなく「どんな世界を作りたいか」から入る。自分は
       〈世界 － 自分以外〉なので、まわりのピースが決まって初めて自分の形が決まる。
@@ -2947,8 +2948,8 @@ function renderMed(){
   // ここで近い方に寄せておく
   if(!mm.mins.includes(S.medMin)){ S.medMin=mm.mins.reduce((a,b)=>Math.abs(b-S.medMin)<Math.abs(a-S.medMin)?b:a); save(); }
   // ゴール設定の「七段通し」は尺が固定（4分20秒×7）なので、分の選択肢の代わりに合計を出す
-  if(mm.goalSet && S.goal==='all'){
-    $('#medMin').innerHTML=`<span class="note">通し：1段 4分20秒 × 7段 ＝ 30分20秒</span>`;
+  if(mm.goalSet && GOAL_RUNS[S.goal]){
+    $('#medMin').innerHTML=`<span class="note">${goalRunLabel(S.goal)}</span>`;
     return;
   }
   $('#medMin').innerHTML=mm.mins.map(m=>`<button class="chip" data-m="${m}" aria-selected="${S.medMin===m}">${m}分</button>`).join('');
@@ -3203,19 +3204,31 @@ function pillarOptions(){
 }
 
 /* ---------- ゴール設定の七段 ---------- */
-/* 七段を1回で通す設定（S.goal==='all'）。1段 260秒＝4分20秒。
-   9行が約21.6秒おきで入り、「一拍おいて次」になる最短がここ。7段で30分20秒。
+/* 七段を1回で通す設定（S.goal==='all'）。
+   1段目（ワールド）だけ 260秒＝4分20秒（9行が約21.6秒おき、一拍おいて次）。
+   2段目以降は 210秒＝3分30秒（9行が16秒おき＝最短で全行入る長さ。3分だと締めの行が落ちる）。
+   本人の希望（2026-09-11：30分は長い。1は4分20秒のまま、他は短く）。
    段の切り替わりは通常どおり鐘が鳴り、ガヤトリーは止めずに流し続ける。 */
-const GOAL_ALL_SEC=260;
+const GOAL_ALL_SEC=260, GOAL_REST_SEC=210;
+function goalStepSec(i){ return i===0?GOAL_ALL_SEC:GOAL_REST_SEC; }
+function goalRunTotal(k){ return GOAL_RUNS[k].idx.reduce((a,i)=>a+goalStepSec(i),0); }
+/* 通しの種類。30分は長い日があるので前編・後編に割った。
+   前編＝ゴールを置く（1〜3）、後編＝そこに入って自分を上げる（4〜7）。 */
+const GOAL_RUNS = {
+  all:   { name:'七段通し', idx:[0,1,2,3,4,5,6] },
+  first: { name:'前編（1〜3）', idx:[0,1,2] },
+  second:{ name:'後編（4〜7）', idx:[3,4,5,6] },
+};
+function goalRunLabel(k){ const r=GOAL_RUNS[k], t=goalRunTotal(k); return `${r.name} — ${Math.floor(t/60)}分${t%60?t%60+'秒':''}`; }
 function resolveGoal(){
-  const g = (S.goal==='auto'||S.goal==='all')
+  const g = (S.goal==='auto'||GOAL_RUNS[S.goal])
     ? GOAL_STEPS[((S.goalIdx%GOAL_STEPS.length)+GOAL_STEPS.length)%GOAL_STEPS.length]
     : (GOAL_STEPS.find(x=>x.id===S.goal)||GOAL_STEPS[0]);
   return {id:g.id,name:'ゴール設定 — '+g.name,script:g};
 }
 function goalOptions(){
   return `<option value="auto" ${S.goal==='auto'?'selected':''}>今日のゴール（自動で回す）— 次は「${GOAL_STEPS[S.goalIdx%GOAL_STEPS.length].name}」</option>`
-    + `<option value="all" ${S.goal==='all'?'selected':''}>七段を通しでやる — 4分20秒×7＝30分20秒</option>`
+    + Object.keys(GOAL_RUNS).map(k=>`<option value="${k}" ${S.goal===k?'selected':''}>${goalRunLabel(k)}</option>`).join('')
     + GOAL_STEPS.map((g,i)=>`<option value="${g.id}" ${S.goal===g.id?'selected':''}>${i+1}. ${g.name} — ${g.short}</option>`).join('');
 }
 
@@ -3685,12 +3698,13 @@ $('#startMed').onclick=()=>{
   } else if(m.pillar){
     const p=resolvePillar();
     stage={type:'script',name:p.name,sec,tl:tlFromScript(p.script,sec,p.id),pillar:p.id,bgSound:'gayatri'};
-  } else if(m.goalSet && S.goal==='all'){
-    // 七段通し。1→7の順そのまま（順番に意味がある。GOAL_STEPS の注記参照）。
+  } else if(m.goalSet && GOAL_RUNS[S.goal]){
+    // 通し（全部／前編／後編）。段の順はそのまま（順番に意味がある。GOAL_STEPS の注記参照）。
     // ガヤトリーは全段同じ bgSound にしておくと nextStage() が切り替えずに流し続ける。
-    const stages=GOAL_STEPS.map(g=>({type:'script',name:'ゴール設定 — '+g.name,sec:GOAL_ALL_SEC,
-      tl:tlFromScript(g,GOAL_ALL_SEC,g.id),goalStep:g.id,bgSound:'gayatri'}));
-    startSession({name:'ゴール設定 七段通し',stages});
+    const run=GOAL_RUNS[S.goal];
+    const stages=run.idx.map(i=>{ const g=GOAL_STEPS[i], sec=goalStepSec(i);
+      return {type:'script',name:'ゴール設定 — '+g.name,sec,tl:tlFromScript(g,sec,g.id),goalStep:g.id,bgSound:'gayatri'}; });
+    startSession({name:'ゴール設定 '+run.name,stages});
     return;
   } else if(m.goalSet){
     const g=resolveGoal();
