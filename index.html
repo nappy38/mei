@@ -1159,6 +1159,69 @@ const NIGHT = {
 };
 
 /* 朝のひとこと：短く、今日をどう迎えるかを自分で決めて終える */
+/* ---- 『心を極める』第9章より：数息・問題解決・1日のシミュレーション（コースの1ステージとして使う）---- */
+const COUNT10 = {
+  open:[
+    {at:0,  text:'背すじを、ゆっくり伸ばします。'},
+    {at:12, text:'まず、息を吐きます。吐く息から、はじめます。'},
+    {at:26, text:'吐いて、吸って。これで、ひとつ。数えるのは、それだけです。'},
+    {at:42, text:'十まで数えたら、また、ひとつに戻ります。'},
+  ],
+  loop:{ every:50, fit:true, minGap:30, texts:[
+    '数は、心の中で、静かに数えます。',
+    '数えそこなったり、途中で分からなくなったら、責めずに、ひとつ目からやり直します。',
+    '考えごとが出てきたら、気づいたところで、呼吸に戻ります。',
+    '数が分からなくなるのは、集中が切れたしるしです。ただ、気づいて、戻ります。',
+    '吐いて、吸って。ひとつ。',
+  ]},
+  close:[
+    {at:-30,text:'数えるのを、手放します。'},
+    {at:-20,text:'今、心がどれくらい静かか、ただ、気づきます。'},
+    {at:-10,text:'ゆっくり、目を開けていきます。'},
+  ],
+};
+const PROBLEM = {
+  open:[
+    {at:0,  text:'呼吸を、三つ、数えます。'},
+    {at:18, text:'今、心にひっかかっている問題を、ひとつだけ、選びます。'},
+    {at:36, text:'大きすぎるものは選ばず、今日、向き合える問題にします。'},
+  ],
+  loop:{ every:60, fit:true, minGap:40, texts:[
+    {text:'その問題に、意識を向けます。平穏な心のまま、見つめます。', wait:75},
+    {text:'いつ、どこで、どんなことが起きましたか。事実だけを、思い出します。', wait:80},
+    {text:'その場に、誰がいましたか。その人は、何と言いましたか。', wait:75},
+    {text:'あなたは、何と答えましたか。何をしましたか。', wait:75},
+    {text:'同じ状況が、また来たら、どうしたいですか。', wait:90},
+    {text:'答えを急がず、出てくるものを、ただ受け取ります。', wait:75},
+  ]},
+  close:[
+    {at:-40,text:'考えるのを、やめます。'},
+    {at:-30,text:'何か腑に落ちたことがあれば、そこに、少しだけ留まります。'},
+    {at:-16,text:'出なくても、大丈夫です。問題が、心に置かれました。'},
+    {at:-6, text:'ゆっくり、戻ってきます。'},
+  ],
+};
+const SIMULATE = {
+  open:[
+    {at:0,  text:'呼吸を、ふたつ。'},
+    {at:14, text:'これから始まる一日を、思い浮かべます。'},
+    {at:30, text:'一日の中で、少し難しそうな場面を、ひとつ選びます。'},
+  ],
+  loop:{ every:55, fit:true, minGap:35, texts:[
+    {text:'その場面は、どこですか。誰と、一緒にいますか。', wait:65},
+    {text:'その人は、あなたに何を言いそうですか。', wait:65},
+    {text:'あなたは、どんな言葉で、答えますか。心の中で、演じてみます。', wait:80},
+    {text:'声の調子も、表情も、落ち着いたまま、演じます。', wait:70},
+    {text:'うまくいった場面を、最後まで、見届けます。', wait:75},
+    {text:'実際に、その場面が来たとき、あなたは、もう準備ができています。', wait:60},
+  ]},
+  close:[
+    {at:-30,text:'演じるのを、終わります。'},
+    {at:-20,text:'今日の自分は、準備ができています。'},
+    {at:-8, text:'ゆっくり、目を開けていきます。'},
+  ],
+};
+
 const MORNING = {
   open:[
     {at:0,  text:'目が覚めたところから、少しだけ時間をもらいます。'},
@@ -2196,16 +2259,22 @@ const COURSE = [
     desc:'鐘のあとに、チャンティングの曲を流す。' },
   { id:'breath', name:'呼吸法', opts:[0,3,4,5,7,10,15], def:4,
     desc:'考える前に、体を静める。プリセットを選べます。' },
+  { id:'count10', name:'数息（10回）', opts:[0,3,5,7,10,15], def:0,
+    desc:'吐く息から数えて、10まで。数えそこなったらひとつ目からやり直す。『心を極める』第9章より。' },
   { id:'analytical', name:'分析的瞑想', opts:[0,3,5,8,12,15,20,25,30,40], def:12,
     desc:'問いが読まれ、長い沈黙が来ます。その沈黙で自分の頭で考えます。' },
-  { id:'letgo', name:'手放し', opts:[0,7,10,12,15,20,25,30], def:0,
-    desc:'考えた直後に置く。頭で出した答えを、感じきる側で受ける。10分あれば誘導は15行ぜんぶ流れます（7分だと10行目まで）。ただし感情が尽きるのを待つのが本体なので、余裕があるときは15分以上に。' },
+  { id:'problem', name:'問題解決瞑想', opts:[0,3,5,7,10,15,20], def:0,
+    desc:'困っていることをひとつ選び、平穏な心で見つめる。答えを急がず、長い沈黙で考える。' },
+  { id:'letgo', name:'手放し', opts:[0,3,5,7,10,12,15,20,25,30], def:0,
+    desc:'考えた直後に置く。頭で出した答えを、感じきる側で受ける。10分あれば誘導は15行ぜんぶ流れます（7分だと10行目まで）。3分・5分は「対象別」向け（5分で全行、3分で7行目まで）。基本の型は5分で6行・3分で2行しか流れないので、短い日は対象別を選ぶこと。感情が尽きるのを待つのが本体なので、余裕があるときは15分以上に。' },
   { id:'metta', name:'慈悲の瞑想', opts:[0,3,5,7,10,15,20], def:0,
     desc:'考えたことを、他者へひらく。四無量心の慈と悲。' },
   { id:'mudita', name:'喜びの瞑想', opts:[0,3,5,7,10,12,15,20], def:5,
     desc:'『よろこびの書』の八本柱を1本ずつ育てる。「今日の柱」にすると毎回自動で次へ進みます。' },
   { id:'goal', name:'ゴール設定', opts:[0,3,5,7,10,15], def:5,
     desc:'現状の外にゴールを置く七段。「今日のゴール」にすると毎回自動で次の段へ進みます。分析的瞑想の直後ではなく、慈悲・喜びのあとに置いてある（他者へひらいたあとのほうが、ゴールが自分だけのものにならないため）。' },
+  { id:'simulate', name:'今日1日のシミュレーション', opts:[0,3,5,7,10], def:0,
+    desc:'これから来る難しい場面で、自分がどう対応するかを、先に心の中で演じておく。朝のひとことの前に置きます。' },
   { id:'morningword', name:'朝のひとこと', opts:[0,1,2,3,5], def:1,
     desc:'今日という日を、自分で定義する短い言葉。回向の前に置きます。' },
   { id:'dedication', name:'回向', opts:[0,1,2,3,4,5], def:4,
@@ -2827,7 +2896,7 @@ function renderCourse(){
   $('#coursePresets').innerHTML=Object.keys(COURSE_PRESETS).map(k=>
     `<button class="chip" data-p="${k}" aria-selected="${tot===+k}">${k}分</button>`).join('');
   $$('#coursePresets .chip').forEach(el=>el.onclick=()=>{
-    S.stage=Object.assign({},COURSE_PRESETS[el.dataset.p]); save(); renderCourse(); });
+    S.stage=Object.assign(Object.fromEntries(COURSE.map(c=>[c.id,0])),COURSE_PRESETS[el.dataset.p]); save(); renderCourse(); });
   $('#courseTotal').textContent = tot? `ぜんぶで ${tot} 分` : 'ステージがすべて「なし」です';
   $('#startCourse').disabled = tot===0;
 }
@@ -3298,6 +3367,9 @@ function buildCourse(){
       const a=ANALYTICAL.find(x=>x.id===S.topic)||ANALYTICAL[0];
       st.push({type:'script',name:'分析的瞑想 — '+a.name,sec,tl:tlAnalytical(S.topic,sec),big:true,bgSound:after});
     }
+    if(s.id==='count10'){ if(!S.stage.chant) after='chant'; st.push({type:'script',name:'数息（10回）',sec,tl:tlFromScript(COUNT10,sec,'count10'),bgSound:after}); }
+    if(s.id==='problem'){ if(!S.stage.chant) after='chant'; st.push({type:'script',name:'問題解決瞑想',sec,tl:tlFromScript(PROBLEM,sec,'problem'),big:true,bgSound:after}); }
+    if(s.id==='simulate') st.push({type:'script',name:'今日1日のシミュレーション',sec,tl:tlFromScript(SIMULATE,sec,'simulate'),big:true,bgSound:after});
     if(s.id==='letgo'){ const g=resolveLetgo();
       if(!S.stage.chant) after='chant';
       st.push({type:'script',name:g.name,sec,tl:tlFromScript(g.script,sec,g.id),letgo:g.id,bgSound:after}); }
